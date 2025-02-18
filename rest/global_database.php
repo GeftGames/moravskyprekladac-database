@@ -3,6 +3,7 @@
 namespace REST;
 
 function database_init() {
+    $dev=$GLOBALS["dev"];
     if (!isset($_POST["password"]) || !isset($_POST["email"])) {
         throwError("Přihlašovací údaje jsou nekorektní!");
         return;
@@ -225,7 +226,7 @@ function database_init() {
             // Table created successfully
             if ($dev) echo "<p>".$sql."</p>";
         } else {
-            $name=$sql.substr(0,$sql.insdexOf("("));
+            $name=$sql.substr(0,strpos($sql, "("));
             throwError("SQL Error: '$name': " . $conn->error);
         }
     }
@@ -254,8 +255,9 @@ function database_load() {
 }
 
 function database_importold() {
+    $dev=$GLOBALS["dev"];
     if (!isset($_SESSION["username"])) {
-        throwError("Nejste přehlášený!");
+        throwError("Nejste přihlášený!");
         return;
     }
 
@@ -311,7 +313,11 @@ function database_importold() {
         $langtype=1;
         $dialect=0;
 
-        foreach ($lines as $line) {
+        $i=0;
+        $linesLen=count($lines);
+
+        for (;$i<$linesLen;$i++) {
+            $line=$lines[$i];
             if (is_string($line) && strlen($line) > 0) {
                 if ($line[0]=="-") break;
                 switch ($line[0]){
@@ -375,12 +381,11 @@ function database_importold() {
             }
         }
 
-        // sql
+        // insert translate
         $sql="INSERT INTO translate (translateName, administrativeTown, gpsX, gpsY, region, country, langtype, quality, dialect, editors, devinfo, options) SELECT ".
         "'".$name."', '".$administrativeTown."', ".$gpsX.", ".$gpsY.", ".$region.", ".$country.", ".$langtype.", ".$quality.", ".$dialect.", '".$editors."', '".$devinfo."', '".$options."'".
         "WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '".$name."')";
-        //  echo $sql;
-     //   $result = $conn->query($sql);
+
         if ($conn->query($sql) === TRUE) {            
             //ok
             if (mysqli_affected_rows($conn) > 0) {
@@ -390,11 +395,340 @@ function database_importold() {
         }else{
             throwError("Chyba vkládání do databáze!");
         }
+        $langId=$conn->insert_id;
 
-    }/**/
+        // SentencePattern
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-") break;
+            if ($line == "")  continue;
+           // itemsSentencePatterns.Add(ItemSentencePattern.Load(line));
+        }
+
+        // SentencePatternPart
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-") break;
+            if ($line == "")  continue;
+           // itemsSentencePatternParts.Add(ItemSentencePatternPart.Load(line));
+        }
+
+            // Sentences
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+            //itemsSentences.Add(ItemSentence.Load(line));
+        }
+
+            // SentencePart
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+         //   itemsSentenceParts.Add(ItemSentencePart.Load(line));
+        }
+
+            // Phrase
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+          //  itemsPhrases.Add(ItemPhrase.Load(line));
+        }
+
+            // SimpleWords
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+
+            $parts = explode('|',$line);
+            $from=$parts[0];
+            $display=$parts[1];
+
+            $sql="INSERT simpleword_relation INTO (translate, shape_from, display, tags, uppercase) VALUES ($langId, $from, $display, $tags)";
+            $idSimpleWord=$conn->insert_id;
+
+            $tos=loadListTranslatingToData($parts,2);
+            $sql_to="";
+            foreach ($tos as $to) {
+                $shape=$to->Text;
+                $comment=$to->Comment;
+                $source=$to->Source;
+                $tags=join(",", tryToGetTags($comment));
+                $sourceId=0;
+
+                $sql_to.="($idSimpleWord, $shape, $tags, $comment, $sourceId)";
+            }
+
+            $sql="INSERT simpleword_to INTO (parent, shapes, tags, comment, source) VALUES ".$sql_to;
+           
+          
+        }
+/*
+            // ReplaceS
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsReplaceS.Add(ItemReplaceS.Load(line));
+            }
+
+            // ReplaceG
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsReplaceG.Add(ItemReplaceG.Load(line));
+            }
+
+            // ReplaceE
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsReplaceE.Add(ItemReplaceE.Load(line));
+            }
+
+            // PatternNounFrom
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternNounFrom.Add(ItemPatternNoun.Load(line));
+            }
+
+            // PatternNounTo
+         for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternNounTo.Add(ItemPatternNoun.Load(line));
+            }
+
+            // Noun
+       for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsNouns.Add(ItemNoun.Load(line));
+            }
+
+            // PatternAdjectives
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternAdjectiveFrom.Add(ItemPatternAdjective.Load(line));
+            }
+
+            // PatternAdjectivesTo
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternAdjectiveTo.Add(ItemPatternAdjective.Load(line));
+            }
+
+            // Adjectives
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsAdjectives.Add(ItemAdjective.Load(line));
+            }
+
+            // PatternPronounsFrom
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternPronounFrom.Add(ItemPatternPronoun.Load(line));
+            }
+
+            // PatternPronounsTo
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternPronounTo.Add(ItemPatternPronoun.Load(line));
+            }
+
+            // Pronouns
+         for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPronouns.Add(ItemPronoun.Load(line));
+            }
+
+            // PatternNumbersFrom
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                var item=ItemPatternNumber.Load(line);
+                if (item!=null) itemsPatternNumberFrom.Add(item);
+            }
+
+            // PatternNumbersTo
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                var item=ItemPatternNumber.Load(line);
+                if (item!=null) itemsPatternNumberTo.Add(item);
+            }
+
+            // Numbers
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsNumbers.Add(ItemNumber.Load(line));
+            }
+
+            // PatternVerbsFrom
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternVerbFrom.Add(ItemPatternVerb.Load(line));
+            }
+
+            // PatternVerbsTo
+         for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPatternVerbTo.Add(ItemPatternVerb.Load(line));
+            }
+
+            // Verb
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsVerbs.Add(ItemVerb.Load(line));
+            }
+
+            // Adverb
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsAdverbs.Add(ItemAdverb.Load(line));
+            }
+
+            // Preposition
+         for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPrepositions.Add(ItemPreposition.Load(line));
+            }
+
+            // Conjunction
+          for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsConjunctions.Add(ItemConjunction.Load(line));
+            }
+
+            // Particle
+           for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsParticles.Add(ItemParticle.Load(line));
+            }
+
+            // Interjection
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsInterjections.Add(ItemInterjection.Load(line));
+            }
+
+            // PhrasePattern
+         for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-")  break;
+            if ($line == "")  continue;
+                itemsPhrasePattern.Add(ItemPhrasePattern.Load(line));
+            }*/
+    }
+}
+
+function getResultSql($result, $id) : int{ 
+    while ($row = $result->fetch_assoc()) {
+        if (is_array($row)) return $row[$id];
+        else return $row;
+    } 
+    throwError("Error getResultSql");
+    return -1;
+}
+
+function extractBase($str) : string{
+    preg_match('/^[a-z]+/', $str, $matches);
+    return $matches[0] ?? '';
+}
+
+function getUpperCaseType($str) : int {
+    // return: 0 = unknown?, 1=lower, 2=first uppercase, 3=all uppercase
+    if ($str === '') {
+        return 0; // Unknown or empty string
+    }
+
+    if (mb_strtoupper($str, "UTF-8") === $str) {
+        return 3; // All uppercase
+    }
+
+    if (mb_strtolower($str, "UTF-8") === $str) {
+        return 1; // All lowercase
+    }
+
+    $firstLetter = mb_substr($str, 0, 1, "UTF-8");
+    $rest = mb_substr($str, 1, null, "UTF-8");
+
+    if (
+        mb_strtoupper($firstLetter, "UTF-8") === $firstLetter &&
+        mb_strtolower($rest, "UTF-8") === $rest
+    ) {
+        return 2; // First uppercase, rest lowercase
+    }
+
+    return 0; // Unknown case (e.g., mixed case)
 }
 
 function throwError($string) {
     $GLOBALS["error"]=$string;
 }
-?>
+
+function loadListTranslatingToData($rawData, $start) : array{
+    $list=[];
+         
+    $len=count($rawData);
+    for ($i=$start; $i<$len ; $i+=3) {
+        if ($i<$len-1) $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$rawData[$i+2]];
+        else if (($i-$start)%2==0 && i==$len-1) 
+            $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$rawData[$i+2]];
+    }
+          
+    return $list;
+}
+
+function tryToGetTags($comment) : array{
+    $list=[];
+         
+    if (str_contains($comment, "expr.")) $list[]="expr.";
+    if (str_contains($comment, "val.")) $list[]="val.";
+    if (str_contains($comment, "han.")) $list[]="han.";
+    if (str_contains($comment, "staří")) $list[]="staří";
+    if (str_contains($comment, "mladí")) $list[]="mladí";
+          
+    return $list;
+}

