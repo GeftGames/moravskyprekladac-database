@@ -69,7 +69,6 @@ function deleteUser() {
 	$name=$_POST['name'];
     $password=$_POST['password'];
 
-    // delete current loginned user
+    // TODO: delete current loginned user
 }
-
 ?>
