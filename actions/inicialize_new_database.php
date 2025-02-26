@@ -38,7 +38,7 @@ if (isset($_POST["action"])) rest();
                 <label>Heslo:</label>
                 <input type="password" name="password" autocomplete="on" required><br>
                 <label>Email:</label>
-                <input type="email" name="email" autocomplete="on" required><br>
+                <input type="email" name="email" autocomplete="on"><br>
                 <label>Importovat databázi:</label>
                 <input type="file" accept="*.sql">
                 <button type="submit">Inicializovat</button>

@@ -1,65 +1,24 @@
 <?php 
 
 // [index, region, subregion, subsubregion, ...]
-function GetArrayEnumRegions(){
+function GetArrayEnumNationss(){
     return [
         [0, "Neznámé"],
 
-        // Haná
-        [1, "Horní Haná"],  
-
-        [10, "Haná"],
-    
-        // Slovácko
-        [25, "Slovácko"],
-        
-        // Valašsko
-        [46, "Valašsko"],
-
-        // Záhoří/Pobečví/Hranicko
-        [61, "Záhoří"],
-
-        // Brněnsko
-        [72, "Brněnsko"],
-
-        // Drahansko
-        [76, "Drahansko"],
-        [80, "Blansko"],
-        
-        // Horácko
-        [81, "Malá Haná"],
-        [82, "Horácko"],
-        [95, "Podhorácko"],
-        [108, "Dolsko"],
-
-        // Němci
-        [114, "Jesenicko"],
-        [117, "Šumpersko"],
-        [118, "Hřebečsko"],
-        [119, "Podyjí"],
-
-        // Lašsko
-        [126, "Lašsko"],
-        [131, "Těšínsko", "Zaolší", "Lašsko", "Frýdecko"],
-
-        // Slezsko
-        [132, "Těšínsko", "Zaolší"],
-        [133, "Těšínsko", "Zaolší", "Goralsko"],
-        [134, "Těšínsko", "Zaolší", "Karvinsko"],
-        [135, "Těšínsko", "Zaolší", "Morávka"],
-        [136, "Těšínsko", "Zaolší", "Třinecko"],
-        [137, "Opavsko"],
-        [138, "Hlučínsko"],
-        [139, "Ostravsko"],
-
-        // Slovensko
-        [140, "Slovensko"],
-        [141, "Slovensko", "Záhorie"],
-        [142, "Slovensko", "Kysuce"],
-        [143, "Slovensko", "Považie"],
-
-        [147, "Morava"],
-        [148, "Nezařaditelné"],
+        [1, "Hanáci"],  
+        [2, "Podhoráci"],
+        [3, "Horáci"],
+        [4, "Slováci"],
+        [5, "Valaši"],
+        [6, "Laši"],
+        [7, "Gorali"],
+        [8, "Prajzi"],
+        [9, "Moravci"],
+        [10, "Němci"],
+        [11, "Šlonzok"],
+        [12, "Češi"],
+        [13, "Čuháci"],
+        [14, "Charváti"],
     ]; 
 }
 

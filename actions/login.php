@@ -25,6 +25,11 @@ if (isset($_POST["action"])) rest();
             <label>Password:</label>
             <input type="password" name="password" required><br>
             <button type="submit">Login</button>
+        </form> 
+        <form method="POST">
+            <input type="hidden" name="action" value="login">           
+            <input type="hidden" name="root" value="yes">           
+            <button type="submit">dev root</button>
         </form>
         <a href="./register.php">register</a>
     </div>

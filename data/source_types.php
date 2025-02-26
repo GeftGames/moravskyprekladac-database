@@ -1,0 +1,30 @@
+<?php
+$source_types=[
+    // [code, text, type]
+
+    // hlavní
+    ["recorded_place", "Místo poøízení", "string"],    
+    ["recorded_date", "Datum poøízení", "date"],    
+    ["writed_type", "Zpùsob zápisu", "string"], // typ zápisu - z nahrávky, z pamìti, rychlopis
+
+    // zapisovatel
+    ["writer", "Jméno a pøíjmení zapisovatele", "string"],
+    ["local_writer", "Lokální zapisovatel", "boolean"], // z místa poblíž nebo v místì ukáz
+    ["writer_age", "Vìk zapisovatele", "int"],
+    ["writer_bornplace", "Místo narození zapisovatele", "string"],
+    ["writer_borntime", "Datum narození zapisovatele", "date"],
+    
+    // osoby
+    [
+        ["recorded_person", "Jméno a pøíjmení mluvèího", "string"],    
+        ["recorded_person_bornplace", "Místo narození mluvèího", "string"],    
+        ["recorded_person_borndate", "Datum narození mluvèího", "date"],
+        ["recorded_person_liveplaces", "Místa pobytu mluvèího", "string"],
+        ["recorded_person_age", "Vìk mluvèího", "int"],
+    ],
+
+    // bližsší údaje o zdroji
+    ["type", "Typ", "string"], // vyprávìní, píseò, rozhovor, kniha
+    ["stylistics", "Umìlecké", "enum"], // reálné (záznam), neumìlecké (kniha, vyprávìní), umìlecké (báseò, píseò)
+    ["language", "jazykové prostøedky", "enum"], //náøeèní, polonáøeèní, nenáøeèní
+]

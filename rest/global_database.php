@@ -48,24 +48,28 @@ function database_init() {
         "INSERT INTO users (username, userPassword, email, usertype, activated)
             VALUES ('".$_POST["username"]."', '".$hashPassword."', '".$_POST["email"]."', 1, 1);",
 
-        // From cs
+        // From cs tags=[nonstandart, expr. , mor., val., ...]
         "CREATE TABLE noun_pattern_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
+            label VARCHAR(255),
             gender TINYINT,
-            shapes TEXT
+            base VARCHAR(255),
+            shapes TEXT,
+            tags VARCHAR(255)
         );",
         "CREATE TABLE adjective_pattern_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            label varchar(255),
             base varchar(255),
-            pattern_type TINYINT,
-            shapes TEXT
+            category TINYINT,
+            shapes JSON
         );",
         "CREATE TABLE pronoun_pattern_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
-            pattern_type TINYINT,
-            shapes TEXT
+            label VARCHAR(255),
+            base VARCHAR(255),
+            category TINYINT,
+            shapes JSON
         );",
         "CREATE TABLE number_pattern_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -75,65 +79,58 @@ function database_init() {
         );",
         "CREATE TABLE verb_pattern_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            pattern_type_show TINYINT,
+            label varchar(255),
+            verbtype TINYINT,
             base varchar(255),
-            infinitive varchar(255),
-            continous varchar(255),
-            future varchar(255),
-            past_active varchar(255),
-            past_passive varchar(255),
-            imperative varchar(255),
-            transgressive_present varchar(255),
-            transgressive_past varchar(255),
-            conditional varchar(255),
-            shapes TEXT
+            shapes JSON
         );",
         "CREATE TABLE preposition_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            shapes varchar(255),
-            fall TINYINT
+            fall TINYINT,
+            shape varchar(255)
+        );",
+        "CREATE TABLE conjunction_cs (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            type TINYINT,
+            shape varchar(255)
+        );",//type=přací, ano/ne, ...
+        "CREATE TABLE particle_cs (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            type TINYINT,
+            shape varchar(255)
         );",
 
         // Translate to
         "CREATE TABLE noun_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
+            label varchar(255),
             gender TINYINT,
-            shapes TEXT
+            shapes JSON
         );",
         "CREATE TABLE adjective_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
+            label varchar(255),
             pattern_type TINYINT,
-            shapes TEXT
+            shapes JSON
         );",
         "CREATE TABLE pronoun_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
+            label varchar(255),
             pattern_type TINYINT,
-            shapes TEXT
+            shapes JSON
         );",
         "CREATE TABLE number_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            base varchar(255),
+            label varchar(255),
             pattern_type TINYINT,
-            shapes TEXT
+            shapes JSON
         );",
         "CREATE TABLE verb_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             pattern_type_show TINYINT,
             reversible TINYINT,
-            base varchar(255),
-            infinitive varchar(255),
-            continous varchar(255),
-            future varchar(255),
-            past_active varchar(255),
-            past_passive varchar(255),
-            imperative varchar(255),
-            transgressive_present varchar(255),
-            transgressive_past varchar(255),
-            conditional varchar(255),
-            shapes text
+            label varchar(255),
+            shapes JSON
         );",
         "CREATE TABLE preposition_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -142,48 +139,58 @@ function database_init() {
         );",
 
         // relations
-        "CREATE TABLE noun (
+        "CREATE TABLE noun_relation (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             uppercase TINYINT,
-            shapes TEXT
+            pattern_from INT,
+            tmp_imp_from_pattern VARCHAR(255),
+            pattern_from_body VARCHAR(255)
         );",
-        "CREATE TABLE adjectives (
+        "CREATE TABLE adjective_relation (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            uppercase TINYINT,
-            shapes TEXT
+            pattern_from INT
         );",
-        "CREATE TABLE pronoun (
+        "CREATE TABLE pronoun_relation (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate int,
-            uppercase TINYINT,
-            shapes TEXT
-        );",
-        "CREATE TABLE adverb (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shapes TEXT
+            pattern_from INT
         );",
-        "CREATE TABLE preposition (
+        "CREATE TABLE number_relation (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate int,
-            shapes TEXT
+            translate INT,
+            pattern_from INT
         );",
-        "CREATE TABLE conjuctions (
+        "CREATE TABLE verb_relation (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate INT,
+            pattern_from INT
+        );",
+        "CREATE TABLE adverb_relation (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shapes TEXT
+            shape_from VARCHAR(255)
         );",
-        "CREATE TABLE particle (
+        "CREATE TABLE preposition_relation (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate INT,
+            shape_from INT
+        );",
+        "CREATE TABLE conjuction_relation (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shapes TEXT
+            shape_from INT
         );",
-        "CREATE TABLE interjection (
+        "CREATE TABLE particle_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shapes TEXT
+            shape_from INT
+        );",
+        "CREATE TABLE interjection_relations (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate INT,
+            shape_from VARCHAR(255)
         );",
 
         // translate
@@ -194,6 +201,7 @@ function database_init() {
             gpsX float,
             gpsY float,
             region INT,
+            subregion INT,
             country TINYINT,
             langtype TINYINT,
             quality TINYINT,
@@ -206,28 +214,107 @@ function database_init() {
         // kniha
         "CREATE TABLE source (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
-            datatext TEXT
+            data JSON
         );",
         // Ukázky
         "CREATE TABLE pieceofsource (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
-            datatext TEXT
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
+            belongs INT,
+            translate INT,
+            datatext TEXT,
+            info JSON
         );",
+
         // log
         "CREATE TABLE logs (
-            created DATE,            
+            created DATE,  
+            user INT,
             logtext TEXT
-        );"
+        );",
+        
+        // edits
+        "CREATE TABLE translate_edits (
+            id NOT NULL AUTO_INCREMENT PRIMARY KEY,  
+            user INT,
+            translate INT,
+            edit_time DATETIME
+        );",
+
+        // simpleword_relations
+        "CREATE TABLE simpleword_relations (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate int,
+            shape_from varchar(255),
+            display tinyint,
+            tags varchar(255),
+            uppercase tinyint
+        );",
+
+        // simpleword_to
+        "CREATE TABLE simpleword_to (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            parent int,
+            shapes varchar(255),
+            tags varchar(255),
+            comment varchar(255),
+            source int
+        );",
+
+        // phrase_relations
+        "CREATE TABLE phrase_relations (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate int,
+            shape_from varchar(255),
+            display tinyint,
+            tags varchar(255)
+        );",
+
+        // phrase_to
+        "CREATE TABLE phrase_to (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            parent int,
+            shapes varchar(255),
+            tags varchar(255),
+            comment varchar(255),
+            source int
+        );",
+
+        // phrase_to
+        "CREATE TABLE phrase_to (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            parent int,
+            shapes varchar(255),
+            tags varchar(255),
+            comment varchar(255),
+            source int
+        );",
+
+        // regions
+        "CREATE TABLE regions (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            label varchar(255) NOT NULL,
+            type TINYINT,
+            parent INT,
+            translates JSON,
+        );",
+
+        // regions ploace
+        "CREATE TABLE place_regions (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            region_id INT,
+            zone_type TINYINT,
+            confinence TINYINT,
+            comment VARCHAR(255),
+        );",
     ];
 
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
     foreach ($sqls as $sql) {
         if ($conn->query($sql) === TRUE) {
             // Table created successfully
-            if ($dev) echo "<p>".$sql."</p>";
+         //   if ($dev) echo "<p>".$sql."</p>";
         } else {
-            $name=$sql.substr(0,strpos($sql, "("));
-            throwError("SQL Error: '$name': " . $conn->error);
+            sqlError($sql,$conn);
         }
     }
 
@@ -393,7 +480,7 @@ function database_importold() {
                 throwError("Překlad s tímto názvem už v databázi existuje!");
             }
         }else{
-            throwError("Chyba vkládání do databáze!");
+            sqlError($sql,$conn);
         }
         $langId=$conn->insert_id;
 
@@ -437,7 +524,7 @@ function database_importold() {
           //  itemsPhrases.Add(ItemPhrase.Load(line));
         }
 
-            // SimpleWords
+        // SimpleWords
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
             if ($line == "-")  break;
@@ -446,25 +533,37 @@ function database_importold() {
             $parts = explode('|',$line);
             $from=$parts[0];
             $display=$parts[1];
+            $uppercase=getUpperCaseType($from);
+            $tags="";
 
-            $sql="INSERT simpleword_relation INTO (translate, shape_from, display, tags, uppercase) VALUES ($langId, $from, $display, $tags)";
+            $sql="INSERT INTO simpleword_relations (translate, shape_from, display, tags, uppercase) VALUES ($langId, '$from', $display, '$tags', $uppercase);";
+            if ($conn->query($sql) === TRUE) {            
+                //ok
+            }else{
+                sqlError($sql,$conn);
+            }
+            
             $idSimpleWord=$conn->insert_id;
 
             $tos=loadListTranslatingToData($parts,2);
-            $sql_to="";
+            $sql_to=[];
             foreach ($tos as $to) {
-                $shape=$to->Text;
-                $comment=$to->Comment;
-                $source=$to->Source;
+                $shape=$to["Text"];
+                $comment=$to["Comment"];
+                $source=$to["Source"];
                 $tags=join(",", tryToGetTags($comment));
                 $sourceId=0;
 
-                $sql_to.="($idSimpleWord, $shape, $tags, $comment, $sourceId)";
+                $sql_to[]="($idSimpleWord, '$shape', '$tags', '$comment', $sourceId)";
             }
 
-            $sql="INSERT simpleword_to INTO (parent, shapes, tags, comment, source) VALUES ".$sql_to;
-           
-          
+            $sql="INSERT INTO simpleword_to (parent, shapes, tags, comment, source) VALUES".implode(", ", $sql_to).";";
+            if ($conn->query($sql) === TRUE) {            
+                //ok
+            }else{
+                sqlError($sql,$conn);
+            }
+            
         }
 /*
             // ReplaceS
@@ -706,6 +805,12 @@ function getUpperCaseType($str) : int {
 
 function throwError($string) {
     $GLOBALS["error"]=$string;
+}
+function sqlError($sql, $conn) {
+    $maxLen=50;
+    $len=strlen($sql);
+    if ($len>$maxLen)$sql=substr($sql,0,$maxLen)."...";
+    $GLOBALS["error"].="Problém s SQL: ".$sql."; ".$conn->error."<br>";
 }
 
 function loadListTranslatingToData($rawData, $start) : array{
