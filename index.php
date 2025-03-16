@@ -134,7 +134,7 @@ if (file_exists($currenteditor)) {
             <div class="popup">
                 <div class="popupHeader"><span onclick="popupClose('userSettings')" class="popupClose">×</span></div>
                 <div class="popupBody">
-                    <h1>nastavení</h1>
+                    <h1>Nastavení</h1>
                     <form>
                         <label for="theme">Motiv</label>
                         <select id="theme">
@@ -173,7 +173,7 @@ if (file_exists($currenteditor)) {
                 <div class="popupBody">
                     <h1>Schválit uživatele</h1>
                     <div>
-                        <span>user</span> <switch>Povolit</switch><btn>Smazat X</btn>
+                        <span>user</span> <switch>Povolit</switch><button>Smazat X</button>
                     </div>
                     <a class="button">Uložit</a>
                 </div>
