@@ -1,6 +1,7 @@
 <?php 
 function throwError($string) {
-    $GLOBALS["error"]="ERROR: ".$string;
+    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
+    $_SESSION["error"].="<p class='error'>ERROR: ".$string."</p>";
     echo "ERROR: ".$string;
 }
 
@@ -11,12 +12,13 @@ function rest(){
     require_once "regions.php";
 
     $action=$_POST['action'];
+    $_SESSION["error"]="";
 
     if ($action=="") {
         throwError("Invalid empty action!");
         return;
     }
-
+   
     $namespace = "rest\\";
  
     // List of all allowed functions in namespace
