@@ -38,7 +38,7 @@ if (isset($_GET["page"])) $selectPage=$_GET["page"];
 $selectEditor="0";
 if (isset($_GET["editor"])) $selectEditor=$_GET["editor"];
 
-// cotent
+// content
 $content="";
 $currenteditor=getcwd()."/editor/".$selectPage."/".$selectEditor.".php";
 if (file_exists($currenteditor)) {
