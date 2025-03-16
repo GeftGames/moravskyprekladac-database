@@ -760,7 +760,7 @@ function pieceofcite_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, parent, cite, people FROM piecesofcite WHERE id = '$id';";
+    $sql="SELECT `label`, `parent`, `cite`, `people`, `text` FROM piecesofcite WHERE id = '$id';";
 
     $result = $conn->query($sql);
     if ($result) {  
@@ -786,7 +786,7 @@ function pieceofcite_item() {
 }
 
 function pieceofcite_update() {
-    if (!isset($_POST['id']) || !isset($_POST['label']) && !isset($_POST['params'])) {
+    if (!isset($_POST['id']) || !isset($_POST['label'])&& !isset($_POST['parent'])  && !isset($_POST['text']) && !isset($_POST['people']) && !isset($_POST['cite'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
         return;
     }
@@ -809,7 +809,7 @@ function pieceofcite_update() {
         return;
     }
 
-    $sql="UPDATE piecesofcite SET label = '$label', parent = '$parent', people = '$people', cite = '$cite', text = '$text' WHERE id = $id;";
+    $sql="UPDATE piecesofcite SET label = '$label', parent = '$parent', people = '$people', cite = '$cite', `text` = '$text' WHERE id = $id;";
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';

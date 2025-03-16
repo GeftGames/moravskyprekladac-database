@@ -2,7 +2,7 @@
     <div>
         <?php
         
-     //   include "components/filter_list.php";
+        // include "components/filter_list.php";
         include("components/param_editor.php");
         include("components/param_editor_multiple.php");
 
@@ -74,6 +74,7 @@
             formData.append('cite', paramsCite);
             formData.append('people', paramsPeople);
             formData.append('parent', pieceofciteParent);
+            formData.append('text', pieceofcitePText);
 
             fetch('index.php', {
                 method: 'POST',
@@ -157,8 +158,8 @@
             ); ?>
 
             <div class="section" style="width: -webkit-fill-available">
-                <label id="name">Text ukázky</label><br> 
-                <textarea type="text" id="pieceofciteText" for="name" value="" placeholder="" style="max-width: calc(100% - 15px);width: 100%"></textarea>
+                <label for="pieceofciteText" id="name">Text ukázky</label><br>
+                <textarea id="pieceofciteText" value="" placeholder="" style="max-width: calc(100% - 15px);width: 100%"></textarea>
             </div>
           
 

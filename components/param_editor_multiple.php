@@ -1,10 +1,12 @@
 <?php
 function paramMultipleEditor($params, $allparams, $name, $label) {
-    $GLOBALS["script"].="var AddParamMultiple = function(parent, divAllTags, labelText, code, val, typeInput, placeholder, spanTag) {
-        //let parent=document.getElementById('paramEditorMultiple$name');
+    $GLOBALS["script"].="var AddParamMultiple = function(parent, labelText, code, val, typeInput, placeholder, spanTag) {
+        let parentE=parent.querySelector('table');
+        let parentTags=parent.querySelector('.allTags');
+        
         let wrap=document.createElement('tr');
         wrap.setAttribute('data-code', code);
-        parent.appendChild(wrap);
+        parentE.appendChild(wrap);
 
         // create label
         let label=document.createElement('label');
@@ -15,7 +17,7 @@ function paramMultipleEditor($params, $allparams, $name, $label) {
         // create input
         if (Array.isArray(typeInput)) {
             let textbox=document.createElement('select');
-            if (val!=undefined) textbox.value=val;
+            if (val != undefined) textbox.value=val;
             textbox.style.display='table-cell';
             textbox.style.margin='1px';
             wrap.appendChild(textbox); 
@@ -52,22 +54,25 @@ function paramMultipleEditor($params, $allparams, $name, $label) {
 
             // unhide existing tag
 
-            let span = divAllTags.querySelector('span[data-code=\"'+code+'\"]');
+            let span = parentTags.querySelector('span[data-code=\"'+code+'\"]');
             span.style.display='inline-block';
         });
         rmv.style.display='table-cell';
         wrap.appendChild(rmv); 
 
         // hide existing tag
-        let span = divAllTags.querySelector('span[data-code=\"'+code+'\"]');
+        let span = parentTags.querySelector('span[data-code=\"'+code+'\"]');
         span.style.display='none';
     };
 
     var AddPart = function() {
         let editor=document.getElementById('editor$name');
-
+        
+        let divPart=document.createElement('div');  
+        
         let divAllTags=document.createElement('div');  
         divAllTags.id='tagseditor$name';
+        divAllTags.className='allTags';
 
         let table=document.createElement('table');
         table.style='margin-top: 5px; border-left: solid;';
@@ -84,11 +89,12 @@ function paramMultipleEditor($params, $allparams, $name, $label) {
             });
             divAllTags.appendChild(stag);
         }
-        editor.appendChild(divAllTags);
+        divPart.appendChild(divAllTags);
+        editor.appendChild(divPart);
         
-        editor.appendChild(table);
+        divPart.appendChild(table);
         maxId++;
-        return table;
+        return divPart;
     };
 
     var PEMGetJSON = function() {
@@ -200,9 +206,10 @@ function paramMultipleEditor($params, $allparams, $name, $label) {
                     break;
                 }
             }
+
+            if (!$found) $GLOBALS["onload"].="AddParamMultiple($table, $rowId, '$paramCode!', '$paramCode', '$paramValue', 'text', '');\n";
         }
-       
-        if (!$found) $GLOBALS["onload"].="AddParamMultiple($table, $rowId, '$paramCode!', '$paramCode', '$paramValue', 'text', '');\n";
+
         $rowId++;
     }
     $htmlpe.='</div><a class="button" onclick="AddPart()">Přidat</a>';        
