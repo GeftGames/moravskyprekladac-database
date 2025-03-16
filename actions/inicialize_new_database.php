@@ -27,8 +27,8 @@ if (isset($_POST["action"])) rest();
     <div class="centerForm">
         <h2>Inicializace databáze</h2>
         <p>Chcete vytvořit novou databázi?</p>
-        <?php if (isset($GLOBALS["error"])) echo "<p class='error'>".$GLOBALS["error"]."</p>"; ?>
-        <?php if (isset($GLOBALS["done"])) echo "<p class='done'>".$GLOBALS["done"]."</p>"; ?>
+        <?php if (isset($SESSION["error"])) echo "<p class='error'>".$SESSION["error"]."</p>"; ?>
+        <?php if (isset($SESSION["done"])) echo "<p class='done'>".$SESSION["done"]."</p>"; ?>
         <form method="POST">
             <?php if ($empty) :?>
                 <input type="hidden" name="action" value="database_init">
