@@ -13,6 +13,8 @@
     --headerSize: 12mm;
 
     color-scheme: light;
+
+    --shm: 3px 3px 10px #00000055;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -21,6 +23,7 @@
         --ColorText: white;
         --ColorBackground: black;
         --ConBack: hsl(0, 0%, 20%);
+        --shm: 3px 3px 10px #ffffff15;
     }
 }
 
@@ -128,6 +131,7 @@ a{
     box-shadow: 0 1px 0 var(--RawColorBack3), 1.25px 2.25px 2.5px -1px var(--RawColorBack5), 0 1px 0 var(--RawColorBack1) inset;
     text-shadow: var(--tsh);
     transition: background-color .2s ease-out;
+    /* opacity: .5; */
 }
 
 .button:hover, button:hover{
@@ -255,6 +259,7 @@ input:focus-visible+.slider {
     margin-left: 5px;
     display: flex;
     flex-direction: column;
+
 }
 
 .listFilteredContainer{
@@ -262,7 +267,8 @@ input:focus-visible+.slider {
     overflow-y: scroll;
     margin-top: 5px;
     min-height: 1mm;
-
+    height: inherit;
+    height: -webkit-fill-available;
     border: solid 2px;
     border-color: var(--ConBack);
 }
@@ -292,7 +298,9 @@ input:focus-visible+.slider {
 }
 
 .editorView{
-    margin: 5px;
+    margin-left: 5px;
+    width: -webkit-fill-available;
+    overflow-y: auto;
 }
 
 .selectItem{
@@ -415,6 +423,8 @@ input:focus-visible+.slider {
     cursor: pointer;
     user-select: none;
     padding: 5px;
+    color: var(--ColorText);
+    display: inline-block;
 }
 .choice:hover{
     background-color: var(--ColorTheme);
@@ -444,17 +454,18 @@ input:focus-visible+.slider {
     color: var(--ColorOrig)
 }
 .mouseContexMenu{
-    background-color: var(--ConBack);
+    background-color: var(--ConBack);  
     display: flex;
     flex-direction: column;    
     position: absolute;
     user-select:none;
     display:none;
-    box-shadow: 3px 3px 10px #00000055;
+    box-shadow: var(--shm);
     border-radius: 3px;
 }
 .mouseContexMenu>a{ 
-    cursor: pointer;
+    cursor: pointer;  
+    color: var(--ColorText);
     padding: 2mm;
 }
 .mouseContexMenu>a:hover{
@@ -467,6 +478,7 @@ h1{
 }
 .section{
     margin-bottom: 10px;
+    justify-self: left;
 }
 .smallRemoveBtn{
     height: 100%;
@@ -485,4 +497,8 @@ h1{
     margin: 1mm;
     border-radius: 1mm;
     padding: 1mm;
+}
+.lineFromTo{
+    display:flex;
+    align-items: center;
 }
