@@ -136,11 +136,11 @@ if (file_exists($currenteditor)) {
                 <div class="popupBody">
                     <h1>nastavení</h1>
                     <form>
-                        <label>Motiv</label>
-                        <select>
-                            <option>Výchozí</option>
-                            <option>Světlý</option>
-                            <option>Tmavý</option>
+                        <label for="theme">Motiv</label>
+                        <select id="theme">
+                            <option value="system">Výchozí</option>
+                            <option value="light">Světlý</option>
+                            <option value="dark">Tmavý</option>
                         </select>
                         <br>
                         <label>Nové heslo</label>
