@@ -2,15 +2,17 @@
     <div>
         <?php
         
-        include "components/filter_list.php";
+     //   include "components/filter_list.php";
         include("components/param_editor.php");
+        include("components/param_editor_multiple.php");
 
-        $sql="SELECT id, name FROM piecesofcite;";
+        $sql="SELECT id, label FROM piecesofcite;";
         $result = $conn->query($sql);
         $list=[];
+        if (!$result) throwError("SQL error: ".$sql);
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                $list[]=[$row["id"], $row["name"]];
+                $list[]=[$row["id"], $row["label"]];
             }
         } else {
             // TODO: echo "0 results ";
@@ -19,7 +21,7 @@
         echo FilteredList($list, "piecesofcite");  
 
         $GLOBALS["onload"].="region_changed=function() { 
-            let elementsSelected = flist_regions.getSelectedItemInList();
+            let elementsSelected = flist_piecesofcite.getSelectedItemInList();
         
             // no selected
             if (!elementsSelected) {
@@ -28,43 +30,50 @@
             //no multiple
             if (Array.isArray(elementsSelected)) return;
 
-            let id=elementsSelected.dataset.id;
+            let id=elementsSelected.dataset.id;console.log(id);
 
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=region_item&idregion=`+id
+                body: `action=pieceofcite_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK'){
-                    document.getElementById('regionId').value=id;
-                    document.getElementById('regionName').value=json.name;
-                    document.getElementById('regionParent').value=json.parent;
-                    document.getElementById('regionType').value=json.type;
-                    document.getElementById('regiontranslates').value=json.translates;
-                }else console.log('error sql: '+json);
+                    document.getElementById('pieceofciteId').value=id;
+                    document.getElementById('pieceofciteLabel').value=json.label;
+                    document.getElementById('pieceofciteParent').value=json.parent;
+                    document.getElementById('pieceofciteText').value=json.text;
+                    
+                    PELoadJSON(JSON.parse(json.cite));
+                    PEMLoadJSON(JSON.parse(json.people));
+                }else console.log('error sql: ', json);
             });
         };
 
         refreshFilteredLists();
 
-        flist_regions.SelectedItemChanged(region_changed);";
+        flist_piecesofcite.EventItemSelectedChanged(region_changed);";
     
-        $GLOBALS["script"].="var flist_regions; 
-        var currentRegionSave = function() {
-            let label=document.getElementById('regionName').value;
-            let regionParent=document.getElementById('regionParent').value;
-            let regionType=document.getElementById('regionType').value;
-            let regionId=document.getElementById('regionId').value;
-            let translates=document.getElementById('regiontranslates').innerText;
+        $GLOBALS["script"].="var flist_piecesofcite; 
+        var currentPieceOfCiteSave = function() {
+            let label=document.getElementById('pieceofciteLabel').value;
+            let pieceofciteId=document.getElementById('pieceofciteId').value;
+            let pieceofciteParent=document.getElementById('pieceofciteParent').value;
+            let pieceofcitePText=document.getElementById('pieceofciteText').value;
+
+            let paramsCite=PEGetJSON();
+            console.log(paramsCite);
+
+            let paramsPeople=PEMGetJSON();
+            console.log(paramsPeople);
 
             let formData = new URLSearchParams();
-            formData.append('action', 'region_update');
-            formData.append('id', regionId);
-            formData.append('name', label);
-            formData.append('type', regionType);
-            formData.append('parent', regionParent);
-            formData.append('parent', translates);
+            formData.append('action', 'pieceofcite_update');
+            formData.append('id', pieceofciteId);
+            formData.append('label', label);
+            formData.append('cite', paramsCite);
+            formData.append('people', paramsPeople);
+            formData.append('parent', pieceofciteParent);
 
             fetch('index.php', {
                 method: 'POST',
@@ -73,58 +82,88 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK'){
-                   flist_regions.getSelectedItemInList().innerText=label;
-                }else console.log('error currentRegionSave: '+json);
+                   flist_piecesofcite.getSelectedItemInList().innerText=label;
+                }else console.log('error currentPieceOfCiteSave: ', json);
             });
         };";
             
         ?>
     </div>
     <div class="editorView">
-        <div id="regionsview">
-            <div class="row">
-                <label id="name">Název</label><br>
-                <input type="text" id="regionName" for="name" value="">
+        <div class="editorView">
+            <div class="row section">
+                <label for="pieceofciteLabel">Label</label><br> 
+                <input type="text" id="pieceofciteLabel" value="" placeholder="" style="max-width: 9cm;">
+                <a onclick="" class="button">Sestavit</a>
             </div>
-
-            <div class="row">
-                <labeĺ>Typ</labeĺ>
-                <select id="regionType" name="type">
-                    <option value="0">Neznámý</option>
-                    <option value="1">Žemě</option>
-                    <option value="2">Region</option>
-                    <option value="3">Subregion</option>
-                    <option value="4">Oblast</option>
-                    <option value="5">Lokalita</option>
-                </select>
-            </div>
-                        
-            <div class="row">
-                <label>Nadřazený region</label>
-                <select id="regionParent" name="type">
-                    <option value="null">Neznámé</option>
-                    <option value="-1">Žádný</option>
-                    <?php
-                    $htmloptions="";
-                    foreach ($list as $item) {
-                        $id=$item[0];
-                        $label=$item[1];
-                        $htmloptions.="<option value='$id'>$label</option>";
-                    }
-                    echo $htmloptions;
+            
+            <div class="row section">
+                <label id="name" for="pieceofciteParent">Patří k</label><br> 
+                <select id="pieceofciteParent">
+                    <?php   
+                        $sql="SELECT id, label FROM cites;";
+                        $result = $conn->query($sql);
+                        $list=[];
+                        if (!$result) throwError("SQL error: ".$sql);
+                        if ($result->num_rows > 0) {
+                            while($row = $result->fetch_assoc()) {
+                                echo "<option value='".$row["id"]."'>".$row["label"]."</option>";
+                            }
+                        } else {
+                            echo "<option value='-1'>neexistují citace</option>";
+                        }
                     ?>
                 </select>
-                <br>
             </div>
-            <div style="display: flex;flex-direction: column;">
-                <label>Překlady</label>
-                    <textarea id="regiontranslates" placeholder='{"cs": "Haná"}'></textarea>
-                <br>
+
+           
+            <?php echo paramEditor(
+                [], 
+                [
+                    ["born_place",      "datum pořízení",       "",         "text",     ""], 
+                    ["writer_name",     "jméno zapisovatele",   "",         "text",     ""],
+                    ["strany",          "strany publikace",     "",         "text",     ""],
+                    ["kapitola",        "kapitoly publikace",   "",         "text",     ""],
+                    ["odkaz",           "url odkaz",            "",         "text",     ""],
+                    ["cislo_periodika", "číslo periodika",      "",         "text",     ""],
+                    ["ročník_periodika", "ročník periodika",    "",         "text",     ""],
+                    ["rok_zapisu",      "rok zápisu",           "",         "text",     "1951"],            
+                    ["mesic_zapisu",    "měsíc zápisu",         "",         "text",     "12"],            
+                    ["den_zapisu",      "den zápisu",           "",         "text",     "3"],            
+                    ["jmeno_zapisovatele", "jméno zapisovatele",  "",       "text",     ""],
+                    ["lokalni_zapisovatel", "lokální zapisovatel","",       "boolean", ""],
+                    ["lokalni_zapisovatel", "lokální zapisovatel","",       ["slovník", "rozhovor", "píseň", "báseň", "próza"], ""],
+                    ["transkripce", "transkripce ukázky",       "",         ["fonetická", "česká zjednodušená", "česká obvyklá", "zpřešková"], ""],
+                ],
+                "pieceofsource",
+                "Část zdroje"
+            ); ?>
+          
+            <?php echo paramMultipleEditor(
+                [],
+                [
+                    ["jmeno",           "jméno",            "",         "text",   ""], 
+                    ["prijmeni",        "příjmení",         "",         "text",   ""], 
+                    ["misto_narozeni",  "místo narození",   "",         "text",     "Brno"], 
+                    ["mista_bydliště",  "místa bydlení",    "",         "text",     ""],
+                    ["rok_narozeni",    "rok narození",     "",         "number",     ""],
+                    ["vek",             "věk",              "",         "number",     "70"],
+                    ["mluva",           "mluva",            "nářeční",  ["nářeční", "polonářeční"], ""],
+                    ["oznaceni",        "označení",         "",        "text", "A"],
+                    ["pohlavi",        "pohlavi",           "",        ["muž", "žena"], ""],
+                ],
+                "sample",
+                "Ukázka - osoby"
+            ); ?>
+
+            <div class="section" style="width: -webkit-fill-available">
+                <label id="name">Text ukázky</label><br> 
+                <textarea type="text" id="pieceofciteText" for="name" value="" placeholder="" style="max-width: calc(100% - 15px);width: 100%"></textarea>
             </div>
-            <div> 
-                <input type="hidden" id="regionId" value="-1">
-                <a onclick="currentPieceOfCiteSave()" class="button">Save</a>
-            </div>
+          
+
+            <input type="hidden" id="pieceofciteId" value="-1">
+            <a class='button' onclick="currentPieceOfCiteSave()">Uložit</a>             
         </div>
     </div>
 </div>

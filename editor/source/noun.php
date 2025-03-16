@@ -3,12 +3,13 @@
         <?php
         
         // Do dashboard stuff
-        include "components/filter_list.php";
+       // include "components/filter_list.php";
         include "components/tags_editor.php";
 
-        $sql="SELECT id, label FROM noun_pattern_cs;";
+        $sql="SELECT id, label FROM noun_patterns_cs;";
         $result = $conn->query($sql);
         $list=[];
+        if (!$result) throwError("SQL error: ".$sql);
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
@@ -17,10 +18,10 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_pattern_cs");  
+        echo FilteredList($list, "noun_patterns_cs");  
 
         $GLOBALS["onload"].="noun_cs_changed=function() { 
-            let elementsSelected = flist_noun_pattern_cs.getSelectedItemInList();
+            let elementsSelected = flist_noun_patterns_cs.getSelectedItemInList();
         
             // no selected
             if (!elementsSelected) {
@@ -47,31 +48,34 @@
                     document.getElementById('nounGender').value=json.gender; 
 
                     let rawShapes=json.shapes;
+                    let shapes;
                     if (rawShapes!=null) {
-                        let shapes=json.shapes.split('|');
-                        for (let i=0; i<14; i++) {
-                            let shape=shapes[i];                            
-                            let textbox=document.getElementById('noun'+i);
+                        shapes=json.shapes.split('|'); 
+                    } else shapes=[];
+                    for (let i=0; i<14; i++) {
+                        let shape=shapes[i];                            
+                        let textbox=document.getElementById('noun'+i);
 
-                            if (shape==undefined) textbox.value='';
-                            else textbox.value=shape;
-                        }
-                    }
+                        if (shape==undefined) textbox.value='';
+                        else textbox.value=shape;
+                    }                   
 
-                    if (json.tags!=null && json.tags!=''){
+                    if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
                         tagSet(arrTags);
-                    }                    
+                    }else{
+                        tagSet([]);
+                    }
                    
-                }else console.log('error sql', json);
+                } else console.log('error sql', json);
             });
         };
 
         refreshFilteredLists();
 
-        flist_noun_pattern_cs.SelectedItemChanged(noun_cs_changed);";
+        flist_noun_patterns_cs.EventItemSelectedChanged(noun_cs_changed);";
     
-        $GLOBALS["script"].="var flist_noun_pattern_cs; 
+        $GLOBALS["script"].="var flist_noun_patterns_cs; 
         var currentNounCSSave = function() {
             let label=document.getElementById('nounLabel').value;
             let base=document.getElementById('nounBase').value;
@@ -100,7 +104,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK'){
-                   flist_noun_pattern_cs.getSelectedItemInList().innerText=label;
+                   flist_noun_patterns_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };";
@@ -124,10 +128,10 @@
                 <label>Rod</label>
                 <select id="nounGender" name="type">
                     <option value="0">Neznámý</option>
-                    <option value="1">Mužský životný</option>
-                    <option value="2">Mužský neživotný</option>
-                    <option value="3">Ženský</option>
                     <option value="4">Střední</option>
+                    <option value="3">Ženský</option>
+                    <option value="2">Mužský neživotný</option>
+                    <option value="1">Mužský životný</option>
                 </select>
                 <br>
             </div>
@@ -153,7 +157,7 @@
                 <input type="hidden" id="nounShapes" value="-1">
             </div>
 
-            <?php echo tagsEditor("noun_cs", [])?>
+            <?php echo tagsEditor("noun_cs", [], "Tagy")?>
             <div> 
                 <input type="hidden" id="nounId" value="-1">
                 <a onclick="currentNounCSSave()" class="button">Uložit</a>

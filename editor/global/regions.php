@@ -3,7 +3,7 @@
         <?php
         
         // Do dashboard stuff
-        include "components/filter_list.php";
+      //  include "components/filter_list.php";
 
         $sql="SELECT id, name FROM regions;";
         $result = $conn->query($sql);
@@ -48,7 +48,7 @@
 
         refreshFilteredLists();
 
-        flist_regions.SelectedItemChanged(region_changed);";
+        flist_regions.EventItemSelectedChanged(region_changed);";
     
         $GLOBALS["script"].="var flist_regions; 
         var currentRegionSave = function() {
