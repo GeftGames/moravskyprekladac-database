@@ -2,21 +2,31 @@ let filteredLists=[];
 
 class filteredList{
     constructor(FilteredListName) {
-        this.handlerSelectedItemChanged=null;
+        this.handlerItemSelectedChanged=null;
+        this.handlerItemAddedChanged=null;
         this.FilteredList=document.getElementById("container_"+FilteredListName);//conteiner_regions
         this.ListContainer=document.getElementById("list_"+FilteredListName);
         this.FilterElement=document.getElementById("filter_"+FilteredListName);
         this.ContextMenu=document.getElementById("contextmenu_"+FilteredListName);
         filteredLists.push(this);
         this.TableName=FilteredListName;
+        this.lastAddedId=-1;
     }
 
-    SelectedItemChanged = function(func) {
-        this.handlerSelectedItemChanged=func;
+    EventItemSelectedChanged = function(func) {
+        this.handlerItemSelectedChanged=func;
+    }
+
+    EventItemAddedChanged = function(func) {
+        this.handlerItemAddedChanged=func;
     }
 
     SelectedItemChanged_dispatch = function() {
-        setTimeout(this.handlerSelectedItemChanged, 0);
+        setTimeout(this.handlerItemSelectedChanged, 0);
+    }
+
+    ItemAdded_dispatch = function() {
+        setTimeout(this.handlerItemAddedChanged, 0);
     }
 
     filterText = function() {
@@ -62,6 +72,11 @@ class filteredList{
                 });
             }
         });
+
+        if (list.length>0) {
+            this.filteredListSelect(this.ListContainer.lastChild);
+            this.lastAddedId=list[list.length-1];
+        }
     }
 
     filteredListSelect = function(element) {
@@ -109,9 +124,13 @@ class filteredList{
             body: `action=list_add&table=`+this.TableName
         }).then(response => response.json())
         .then(json => {
-            if (json.status=="ERROR"){ console.log(json); return; }
+            if (json.status=="ERROR"){ 
+                console.log(json); 
+                return; 
+            }
             this.generateList(json);
             this.ListContainer.lastChild.classList.add("selectedSideItem");
+            this.ItemAdded_dispatch();
         });
     }
 
@@ -141,7 +160,7 @@ class filteredList{
         });
     }
 
-    list_duplicate = function(listContainer) { 
+    list_duplicate = function() { 
         // selected container
         let elementsSelected = this.getSelectedItemInList();
     
@@ -177,6 +196,13 @@ function refreshFilteredLists(){
     for (let e of filteredLists) {
         var rect = e.FilteredList.getBoundingClientRect();
         e.FilteredList.style.height="calc(100vh - "+rect.top+"px)";
+    }
+
+    // Editor right side
+    let editorView=document.getElementsByClassName('editorView');
+    for (let e of editorView){
+        var rect = e.getBoundingClientRect();
+        e.style.height="calc(100vh - "+rect.top+"px)";
     }
 }
 
@@ -276,7 +302,7 @@ function popupShow(name){
 }
 
 function selectMainOption(elToSelect) {
-    let tabs=["source", "global", "attributes", "simple", "translate"];
+    let tabs=["source", "global", "attributes", "tools", "patterns", "replaces", "simple", "translate"];
     for (let tab of tabs) {
         let eMainOption = document.getElementById("mainOption_" + tab);
         eMainOption.classList.remove("selected");

@@ -9,7 +9,6 @@ function FilteredList($list, $id) {
     
     // list 
     $html.="<div class='listFilteredContainer' id='".$listContaineId."'>";
-    //  $html.=ListContent($list);
     $GLOBALS["onload"].="flist_$id=new filteredList('$id');\nflist_$id.generateList(".json_encode($list).");\n";
     $html.="</div>";
     // Mouse context menu

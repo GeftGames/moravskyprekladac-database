@@ -1,6 +1,6 @@
 <?php
 
-function tagsEditor($id, $tags) {
+function tagsEditor($id, $tags, $label) {
     // onload
     $GLOBALS["script"].="
 var tagRemove=function(e) {
@@ -18,10 +18,13 @@ var tagRemove=function(e) {
     // remove element
     parent.outerHTML='';
 }
-var tagAdd=function(){ 
-    let tagAddNew = document.getElementById('tagAddNew');
-    let tagToAdd=tagAddNew.value;
-    if (tagToAdd=='') return;
+var tagAdd=function(text){
+    let tagToAdd;
+    if (text==undefined) { 
+        let tagAddNew = document.getElementById('tagAddNew');
+        tagToAdd=tagAddNew.value;
+        if (tagToAdd=='') return;
+    }else tagToAdd=text;
 
     let tagsdata = document.getElementById('".$id."datatags');
     tagsdata.value+='|'+tagToAdd;
@@ -43,7 +46,7 @@ var tagAdd=function(){
     tagRemoveE.addEventListener('click', () => {tagRemove(tagRemoveE)});
     newTag.appendChild(tagRemoveE);
 }
-var tagSet=function(list){
+var tagSet=function(list){      
     // crear tags hidden
     let tags=document.getElementById('".$id."datatags');
     tags.value='';
@@ -55,8 +58,8 @@ var tagSet=function(list){
     let area=document.getElementById('tagsArea');
     area.innerHTML='';
 
-    for (let i of list){
-        tagAdd(i);
+    for (let i of list){  
+        if (i!='') tagAdd(i);
     }
 }
 ";
@@ -66,7 +69,7 @@ var tagSet=function(list){
     }
     //html
     $html = '<div class="section">
-        <label>Tagy</label> 
+        <label>'.(isset($label) ? $label : 'Tagy').'</label> 
         <div class="row">
             <input type="text" id="tagAddNew" placeholder="expr." style="margin: 1mm;">
             <a onclick="tagAdd()" class="button">Přidat</a>
