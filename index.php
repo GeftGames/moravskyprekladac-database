@@ -140,7 +140,7 @@ if (file_exists($currenteditor)) {
                 <form>
                     <label>Motiv</label>
                     <select>
-                        <option>Výchozí</option>
+                        <option value="default">Výchozí</option>
                         <option>Světlý</option>
                         <option>Tmavý</option>
                     </select>

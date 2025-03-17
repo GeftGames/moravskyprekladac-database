@@ -1,7 +1,6 @@
 <?php 
 // Rest api - database global tools 
 namespace REST;
-use UI\Controls\Button;
 
 function database_init() {
     $dev=$GLOBALS["dev"];
@@ -159,7 +158,7 @@ function database_init() {
         );",
 
         // relations
-        "CREATE TABLE noun_relation (
+        "CREATE TABLE noun_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             uppercase TINYINT,
@@ -167,37 +166,37 @@ function database_init() {
             tmp_imp_from_pattern VARCHAR(255),
             pattern_from_body VARCHAR(255)
         );",
-        "CREATE TABLE adjective_relation (
+        "CREATE TABLE adjective_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             pattern_from INT
         );",
-        "CREATE TABLE pronoun_relation (
+        "CREATE TABLE pronoun_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             pattern_from INT
         );",
-        "CREATE TABLE number_relation (
+        "CREATE TABLE number_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             pattern_from INT
         );",
-        "CREATE TABLE verb_relation (
+        "CREATE TABLE verb_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             pattern_from INT
         );",
-        "CREATE TABLE adverb_relation (
+        "CREATE TABLE adverb_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             shape_from VARCHAR(255)
         );",
-        "CREATE TABLE preposition_relation (
+        "CREATE TABLE preposition_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             shape_from INT
         );",
-        "CREATE TABLE conjuction_relation (
+        "CREATE TABLE conjuction_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
             shape_from INT
@@ -351,7 +350,7 @@ function database_init() {
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
     foreach ($sqls as $sql) {
         $result=$conn->query($sql);
-        if ($result === TRUE) {
+        if ($result) {
             // Table created successfully
          //   if ($dev) echo "<p>".$sql."</p>";
         } else {
@@ -542,8 +541,8 @@ function database_importold() {
 
                  if ($conn->query($sql) === TRUE) {            
                     //ok
-                    $sql="INSERT INTO cites (label, data) SELECT ".
-                    "'".$name."', '".$administrativeTown."', ".$gpsX.", ".$gpsY.", ".$region.", ".$country.", ".$langtype.", ".$quality.", ".$dialect.", '".$editors."', '".$devinfo."', '".$options."'".
+                    $sql="INSERT INTO cites (label, data) SELECT 
+                    '$name', '$administrativeTown', $gpsX, $gpsY, $region, $country, $langtype, $quality, $dialect, '".$editors."', '".$devinfo."', '".$options."'".
                     "WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '".$name."')";
 
                   
@@ -1094,6 +1093,7 @@ function throwError($string) {
     if (!isset($_SESSION["error"])) $_SESSION["error"]="";
     $_SESSION["error"].=$string;
 }
+
 function sqlError($sql, $conn) {
     $maxLen=50;
     $len=strlen($sql);
