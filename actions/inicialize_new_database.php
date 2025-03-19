@@ -39,8 +39,8 @@ if (isset($_POST["action"])) rest();
                 <input type="password" name="password" autocomplete="on" required><br>
                 <label>Email:</label>
                 <input type="email" name="email" autocomplete="on"><br>
-                <label>Importovat databázi:</label>
-                <input type="file" accept="*.sql">
+               <!-- <label>Importovat databázi:</label>
+                <input type="file" accept="*.sql">-->
                 <button type="submit">Inicializovat</button>
             <?php else: ?>
                <p class="error">Databáze není prázná, nejdříve ji smažte, jinak nepůjde inicializovat nová!</p>

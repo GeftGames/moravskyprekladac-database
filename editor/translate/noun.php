@@ -1,148 +1,126 @@
  <div class="splitView">
     <div>
         <?php
-     //   include "components/filter_list.php";
         include "components/tags_editor.php";
+        include "components/multiple_pattern_to.php";
         
-        $sql="SELECT id, label FROM noun_relations LIMIT 30;";
-        $result = $conn->query($sql);
         $list=[];
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $list[]=[$row["id"], $row["label"]];
-            }
-        } else {
-            echo "0 results ";
+        $sqlDone=true;
+        $sql="SELECT `id`, `from` FROM `noun_relations` WHERE `translate` = ".$_SESSION['translate'].";";
+        $result = $conn->query($sql);
+        if (!$result) {
+            throwError("SQL error: ".$sql);
+            $sqlDone=false;
         }
 
-        echo FilteredList($list, "noun_relation");    
-        
-        
-        $GLOBALS["onload"].="noun_relation_changed=function() { 
-            let elementsSelected = flist_noun_relation.getSelectedItemInList();
+        $sqlFrom="SELECT `id`, `label` FROM `noun_patterns_cs`";
+        $resultFrom = $conn->query($sqlFrom);
+        if (!$resultFrom) {
+            $sqlDone=false;
+            throwError("SQL error: ".$sqlFrom);
+        }
+
+        if ($sqlDone) {
+            while ($row = $result->fetch_assoc()) {
+                $idRelation=$row["id"];
+                $from=null;
+
+                while ($rowFrom = $resultFrom->fetch_assoc()) {
+                    if ($rowFrom['id']==$idRelation){
+                        $from=$rowFrom;
+                    }
+                }
+
+                if ($from!=null) {
+                    $list[]=[$idRelation, $from["label"]];
+                }else{
+                    $list[]=[$idRelation, "<Unknown from>"];
+                }
+            }
+        }
+
+        echo FilteredList($list, "noun_relations");
+
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "noun_relations_changed=function() { 
+            let id = flist_noun_relations.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
-
+            if (id==null) return;
+            
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `action=noun_relation_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
-                    document.getElementById('adjectiveId').value=id;
-                    document.getElementById('adjectiveLabel').value=json.label;
-                    document.getElementById('adjectiveBase').value=json.base;
-                    document.getElementById('adjectiveCategory').value=json.category;
-
-                    if (json.category==null) json.category=0;
-                    document.getElementById('adjectiveCategory').value=json.category; 
-
-                    let rawShapes=json.shapes;
-                    let shapes;
-                    if (rawShapes!=null) {
-                        shapes=json.shapes.split('|'); 
-                    } else shapes=[];
-                    for (let g=0; g<4; g++) {
-                        for (let i=0; i<14; i++) {
-                            let shape=shapes[i];                            
-                            let textbox=document.getElementById('noun'+g+''+i);
-
-                            if (shape==undefined) textbox.value='';
-                            else textbox.value=shape;
-                        }  
-                    }
-
-                    if (json.tags!=null) {
-                        let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
-                    }else{
-                        tagSet([]);
-                    }
-                   
+                if (json.status==='OK'){
+                    document.getElementById('nounId').value=id;
+                    document.getElementById('noun_from').value=json.from;
                 }else console.log('error sql', json);
             });
         };
 
         refreshFilteredLists();
 
-        flist_noun_relation.EventItemSelectedChanged(adjective_cs_changed);";
+        flist_noun_relations.EventItemSelectedChanged(noun_relations_changed);";
     
-        $GLOBALS["script"].="var flist_noun_relation; 
-        var currentadjectiveCSSave = function() {
-            let label=document.getElementById('adjectiveLabel').value;
-            let base=document.getElementById('adjectiveBase').value;
-            let category=document.getElementById('adjectiveCategory').value;
-            let adjectiveId=document.getElementById('adjectiveId').value;
-            let tags=document.getElementById('adjective_csdatatags').value;
-            let shapes=[];
-            for (let i=0; i<14; i++) {
-                let textbox=document.getElementById('noun'+i);
-                shapes[i]=textbox.value
-            }
-
-            let formData = new URLSearchParams();
-            formData.append('action', 'noun_relation_update');
-            formData.append('id', adjectiveId);
-            formData.append('label', label);
-            formData.append('base', base);
-            formData.append('category', category);
-            formData.append('shapes', shapes.join('|'));
-            formData.append('tags', tags);
-
-            fetch('index.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData.toString()
-            }).then(response => response.json())
-            .then(json => {
-                if (json.status=='OK'){
-                   flist_noun_relation.getSelectedItemInList().innerText=label;
-                }else console.log('error currentRegionSave',json);
-            });
-        };";
-            
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_noun_relation; 
+            var currentNounRelationSave = function() {
+                let froms=document.getElementById('noun_from').value;              
+                let id=document.getElementById('nounId').value;              
+    
+                let formData = new URLSearchParams();
+                formData.append('action', 'noun_relation_update');
+                formData.append('id', id);
+                formData.append('from', froms);
+               
+    
+                fetch('index.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                }).then(response => response.json())
+                .then(json => {
+                    if (json.status==='OK') {
+                       flist_noun_relation.getSelectedItemInList().innerText=label;
+                    }else console.log('error currentRegionSave',json);
+                });
+            };";
         ?>
     </div>
     <div class="editorView">
-        <div id="noun" style="display:none">
+        <div id="noun">
             <div class="row">
-                <label id="name">Z</label>
-                <input type="text" for="name">
+                <label for="noun_from" id="name">Z</label>
+                <input id="noun_from" type="hidden">
+
+                <datalist id="fromList">
+                    <?php
+                        $options="";
+                        if ($resultFrom->num_rows > 0) {
+                            while ($rowFrom = $resultFrom->fetch_assoc()) {
+                                $options.="<option value='".$rowFrom['id']."'>".$rowFrom['label']."</option>";
+                            }
+                        }
+                        echo $options;
+                    ?>
+                </datalist>
+
+                <?php// echo selectfromList($list, "noun_pattern_cs");?>
             </div>
 
             <div>
-                <label id="name">Do</label>
-                <table>
-                    <tr>
-                        <td class="tableHeader">Pád</td>
-                        <td class="tableHeader">Jednotné</td>
-                        <td class="tableHeader">Množné</td>
-                    </tr>
-                <?php 
-                $html="";
-                for ($i=0; $i<7; $i++) {
-                    $html.="<tr><td>".($i+1).".</td>";
-                    for ($j=0; $j<2; $j++) $html.="<td><input type='text'></td>";
-                    $html.="</tr>";
-                }
-                echo $html;
-                ?> 
-                </table>
+                <label for="noun_from" id="name">Na</label>
+                <datalist id="listTo">
+
+                </datalist>
             </div>
 
             <div>
-                <label id="name">Info</label>
-                <p>"dny,dny" čárkou bez mezery oddělit více možností, primární je první</p>
-                <p>"?" Neznámý tvar</p>
-                <p>"-" Neexistuje tvar</p>
+                <input type="hidden" id="nounId" value="-1">
+                <a onclick="currentNounRelationSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

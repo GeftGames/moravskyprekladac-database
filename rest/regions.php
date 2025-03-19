@@ -4,16 +4,15 @@ namespace REST;
 
 #region Lists
 function list_add() {
-    if (!isset($_POST['table'])){
+    if (!isset($_POST['table'])) {
         throwError("Chybí list");
         return;
     }
     $table=(string)$_POST['table'];
 
     $conn= new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
-    $namedef = $conn->real_escape_string("Výchozí");
-    
-    $result=$conn->query("INSERT INTO $table (label) VALUES ('$namedef');");
+
+    $result=$conn->query("INSERT INTO $table () VALUES ();");
     if ($result === TRUE) {
         list_items();
         // todo: get id and def
@@ -21,6 +20,19 @@ function list_add() {
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_add", "message" => $conn->error]);
     } 
+}
+
+function list_relation_add() {
+    $table=(string)$_POST['table'];
+
+    $conn= new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result=$conn->query("INSERT INTO $table (translate) VALUES (".$_SESSION['translate'].");");
+    if ($result === TRUE) {
+        list_relation_items();
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "list_relation_add", "message" => $conn->error]);
+    }
 }
 
 function list_remove() {
@@ -93,6 +105,52 @@ function list_items() {
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_items", "message" => $conn->error, "sql"=>$sql]);
     } 
+}
+
+function list_relation_items() {
+    if (!isset($_POST['table'])){
+        throwError("Chybí list");
+        return;
+    }
+    $table=$_POST['table'];
+    $translate=$_SESSION['translate'];
+    $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $sql="SELECT id FROM $table WHERE translate = $translate;";
+    $result = $conn->query($sql);
+
+    if ($result) {
+        if ($result->num_rows > 0) {
+            $sqlFrom="SELECT `id`, `label` FROM `".$table."_cs_patterns`";
+            $resultFrom = $conn->query($sql);
+            if (!$resultFrom) {
+                throwError("SQL error: ".$sqlFrom);
+                return;
+            }
+
+            $list=[];
+            while ($row = $result->fetch_assoc()) {
+                $idRelation=$row["id"];
+                $from=null;
+
+                while ($rowFrom = $resultFrom->fetch_assoc()) {
+                    if ($rowFrom['id']==$idRelation){
+                        $from=$rowFrom;
+                    }
+                }
+
+                if ($from!=null) {
+                    $list[]=[$idRelation, $from["label"]];
+                } else {
+                    $list[]=[$idRelation, "<Neznámé>"];
+                }
+            }
+
+            echo json_encode(["status" => "OK", "list" => $list]);
+        } else echo json_encode([]);
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"list_items", "message" => $conn->error, "sql"=>$sql]);
+    }
 }
 #endregion 
 
@@ -816,4 +874,54 @@ function pieceofcite_update() {
     } else {
         echo json_encode(["status" => "ERROR", "function" => "cite_update", "message" => $conn->error, "sql"=>$sql]);
     } 
+}
+
+function noun_relation_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $sql="SELECT `from` FROM noun_relations WHERE id = '$id';";
+
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                echo json_encode([
+                    "status"=>"OK",
+                    "from" =>$row["from"]
+                ]);
+                return;
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+    }
+    $conn->close();
+}
+
+function noun_relation_update() {
+    if (!isset($_POST['id']) || !isset($_POST['from'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id    = (int)$_POST['id'];
+    $from  = $conn->real_escape_string($_POST['from']);
+
+    $sql= /** @lang SQL */
+        "UPDATE noun_relations SET `from` = '$from' WHERE id = $id;";
+    $result=$conn->query($sql);
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "cite_update", "message" => $conn->error, "sql"=>$sql]);
+    }
 }

@@ -33,14 +33,15 @@ function database_init() {
     } else {
         throwError("Error creating database: " . $conn_newDB->error);
     }
-      
+
+    $namedef = $conn_newDB->real_escape_string("Výchozí");
 
     // create tables
     $sqls = [ 
         // users
         "CREATE TABLE users (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            username varchar(255),
+            username varchar(255) DEFAULT 'User',
             userPassword varchar(255),
             email varchar(255),
             usertype TINYINT,
@@ -52,7 +53,7 @@ function database_init() {
         // From cs tags=[nonstandart, expr. , mor., val., ...]
         "CREATE TABLE noun_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             base VARCHAR(255),
             shapes TEXT,
             gender TINYINT DEFAULT 0,
@@ -60,7 +61,7 @@ function database_init() {
         );",
         "CREATE TABLE adjective_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             base VARCHAR(255),
             shapes TEXT,
             category TINYINT DEFAULT 0,
@@ -68,7 +69,7 @@ function database_init() {
         );",
         "CREATE TABLE pronoun_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             base VARCHAR(255),
             shapes TEXT,
             category TINYINT DEFAULT 0,
@@ -76,7 +77,7 @@ function database_init() {
         );",
         "CREATE TABLE number_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             base VARCHAR(255),
             shapes TEXT,
             pattern_type TINYINT,
@@ -84,7 +85,7 @@ function database_init() {
         );",
         "CREATE TABLE verb_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             base VARCHAR(255),
             shapetype INT,
             shapes TEXT,
@@ -122,25 +123,25 @@ function database_init() {
         // Translate to
         "CREATE TABLE noun_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255),
+            label varchar(255) DEFAULT $namedef,
             gender TINYINT,
             shapes JSON
         );",
         "CREATE TABLE adjective_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255),
+            label varchar(255) DEFAULT $namedef,
             pattern_type TINYINT,
             shapes JSON
         );",
         "CREATE TABLE pronoun_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255),
+            label varchar(255) DEFAULT $namedef,
             pattern_type TINYINT,
             shapes JSON
         );",
         "CREATE TABLE number_pattern_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255),
+            label varchar(255) DEFAULT $namedef,
             pattern_type TINYINT,
             shapes JSON
         );",
@@ -148,7 +149,7 @@ function database_init() {
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             pattern_type_show TINYINT,
             reversible TINYINT,
-            label varchar(255),
+            label varchar(255) DEFAULT $namedef,
             shapes JSON
         );",
         "CREATE TABLE preposition_to (
@@ -159,12 +160,11 @@ function database_init() {
 
         // relations
         "CREATE TABLE noun_relations (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate INT,
-            uppercase TINYINT,
-            pattern_from INT,
-            tmp_imp_from_pattern VARCHAR(255),
-            pattern_from_body VARCHAR(255)
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `translate` INT,
+            `from` INT,
+            `tmp_imp_from_pattern` VARCHAR(255),
+            `pattern_from_body` VARCHAR(255)
         );",
         "CREATE TABLE adjective_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -233,13 +233,13 @@ function database_init() {
         // kniha
         "CREATE TABLE cites (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             data JSON
         );",
         // Ukázky
         "CREATE TABLE piecesofcite (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
-            label VARCHAR(255),
+            label VARCHAR(255) DEFAULT $namedef,
             `parent` INT,
             translate INT,
             people JSON,
@@ -305,7 +305,7 @@ function database_init() {
         // regions
         "CREATE TABLE regions (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) NOT NULL,
+            label varchar(255) NOT NULL DEFAULT $namedef,
             type TINYINT,
             parent INT,
             translates JSON
@@ -324,7 +324,7 @@ function database_init() {
         "CREATE TABLE replaces_start (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255),
+            `label` VARCHAR(255) DEFAULT $namedef,
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
@@ -332,7 +332,7 @@ function database_init() {
         "CREATE TABLE replaces_inside (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255),
+            `label` VARCHAR(255) DEFAULT $namedef,
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
@@ -340,7 +340,7 @@ function database_init() {
         "CREATE TABLE replaces_end (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255),
+            `label` VARCHAR(255) DEFAULT $namedef,
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT

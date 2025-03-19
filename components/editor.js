@@ -1,7 +1,7 @@
 let filteredLists=[];
 
 class filteredList{
-    constructor(FilteredListName) {
+    constructor(FilteredListName, type) {
         this.handlerItemSelectedChanged=null;
         this.handlerItemAddedChanged=null;
         this.FilteredList=document.getElementById("container_"+FilteredListName);//conteiner_regions
@@ -11,6 +11,7 @@ class filteredList{
         filteredLists.push(this);
         this.TableName=FilteredListName;
         this.lastAddedId=-1;
+        this.type=type;
     }
 
     EventItemSelectedChanged = function(func) {
@@ -34,21 +35,29 @@ class filteredList{
     }
 
     getSelectedItemInList = function() {
-        return this.ListContainer.querySelector(".selectedSideItem");
+        return this.ListContainer.querySelectorAll(".selectedSideItem");
+    }
+
+    getSelectedIdInList = function() {
+        let elementsSelected= this.ListContainer.querySelectorAll(".selectedSideItem");
+        if (!elementsSelected) {
+            return null;
+        }
+        return elementsSelected[0].dataset.id;
     }
 
     hasFocus() {
         return document.activeElement === this.FilteredList;
     }
 
-    generateList = function(list) {
+    generateList = (list) => {
         this.ListContainer.innerHTML = "";
         this.filter=this.filterText().toLowerCase();
 
         list.forEach(item => {
             let id=item[0];
             let label=item[1];
-            if (label.toLowerCase().includes(this.filter) || label=="Výchozí") {
+            if (label.toLowerCase().includes(this.filter) || label==="Výchozí") {
                 const div = document.createElement("div");
                 div.classList.add("item");
                 div.textContent = label;
@@ -79,14 +88,15 @@ class filteredList{
         }
     }
 
-    filteredListSelect = function(element) {
+    filteredListSelect = (element) => {
         let classNameSelected="selectedSideItem";
 
         // Deselect
         let elementsSelected = this.getSelectedItemInList();
-        if (elementsSelected!=undefined){
-            // for (let e of elementsSelected) {
-            elementsSelected.classList.remove(classNameSelected);
+        if (elementsSelected!==undefined) {
+            for (let e of elementsSelected) {
+                e.classList.remove(classNameSelected);
+            }
         }
 
         // Select
@@ -106,25 +116,25 @@ class filteredList{
         //parentList.focus();
     }
        
-    loadItems = function(listContainer) {
+    loadItems = (listContainer) => {
         fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=regions_items&table=`+this.TableName
+            body: 'action=regions_items&table='+this.TableName
         }).then(response => response.text()) 
         .then(html => {
             listContainer.innerHTML = html;
         });
     }
 
-    list_add = function() {   
+    list_add = () =>{
         fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=list_add&table=`+this.TableName
+            body: 'action=list'+this.type+'_add&table='+this.TableName
         }).then(response => response.json())
         .then(json => {
-            if (json.status=="ERROR"){ 
+            if (json.status==="ERROR"){
                 console.log(json); 
                 return; 
             }
@@ -134,7 +144,7 @@ class filteredList{
         });
     }
 
-    list_remove = function() { 
+    list_remove = () => {
      
         // selected container
         let elementsSelected = this.getSelectedItemInList();
@@ -145,22 +155,22 @@ class filteredList{
         }
 
         //no multiple
-        if (Array.isArray(elementsSelected)) return;   
+       // if (elementsSelected.length>1) return;
         
         if (!confirm("smazat "+elementsSelected.innerText+"?")) return;
 
-        let id=elementsSelected.dataset.id;
+        let id=elementsSelected[0].dataset.id;
         fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=list_remove&table=${this.TableName}&id=${id}`
+            body: 'action=list_'+this.type+'remove&table='+this.TableName+'&id='+id
         }).then(response => response.json())
         .then(json => {
             this.generateList(json);
         });
     }
 
-    list_duplicate = function() { 
+    list_duplicate = ()=> {
         // selected container
         let elementsSelected = this.getSelectedItemInList();
     
@@ -170,13 +180,13 @@ class filteredList{
         }
 
         //no multiple
-        if (Array.isArray(elementsSelected)) return;
+       // if (Array.isArray(elementsSelected)) return;
 
-        let id=elementsSelected.dataset.id;
+        let id=elementsSelected[0].dataset.id;
         fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=list_duplicate&table=${this.TableName}&id=${id}`
+            body: 'action=list_'+this.type+'duplicate&table='+this.TableName+'&id='+id
         }).then(response => response.json())
         .then(json => {
             this.generateList(json);
@@ -194,14 +204,14 @@ window.addEventListener('resize', () => {
 
 function refreshFilteredLists(){
     for (let e of filteredLists) {
-        var rect = e.FilteredList.getBoundingClientRect();
+        const rect = e.FilteredList.getBoundingClientRect();
         e.FilteredList.style.height="calc(100vh - "+rect.top+"px)";
     }
 
     // Editor right side
     let editorView=document.getElementsByClassName('editorView');
     for (let e of editorView){
-        var rect = e.getBoundingClientRect();
+        const rect = e.getBoundingClientRect();
         e.style.height="calc(100vh - "+rect.top+"px)";
     }
 }
@@ -258,20 +268,20 @@ document.addEventListener("DOMContentLoaded", () => {
             for (let i=0; i<10; i++) {
                 let prev=selectedE;
                 for (let skip=0; skip<Math.abs(dir); skip++) {
-                    if (prev.previousElementSibling!=undefined) prev=prev.previousElementSibling;
+                    if (prev.previousElementSibling!==undefined) prev=prev.previousElementSibling;
                 }
-                if (prev==undefined) return;
-                if (prev.nodeName!="DIV") continue;
+                if (prev===undefined) return;
+                if (prev.nodeName!=="DIV") continue;
                 selectedContainer.filteredListSelect(prev);
             }
         } else if (dir>0) {
             for (let i=0; i>-10; i--) {
                 let next=selectedE;
                 for (let skip=0; skip<Math.abs(dir); skip++) {
-                    if (next.nextElementSibling!=undefined) next=next.nextElementSibling;
+                    if (next.nextElementSibling!==undefined) next=next.nextElementSibling;
                 }
-                if (next==undefined) return;
-                if (next.nodeName!="DIV") continue;
+                if (next===undefined) return;
+                if (next.nodeName!=="DIV") continue;
                 selectedContainer.filteredListSelect(next);
             }
         }
@@ -281,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Hide contex menu if action
 let contexMenuShown=null;
 function HideContexMenu() {
-    if (contexMenuShown!=undefined) {
+    if (contexMenuShown!==undefined && contexMenuShown!==null) {
         contexMenuShown.style.display="none";
     }
 }

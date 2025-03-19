@@ -27,6 +27,11 @@ if (isset($_POST["action"])) {
     exit;
 }
 
+// Check if login
+if (!isset($_SESSION['translate'])) {
+    $_SESSION['translate']=-1;
+}
+
 // >> Load page
 $GLOBALS["onload"]="";
 $GLOBALS["script"]="";
@@ -253,7 +258,7 @@ if (file_exists($currenteditor)) {
         </div>
     </div>
 
-    <div style="max-width: 5cm">
+    <div style="max-height: 5cm">
         <?php if (isset($_SESSION["error"])) echo $_SESSION["error"]; ?>
     </div>
 
