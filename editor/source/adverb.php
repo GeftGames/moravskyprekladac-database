@@ -1,9 +1,7 @@
 <div class="splitView">
     <div>
         <?php
-        
         // Do dashboard stuff
-     //   include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(shape) ASC";
@@ -21,17 +19,12 @@
 
         echo FilteredList($list, "adverb_cs");  
 
-        $GLOBALS["onload"].="adverb_cs_changed=function() { 
-            let elementsSelected = flist_adverb_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        adverb_cs_changed=function() { 
+            let id = flist_adverb_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',
@@ -60,7 +53,8 @@
         flist_adverb_cs.EventItemSelectedChanged(adverb_cs_changed);
         flist_adverb_cs.EventItemAddedChanged(adverb_cs_added);";
     
-        $GLOBALS["script"].="var flist_adverb_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_adverb_cs; 
         var currentadverbCSSave = function() {
             let shape=document.getElementById('adverbShape').value;
             let adverbId=document.getElementById('adverbId').value;

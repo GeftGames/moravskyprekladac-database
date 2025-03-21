@@ -34,8 +34,12 @@ class filteredList{
         return this.FilterElement.value;
     }
 
-    getSelectedItemInList = function() {
+    getSelectedItemsInList = function() {
         return this.ListContainer.querySelectorAll(".selectedSideItem");
+    }
+
+    getSelectedItemInList = function() {
+        return this.ListContainer.querySelector(".selectedSideItem");
     }
 
     getSelectedIdInList = function() {
@@ -57,6 +61,7 @@ class filteredList{
         list.forEach(item => {
             let id=item[0];
             let label=item[1];
+            if (label==null) label="<Výchozí>";
             if (label.toLowerCase().includes(this.filter) || label==="Výchozí") {
                 const div = document.createElement("div");
                 div.classList.add("item");
@@ -92,7 +97,7 @@ class filteredList{
         let classNameSelected="selectedSideItem";
 
         // Deselect
-        let elementsSelected = this.getSelectedItemInList();
+        let elementsSelected = this.getSelectedItemsInList();
         if (elementsSelected!==undefined) {
             for (let e of elementsSelected) {
                 e.classList.remove(classNameSelected);
@@ -147,7 +152,7 @@ class filteredList{
     list_remove = () => {
      
         // selected container
-        let elementsSelected = this.getSelectedItemInList();
+        let elementsSelected = this.getSelectedItemsInList();
     
         // no selected
         if (!elementsSelected) {
@@ -172,7 +177,7 @@ class filteredList{
 
     list_duplicate = ()=> {
         // selected container
-        let elementsSelected = this.getSelectedItemInList();
+        let elementsSelected = this.getSelectedItemsInList();
     
         // no selected
         if (!elementsSelected) {

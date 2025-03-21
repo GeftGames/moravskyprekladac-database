@@ -397,7 +397,7 @@ function database_importold() {
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
     // enums
-    require "./data/enum_region.php";
+    //require "./data/enum_region.php";
 
     // File settings
     $files=$_FILES["database_files"];

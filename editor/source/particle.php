@@ -21,17 +21,12 @@
 
         echo FilteredList($list, "particle_cs");  
 
-        $GLOBALS["onload"].="particle_cs_changed=function() { 
-            let elementsSelected = flist_particle_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        particle_cs_changed=function() { 
+            let id = flist_particle_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',

@@ -18,17 +18,13 @@
 
         echo FilteredList($list, "cites");  
 
-        $GLOBALS["onload"].="cites_changed=function() { 
-            let elementsSelected = flist_cites.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "
+        cites_changed=function() { 
+           let id = flist_cites.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',
@@ -36,7 +32,7 @@
                 body: `action=cite_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                     document.getElementById('citeId').value=id;
                     document.getElementById('citeLabel').value=json.label;
                     
@@ -71,7 +67,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK'){
-                   flist_cites.getSelectedItemInList().innerText=label;
+                   flist_cites.getSelectedItemsInList()[0].innerText=label;
                 }else console.log('error currentciteSave: ',json);
             });
         };";

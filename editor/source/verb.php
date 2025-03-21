@@ -34,17 +34,12 @@
 
         echo FilteredList($list, "verb_pattern_cs");  
 
-        $GLOBALS["onload"].="verb_cs_changed=function() { 
-            let elementsSelected = flist_verb_pattern_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        verb_cs_changed=function() {             
+            let id = flist_verb_pattern_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',

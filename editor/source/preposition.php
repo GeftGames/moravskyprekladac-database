@@ -21,17 +21,12 @@
 
         echo FilteredList($list, "preposition_cs");  
 
-        $GLOBALS["onload"].="preposition_cs_changed=function() { 
-            let elementsSelected = flist_preposition_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        preposition_cs_changed=function() { 
+            let id = flist_preposition_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',

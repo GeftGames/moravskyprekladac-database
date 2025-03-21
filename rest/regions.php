@@ -907,7 +907,7 @@ function noun_relation_item() {
 }
 
 function noun_relation_update() {
-    if (!isset($_POST['id']) || !isset($_POST['from'])) {
+    if (!isset($_POST['id']) || !isset($_POST['from']) || !isset($_POST['to'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
         return;
     }
@@ -916,12 +916,42 @@ function noun_relation_update() {
     $id    = (int)$_POST['id'];
     $from  = $conn->real_escape_string($_POST['from']);
 
-    $sql= /** @lang SQL */
-        "UPDATE noun_relations SET `from` = '$from' WHERE id = $id;";
+    $sql= /** @lang SQL */"UPDATE noun_relations SET `from` = '$from' WHERE id = $id;";
     $result=$conn->query($sql);
-    if ($result) {
-        echo '{ "status": "OK"}';
+
+    // todo: convert $_POST['to'] json array to sql code multiple rows (id, priority, shape, comment, source) and update table nouns_to
+    // check if it's array
+    $toData = json_decode($_POST['to'], true);
+    if ($toData === null) {
+        echo json_encode(["status" => "ERROR", "message" => "Invalid JSON in 'to' parameter"]);
+        return;
+    }
+
+    $tookdone=true;
+    $errorto="";
+    foreach ($toData as $to) {
+        $toId=$to[0];
+        $toPriority=$to[1];
+        $toShape=$to[2];
+        $toComment=$to[3];
+        $toSource=$to[4];
+        $sqlTo= /** @lang SQL */"UPDATE noun_to SET `priority` = '$toPriority' WHERE id = $toId;";
+        $resultTo=$conn->query($sqlTo);
+
+        if (!$resultTo) {
+            $tookdone=false;
+            $errorto.=$conn->error.", ";
+        }
+    }
+
+    if ($result && $tookdone) {
+        echo '{ "status": "OK", "idFrom": "'.$id.'"}';
     } else {
-        echo json_encode(["status" => "ERROR", "function" => "cite_update", "message" => $conn->error, "sql"=>$sql]);
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "cite_update",
+            "message1" => $conn->error, "message2" => $errorto,
+            "sql"=>$sql
+        ]);
     }
 }

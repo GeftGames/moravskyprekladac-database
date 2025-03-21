@@ -21,17 +21,12 @@
 
         echo FilteredList($list, "conjunction_cs");  
 
-        $GLOBALS["onload"].="conjunction_cs_changed=function() { 
-            let elementsSelected = flist_conjunction_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        conjunction_cs_changed=function() { 
+            let id = flist_conjunction_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',

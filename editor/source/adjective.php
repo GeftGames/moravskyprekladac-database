@@ -20,17 +20,12 @@
 
         echo FilteredList($list, "adjective_patterns_cs");  
 
-        $GLOBALS["onload"].="adjective_cs_changed=function() { 
-            let elementsSelected = flist_adjective_patterns_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "adjective_cs_changed=function() { 
+            let id = flist_adjective_patterns_cs.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
+            if (id==null) return;
 
             fetch('index.php', {
                 method: 'POST',
