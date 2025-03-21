@@ -1,8 +1,6 @@
 # moravskyprekladac-database
 # log in
 - ./login.php
-user: 
-password: 
 
 # register
 - ./register.php
