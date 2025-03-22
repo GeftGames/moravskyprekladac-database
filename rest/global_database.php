@@ -546,7 +546,7 @@ function database_importold() :void {
         $langId=$conn->insert_id;
 
         // cites
-        $listCites=[];
+
         $citesRawLines=explode("\n", $cites);
         foreach ($citesRawLines as $citeLineRaw) {
             if ($citeLineRaw!="") {
@@ -564,10 +564,10 @@ function database_importold() :void {
                     }
                 }
                 $citeData=[];
-                $shortcut=$citeVars["shortcut"];
                 // more info ./globa/cites.php
-                $citeData[]=["shortcut"=>$shortcut];
                 $citeData[]=["typ"=>$citeVars["typ"]];
+                $shortcut=$citeVars["shortcut"];
+                if (isset($citeVars["shortcut"])) $citeData[]=["shortcut"=>$citeVars["shortcut"]];
                 if (isset($citeVars["nazev"])) $citeData[]=["nazev"=>$citeVars["nazev"]];
                 if (isset($citeVars["podnazev"])) $citeData[]=["podnazev"=>$citeVars["podnazev"]];
                 if (isset($citeVars["odkaz"])) $citeData[]=["odkaz"=>$citeVars["odkaz"]];
@@ -576,16 +576,49 @@ function database_importold() :void {
 
                 $data=json_encode($citeData);
 
+                $label="";
+                if (isset($citeVars["shortcut"])) $label=$citeVars["shortcut"];
+                else if (isset($citeVars["typ"])) $label=$citeVars["typ"];
+                else if (isset($citeVars["nazev"])) $label=$citeVars["nazev"];
+                else if (isset($citeVars["odkaz"])) $label=$citeVars["odkaz"];
+
                 $sql="INSERT INTO cites (label, data) SELECT '$shortcut', '$data'
-                    WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$shortcut')";
+                    WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$label')";
 
                 if ($conn->query($sql) === TRUE) {
                     // add to list
-                    $citeId=$conn->insert_id;
-                    $listCites[$shortcut]=$citeId;
                 }else{
                     sqlError($sql, $conn);
                 }
+                $idcite=$conn->insert_id;
+
+                // Pieces of cite
+                $dataPiece=[];
+                if (isset($citeVars["strany"])) $dataPiece[]=["strany"=>$citeVars["strany"]];
+                //TODO: add more
+
+                $dataPieceSave=json_encode($dataPiece);
+
+                $sqlPiece="INSERT INTO pieceofcite (label, parent, translate, data) VALUES ('$label', '$idcite', '$langId', '$dataPieceSave')";
+
+                if ($conn->query($sqlPiece) === TRUE) {
+                    //ok
+                }else{
+                    sqlError($sqlPiece, $conn);
+                }
+            }
+        }
+
+        $listCites=[];
+        {
+            $sqlPiece="SELECT id, label FROM piecesofcite";
+            $resultCites=$conn->query($sqlPiece);
+            if ($resultCites) {
+                while($row = $resultCites->fetch_assoc()) {
+                    $listCites[$row["label"]]=$row["id"];
+                }
+            }else{
+                sqlError($sqlPiece, $conn);
             }
         }
 
@@ -1216,6 +1249,15 @@ function database_importold() :void {
     }
 
     header("location: index.php");
+}
+
+function select_lang() : void {
+    if (isset($_POST['id'])){
+        $_SESSION['translate']=intval($_POST['id']);
+        echo '{"status": "OK"}';
+    }else{
+        echo '{"status": "ERROR"}';
+    }
 }
 
 function getResultSql($result, $id) : int{ 

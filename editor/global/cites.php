@@ -46,7 +46,8 @@
         flist_cites.EventItemSelectedChanged(cites_changed);";
 
     
-        $GLOBALS["script"].="var flist_cites; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_cites; 
         var currentciteSave = function() {
             let label=document.getElementById('citeLabel').value;
             let citeId=document.getElementById('citeId').value;

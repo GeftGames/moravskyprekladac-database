@@ -66,14 +66,13 @@ function multiple_pattern_to($list) {
     $GLOBALS["script"].=
     /** @lang JavaScript */'
     var to_load = function(list) {
-        console.log(list);
-        for (let i=0; i<list.length; i++) {
-            let item=list[i];
-            document.getElementById("id"+i).value=item.id;
-            //document.getElementById("tags"+i).value=item.tags;
-            document.getElementById("shape"+i).value=item.shape;
-            document.getElementById("comment"+i).value=item.comment;
-            document.getElementById("cite"+i).value=item.source;
+        // clear
+        document.getElementById("listTo").innerHTML="";
+        
+        for (let item of list) {
+            //let item=list[i];
+            console.log(item);
+            to_add(item["id"], item["priority"], item["shape"], item["comment"], item["cite"]);
         }
     };';
 
@@ -81,16 +80,25 @@ function multiple_pattern_to($list) {
     $GLOBALS["script"].=
     /** @lang JavaScript */'
     let maxId='.count($list).';
-    var to_add = function() {
+    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite) {
+        let idAdd = (defId==-1 ? maxId: defId);
         let wrap=document.createElement("div");
-        wrap.classList="row";
+        wrap.classList="row";   
+        
+        // id
+        let id_holder=document.createElement("input");
+        id_holder.type="hidden";
+        id_holder.value=idAdd;      
+        id_holder.setAttribute("seltype","id");
+        wrap.appendChild(id_holder);
         
         let priority=document.createElement("select");     
-        wrap.setAttribute("seltype","priority");
+        priority.setAttribute("seltype","priority");
+        if (defPriority!=null) priority.value=defPriority;
         wrap.appendChild(priority);   
         
         for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]){
-           let option=document.createElement("option");
+            let option=document.createElement("option");
             option.innerText=o[0];
             option.value=o[1];
             priority.appendChild(option);
@@ -99,6 +107,7 @@ function multiple_pattern_to($list) {
         let text=document.createElement("div");
         text.id="select_To"+maxId;
         text.setAttribute("seltype","shapeto");
+        if (defShapeTo!=null) text.value=defShapeTo;
         wrap.appendChild(text);
         
         // comment
@@ -107,10 +116,12 @@ function multiple_pattern_to($list) {
         comment.className="comment";
         comment.placeholder="komentář";
         comment.setAttribute("seltype","comment");
+        if (defComment!=null) comment.value=defComment;
         wrap.appendChild(comment);
 
         let source=document.createElement("select");
         source.setAttribute("seltype", "source");
+        if (defCite!=null) source.value=defCite;
         wrap.appendChild(source); 
         for (let o of cites) {
             let option=document.createElement("option");
@@ -143,7 +154,7 @@ function multiple_pattern_to($list) {
 
     $html='<div id="listTo">';
     $i=0;
-    foreach ($list as $item) {
+  /*  foreach ($list as $item) {
         // text to, comment, cite
         $html.='<div class="lineFromTo">
         <input id="id'.$i.'" type="hidden" value="'.$item[0].'">
@@ -152,7 +163,7 @@ function multiple_pattern_to($list) {
         &nbsp; &nbsp; <span>Zdroj</span>&nbsp;<select id="cite'.$i.'" value="'.$item[2].'"><option value="0">Bez zdroje</option></select>
         <a class="button">Smazat</a>
         </div>';
-    }
-    $html.='</div><a class="button" onclick="to_add()">Přidat</a>';
+    }*/
+    $html.='</div><a class="button" onclick="to_add(-1, null, null, null, null)">Přidat</a>';
     return $html;
 }

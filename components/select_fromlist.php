@@ -1,11 +1,19 @@
 <?php
-function createSelectList($list, $id) {
-
+function createSelectList($list, $id, $defId) {
+    $encodedList=json_encode($list);
     // Basic form
     $GLOBALS['onload'].= /** @lang JavaScript */"
         createSelectFilter('$id');
+        filteredSearchList_".$id." = new filteredSearchList($encodedList, '$id');
+        filteredSearchList_".$id.".selectId($defId);
     ";
 
+    $GLOBALS['script'].= /** @lang JavaScript */"
+    var filteredSearchList_$id;
+    ";
+}
+
+function selectListScripts() :void{
     // init
     $GLOBALS['script'].= /** @lang JavaScript */'
     var createSelectFilter = (id) => {
@@ -59,32 +67,21 @@ function createSelectList($list, $id) {
         e.appendChild(containerPopup);
     };';
 
-   /* // Show search popup
-    $GLOBALS['script'].= '
-    var showSearch = () => {
-        document.getElementById("searchList_'.$id.'").style.display = "block";
-    };';
-*/
     // Hide popup
     $GLOBALS['script'].= /** @lang JavaScript */'
-        
-    /*var hideSearch = () => {
-        document.getElementById("searchList_'.$id.'").style.display = "none";
-    };*/
-
     var switchSearch=(id)=>{
         let e=document.getElementById("searchList_"+id);
         if (e.style.display === "block"){
             e.style.display = "none";
         }else{
             e.style.display = "block";
-            filter_noun_from.focus();
+            document.getElementById("filter_" +id).focus();
         }
     }
 
-    var appply= () =>{
-        document.getElementById("filter_' .$id.'").apply();
-    };
+   /* var appply= (id) =>{
+        document.getElementById("filter_" +id).apply();
+    };*/
    ';
 
     // Filter class
@@ -157,6 +154,7 @@ function createSelectList($list, $id) {
     
                     div.addEventListener("click", () => {
                         this.filteredListSelect(div);
+                        this.Popup.style.display = "none";
                     });
                 }
             });
@@ -185,6 +183,7 @@ function createSelectList($list, $id) {
         }
         
         selectId(id) {
+            
             // Deselect
             let elementsSelected = this.getSelectedItemInList();
             if (elementsSelected!==undefined) {
@@ -193,24 +192,13 @@ function createSelectList($list, $id) {
                 }
             }
             if (id!=null){
-                let selectedE=this.ListContainer.querySelector(`div[data-id="`+id+`"]`);
+                let selectedE;
+                if (id===-1) selectedE=this.ListContainer.lastChild;
+                else selectedE=this.ListContainer.querySelector(`div[data-id="`+id+`"]`);
                 selectedE.classList.add(this.classNameSelected);
                 this.SelectedLabel.innerText=selectedE.innerText;  
                 this.ReturnHolder.value= selectedE.getAttribute("data-id");
             }
         }
     }';
-
-    // varible
-    $encodedList=json_encode($list);
-    $GLOBALS['onload'].= /** @lang JavaScript */"
-    filteredSearchList_$id = new filteredSearchList($encodedList, '$id');
-    ";
-
-    $GLOBALS['script'].= /** @lang JavaScript */"
-    var filteredSearchList_$id;
-    ";
-
-
-    return "";
 }

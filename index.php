@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "./data/config.php";
+include "components/select_fromlist.php";
 
 // Check if database exists
 $conn_check = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"]);
@@ -54,6 +55,22 @@ if (file_exists($currenteditor)) {
     $content=ob_get_contents();
     ob_get_clean();
 } else $_SESSION["error"].="ERROR: Editor not found! '".$currenteditor.'"';
+
+$listTranslates=[];
+$sql ="SELECT id, translateName FROM translate";
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+    $listTranslates=[];
+    while ($row = $result->fetch_assoc()) {
+        $listTranslates[]=[$row["id"], $row["translateName"]];
+    }
+    //    echo FilteredList($listTranslates, "lang", "");
+} else {
+    echo "<p>Prázné! Vytvořte nebo importujte překlady</p>";
+}
+selectListScripts();
+createSelectList(list: $listTranslates, id:"translate",defId: $_SESSION["translate"]);
 ?>
 <!DOCTYPE html>
 <html lang="cs">
@@ -67,6 +84,18 @@ if (file_exists($currenteditor)) {
         <?php echo $GLOBALS["script"]; ?>
         function onload() {
             <?php echo $GLOBALS["onload"]; ?>
+        }
+        function selectLang(){
+            let id=document.getElementById("listreturnholder_translate").value;
+            fetch('index.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=select_lang&id='+id
+            }).then(response => response.json())
+            .then(json => {
+                if (json.status==="ERROR") console.error(json.error);
+            });
+            popupClose('selectLang');
         }
     </script>
 </head>
@@ -108,20 +137,9 @@ if (file_exists($currenteditor)) {
             <div class="popupHeader"><span onclick="popupClose('selectLang')" class="popupClose">×</span></div>
             <div class="popupBody">
                 <h1>Vybrat překlad</h1>
-                <?php
-                $sql ="SELECT translateName, administrativeTown FROM translate";
-                $result = $conn->query($sql);
 
-                if ($result->num_rows > 0) {
-                    $listTranslated=[];
-                    while ($row = $result->fetch_assoc()) {
-                        $listTranslated[]= $row["translateName"]." (".$row["administrativeTown"].")";
-                    }
-                    echo FilteredList($listTranslated, "lang", "");
-                } else {
-                    echo "<p>Prázné! Vytvořte nebo importujte překlady</p>";
-                }
-                ?>
+                <div id="select_translate"></div>
+                <a class="button" onclick="selectLang()">OK</a>
             </div>
         </div>
     </div>

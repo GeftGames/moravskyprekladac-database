@@ -885,24 +885,42 @@ function noun_relation_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
-    $sql="SELECT `from` FROM noun_relations WHERE id = '$id';";
+    $relation_id="";
+    $from=-1;
 
+    $sql="SELECT `id`, `from` FROM noun_relations WHERE id = '$id';";
     $result = $conn->query($sql);
     if ($result) {
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                echo json_encode([
-                    "status"=>"OK",
-                    "from" =>$row["from"]
-                ]);
-                return;
+                $relation_id=$row["id"];
+                $from=$row["from"];
             }
         } else {
             echo json_encode(["status" => "EMPTY"]);
+            return;
         }
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
     }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `noun_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=["id"=>$row["id"], "priority"=>$row["priority"], "shape"=>$row["shape"], "comment"=>$row["comment"], "cite"=>$row["cite"]];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "from" =>$from,
+        "to"=>json_encode($listTo)
+    ]);
     $conn->close();
 }
 

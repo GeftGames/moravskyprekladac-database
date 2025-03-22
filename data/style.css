@@ -449,6 +449,7 @@ input:focus-visible+.slider {
     padding-left: 3px;    
     user-select: none;
     cursor:pointer;
+    min-height: 4mm;
 }
 .sideItem:hover{
     color: var(--ColorOrig)

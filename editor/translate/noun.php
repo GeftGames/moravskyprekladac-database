@@ -2,7 +2,7 @@
     <div>
         <?php
         include "components/tags_editor.php";
-        include "components/select_fromlist.php";
+      //  include "components/select_fromlist.php";
         include "components/multiple_pattern_to.php";
 
         $sqlDone=true;
@@ -71,11 +71,11 @@
             .then(json => {
                 if (json.status==='OK') {
                     document.getElementById('nounId').value=id;
-                    
-                    filteredSearchList_noun_from.selectId(json.from);
-                   // document.getElementById('noun_from').value=;
-                    
+                    //from
+                    filteredSearchList_noun_from.selectId(json.from);                   
                     filteredSearchList_noun_from.reload();
+                    //to
+                    to_load(JSON.parse(json.to));
                 }else console.log('error sql', json);
             });
         };
@@ -116,12 +116,22 @@
             <div class="section">
                 <label for="noun_from" id="name">Z</label>
                 <div id="select_noun_from"></div>
-                <?php createSelectList($listFrom, "noun_from");?>
+                <?php createSelectList($listFrom, "noun_from", null);?>
             </div>
 
             <div class="section">
                 <label for="noun_from" id="name">Na</label>
-                <?php echo multiple_pattern_to([]); ?>
+                <?php
+              /*  $listTo=[];
+                $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `noun_to`;";
+                $result = $conn->query($sqlTo);
+                if (!$result) {
+                    throwError("SQL error: ".$sqlTo);
+                }
+                while ($row = $result->fetch_assoc()) {
+                    $listTo[]=[$row["id"], $row["priority"], $row["shape"], $row["comment"], $row["cite"]];
+                }*/
+                echo multiple_pattern_to([]); ?>
             </div>
 
             <div class="section">
