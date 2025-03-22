@@ -2,7 +2,7 @@
 // Rest api - database global tools 
 namespace REST;
 
-function database_init() {
+function database_init() :void{
     $dev=$GLOBALS["dev"];
     if (!isset($_POST["password"]) || !isset($_POST["email"])) {
         throwError("Přihlašovací údaje jsou nekorektní!");
@@ -53,7 +53,7 @@ function database_init() {
         // From cs tags=[nonstandart, expr. , mor., val., ...]
         "CREATE TABLE noun_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapes TEXT,
             gender TINYINT DEFAULT 0,
@@ -61,7 +61,7 @@ function database_init() {
         );",
         "CREATE TABLE adjective_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapes TEXT,
             category TINYINT DEFAULT 0,
@@ -69,7 +69,7 @@ function database_init() {
         );",
         "CREATE TABLE pronoun_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapes TEXT,
             category TINYINT DEFAULT 0,
@@ -77,7 +77,7 @@ function database_init() {
         );",
         "CREATE TABLE number_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapes TEXT,
             pattern_type TINYINT,
@@ -85,7 +85,7 @@ function database_init() {
         );",
         "CREATE TABLE verb_patterns_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapetype INT,
             shapes TEXT,
@@ -121,40 +121,48 @@ function database_init() {
         );",
 
         // Translate to
-        "CREATE TABLE noun_pattern_to (
+        "CREATE TABLE noun_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) DEFAULT $namedef,
+            label varchar(255) DEFAULT '$namedef',
+            translate INT,
+            base varchar(255),
+            uppercase TINYINT,
             gender TINYINT,
-            shapes JSON
+            shapes TEXT
         );",
-        "CREATE TABLE adjective_pattern_to (
+        "CREATE TABLE adjective_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) DEFAULT $namedef,
+            label varchar(255) DEFAULT '$namedef',
+            translate INT,
             pattern_type TINYINT,
-            shapes JSON
+            shapes TEXT
         );",
-        "CREATE TABLE pronoun_pattern_to (
+        "CREATE TABLE pronoun_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) DEFAULT $namedef,
+            label varchar(255) DEFAULT '$namedef',
+            translate INT,
             pattern_type TINYINT,
-            shapes JSON
+            shapes TEXT
         );",
-        "CREATE TABLE number_pattern_to (
+        "CREATE TABLE number_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) DEFAULT $namedef,
+            label varchar(255) DEFAULT '$namedef',
+            translate INT,
             pattern_type TINYINT,
-            shapes JSON
+            shapes TEXT
         );",
-        "CREATE TABLE verb_pattern_to (
+        "CREATE TABLE verb_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             pattern_type_show TINYINT,
+            translate INT,
             reversible TINYINT,
-            label varchar(255) DEFAULT $namedef,
-            shapes JSON
+            label varchar(255) DEFAULT '$namedef',
+            shapes TEXT
         );",
-        "CREATE TABLE preposition_to (
+        "CREATE TABLE prepositions_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             shapes varchar(255),
+            translate INT,
             falls VARCHAR(255)
         );",
 
@@ -162,9 +170,7 @@ function database_init() {
         "CREATE TABLE noun_relations (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `from` INT,
-            `tmp_imp_from_pattern` VARCHAR(255),
-            `pattern_from_body` VARCHAR(255)
+            `from` INT
         );",
         "CREATE TABLE adjective_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -212,6 +218,19 @@ function database_init() {
             shape_from VARCHAR(255)
         );",
 
+        // to
+        "CREATE TABLE noun_to (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `relation` INT,
+            `shape` INT,
+            `cite` TEXT,
+            `comment` VARCHAR(255),
+            `tags` VARCHAR(255),
+            `priority` TiNYINT,
+            `tmp_pattern_from_body` VARCHAR(255),
+            `tmp_imp_from_pattern` VARCHAR(255)
+        );",
+
         // translate
         "CREATE TABLE translate (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -233,13 +252,14 @@ function database_init() {
         // kniha
         "CREATE TABLE cites (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             data JSON
         );",
+        
         // Ukázky
         "CREATE TABLE piecesofcite (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
-            label VARCHAR(255) DEFAULT $namedef,
+            label VARCHAR(255) DEFAULT '$namedef',
             `parent` INT,
             translate INT,
             people JSON,
@@ -305,7 +325,7 @@ function database_init() {
         // regions
         "CREATE TABLE regions (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            label varchar(255) NOT NULL DEFAULT $namedef,
+            label varchar(255) NOT NULL DEFAULT '$namedef',
             type TINYINT,
             parent INT,
             translates JSON
@@ -324,7 +344,7 @@ function database_init() {
         "CREATE TABLE replaces_start (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255) DEFAULT $namedef,
+            `label` VARCHAR(255) DEFAULT '$namedef',
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
@@ -332,7 +352,7 @@ function database_init() {
         "CREATE TABLE replaces_inside (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255) DEFAULT $namedef,
+            `label` VARCHAR(255) DEFAULT '$namedef',
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
@@ -340,7 +360,7 @@ function database_init() {
         "CREATE TABLE replaces_end (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
-            `label` VARCHAR(255) DEFAULT $namedef,
+            `label` VARCHAR(255) DEFAULT '$namedef',
             `source` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
@@ -364,7 +384,7 @@ function database_init() {
     header("Location: ../index.php");
 }
 
-function database_backup() {
+function database_backup() :void{
     if (!isset($_SESSION["username"])) {
         throwError("Néste přehlášené!");
         return;
@@ -372,16 +392,15 @@ function database_backup() {
 	exec("mysqldump -u USER -p PASSWORD DATABASE > dump.sql");  // backup
 }
 
-function database_load() {
+function database_load() :void {
     if (!isset($_SESSION["username"])) {
         throwError("Néste přehlášené!");
         return;
     }
     exec("mysql -u USER -p PASSWORD < dump.sql");               // restore
-	
 }
 
-function database_importold() {
+function database_importold() :void {
     $dev=$GLOBALS["dev"];
     if (!isset($_SESSION["username"])) {
         throwError("Nejste přihlášený!");
@@ -391,8 +410,8 @@ function database_importold() {
     if (empty($_FILES["database_files"]["name"][0])) {
         throwError("Chybí soubor databáze!");
         return;
-    }  
-    
+    }
+
     // mysql connect
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
@@ -409,8 +428,8 @@ function database_importold() {
             throwError("Neplatný typ souboru!");
             continue;
         }
-      
-        $fileContent= file_get_contents($tmpName); 
+
+        $fileContent= file_get_contents($tmpName);
         $lines = preg_split("/\r\n|\n|\r/", $fileContent);
 
         if ($fileContent === false) {
@@ -439,7 +458,7 @@ function database_importold() {
         $options="";
         $langtype=1;
         $dialect=0;
-
+        $cites="";
         $i=0;
         $linesLen=count($lines);
 
@@ -448,51 +467,51 @@ function database_importold() {
             if (is_string($line) && strlen($line) > 0) {
                 if ($line[0]=="-") break;
                 switch ($line[0]){
-                    case "t": 
+                    case "t":
                         $name=substr($line,1);
                         break;
 
-                    case "c": 
+                    case "c":
                         $comment=substr($line,1);
                         break;
 
-                    case "a": 
+                    case "a":
                         $editors=substr($line,1);
                         break;
 
-                    case "b": 
+                    case "b":
                         $cites=substr($line,1);
                         break;
 
-                    case "o": 
-                        $region=GetRegionCode(explode(">", substr($line, 1)));
+                    case "o":
+                     //   $region=GetRegionCode(explode(">", substr($line, 1)));
                         break;
 
-                    case "u": 
+                    case "u":
                         $country=intval(substr($line,1));
                         break;
 
-                    case "i": 
+                    case "i":
                         $devinfo=substr($line,1);
                         break;
 
-                    case "r": 
+                    case "r":
                         $original=substr($line,1);
                         break;
 
-                    case "s": 
+                    case "s":
                         $administrativeTown=substr($line,1);
                         break;
 
-                    case "q": 
+                    case "q":
                         $quality=intval(substr($line, 1));
                         break;
 
-                    case "y": 
+                    case "y":
                         $recTranscription=intval(substr($line, 1));
                         break;
-                        
-                    case "e": 
+
+                    case "e":
                         $options=substr($line,1);
                         break;
 
@@ -507,13 +526,15 @@ function database_importold() {
                 }
             }
         }
+        $devinfo_saveFormat = $conn->real_escape_string($devinfo);
+        $options_saveFormat = $conn->real_escape_string($options);
 
         // insert translate
-        $sql="INSERT INTO translate (translateName, administrativeTown, gpsX, gpsY, region, country, langtype, quality, dialect, editors, devinfo, options) SELECT ".
-        "'".$name."', '".$administrativeTown."', ".$gpsX.", ".$gpsY.", ".$region.", ".$country.", ".$langtype.", ".$quality.", ".$dialect.", '".$editors."', '".$devinfo."', '".$options."'".
-        "WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '".$name."')";
+        $sql="INSERT INTO translate (`translateName`, `administrativeTown`, `gpsX`, `gpsY`, `country`, `langtype`, `quality`, `dialect`, `editors`, `devinfo`, `options`) SELECT 
+        '$name', '$administrativeTown', $gpsX, $gpsY, $country, $langtype, $quality, $dialect, '$editors', '$devinfo_saveFormat', '$options_saveFormat'
+        WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '$name')";
 
-        if ($conn->query($sql) === TRUE) {            
+        if ($conn->query($sql) === TRUE) {
             //ok
             if (mysqli_affected_rows($conn) > 0) {
             } else {
@@ -524,28 +545,44 @@ function database_importold() {
         }
         $langId=$conn->insert_id;
 
-        $citeList=[];
-        $citesRawArray=explode("\n", $cites);
-        foreach ($citesRawArray as $rawCite) {
-            if ($rawCite!="") {
-                $cite=[];
-                $vars=explode("\n", $rawCite);
-                
+        // cites
+        $listCites=[];
+        $citesRawLines=explode("\n", $cites);
+        foreach ($citesRawLines as $citeLineRaw) {
+            if ($citeLineRaw!="") {
+                $citeVars=[];
+                $vars=explode("|", $citeLineRaw); //["smt=d", "shgj=df", ...]
+
                 foreach ($vars as $varr) {
-                    $var=explode("\n", $varr);
-                    $varCode=$var[0];
-                    $varValue=$var[1];
-                    $cite[$varCode]=$varValue;
+                    $var=explode("=", $varr);//["smt","d"]
+                    if (count($var)==2){
+                        $varCode=$var[0];
+                        $varValue=$var[1];
+                        $citeVars[$varCode]=$varValue;
+                    } elseif (count($var)==1) {
+                        $citeVars["typ"]=$var;
+                    }
                 }
-                $citeList[]=$cite;
+                $citeData=[];
+                $shortcut=$citeVars["shortcut"];
+                // more info ./globa/cites.php
+                $citeData[]=["shortcut"=>$shortcut];
+                $citeData[]=["typ"=>$citeVars["typ"]];
+                if (isset($citeVars["nazev"])) $citeData[]=["nazev"=>$citeVars["nazev"]];
+                if (isset($citeVars["podnazev"])) $citeData[]=["podnazev"=>$citeVars["podnazev"]];
+                if (isset($citeVars["odkaz"])) $citeData[]=["odkaz"=>$citeVars["odkaz"]];
+                if (isset($citeVars["issn"])) $citeData[]=["issn"=>$citeVars["issn"]];
+                //TODO: add more
 
-                 if ($conn->query($sql) === TRUE) {            
-                    //ok
-                    $sql="INSERT INTO cites (label, data) SELECT 
-                    '$name', '$administrativeTown', $gpsX, $gpsY, $region, $country, $langtype, $quality, $dialect, '".$editors."', '".$devinfo."', '".$options."'".
-                    "WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '".$name."')";
+                $data=json_encode($citeData);
 
-                  
+                $sql="INSERT INTO cites (label, data) SELECT '$shortcut', '$data'
+                    WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$shortcut')";
+
+                if ($conn->query($sql) === TRUE) {
+                    // add to list
+                    $citeId=$conn->insert_id;
+                    $listCites[$shortcut]=$citeId;
                 }else{
                     sqlError($sql, $conn);
                 }
@@ -589,7 +626,7 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-") break;
             if ($line == "")  continue;
-             
+
             $parts = explode('|',$line);
             $from=$parts[0];
             $display=$parts[1];
@@ -597,12 +634,12 @@ function database_importold() {
             $tags="";
 
             $sql="INSERT INTO phrase_relations (translate, shape_from, display, pos, tags) VALUES ($langId, '$from', $display, $pos, '$tags');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
-            
+
             $idPhrase=$conn->insert_id;
 
             $sql_to=[];
@@ -618,7 +655,7 @@ function database_importold() {
             }
 
             $sqlTo="INSERT INTO phrase_to (parent, shape, tags, comment, source) VALUES ".implode(", ", $sql_to).";";
-            if ($conn->query($sqlTo) === TRUE) {            
+            if ($conn->query($sqlTo) === TRUE) {
                 //ok
             }else{
                 sqlError($sqlTo,$conn);
@@ -638,12 +675,12 @@ function database_importold() {
             $tags="";
 
             $sql="INSERT INTO simpleword_relations (translate, shape_from, display, tags, uppercase) VALUES ($langId, '$from', $display, '$tags', $uppercase);";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
-            
+
             $idSimpleWord=$conn->insert_id;
 
             $tos=loadListTranslatingToData($parts,2);
@@ -659,12 +696,12 @@ function database_importold() {
             }
 
             $sql="INSERT INTO simpleword_to (parent, shapes, tags, comment, source) VALUES".implode(", ", $sql_to).";";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
-            
+
         }
 
         // ReplaceS
@@ -672,7 +709,7 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                 
+
             $parts = explode('|',$line);
             $from="";
             $to="";
@@ -683,7 +720,7 @@ function database_importold() {
             }
 
             $sql="INSERT INTO replaces_start (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -695,7 +732,7 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                 
+
             $parts = explode('|',$line);
             $from="";
             $to="";
@@ -706,7 +743,7 @@ function database_importold() {
             }
 
             $sql="INSERT INTO replaces_inside (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -718,7 +755,7 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                            
+
             $parts = explode('|',$line);
             $from="";
             $to="";
@@ -729,7 +766,7 @@ function database_importold() {
             }
 
             $sql="INSERT INTO replaces_end (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -741,18 +778,19 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                            
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $label=$parts[0];
             $base=extractBase($label);
             $gender=$parts[1];
             $shapes=array_slice($parts, 2);
           // if (str_starts_with($label,) $uppercase but hash has lowecase) $tags[]="název";
-          
-            $sql="INSERT INTO noun_patterns_cs (label, base, gender, shapes) ".
+
+            $sql= /** @lang MySQL */
+                "INSERT INTO noun_patterns_cs (label, base, gender, shapes) ".
                   "SELECT '$label', '$base', '$gender', '".implode("|",$shapes)."' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM noun_patterns_cs WHERE label = '$label');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -762,17 +800,149 @@ function database_importold() {
         // PatternNounTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
-              //  itemsPatternNounTo.Add(ItemPatternNoun.Load(line));
+
+            $parts = explode('|', $line);
+            $label=$parts[0];
+            $base=extractBase($label);
+            $gender=intval($parts[1]);
+            $shapes=array_slice($parts, 2);
+
+            $shapesSave=implode("|", $shapes);
+
+            $shapesSave_format=$conn->real_escape_string($shapesSave);
+            $base_format=$conn->real_escape_string($base);
+            $label_format=$conn->real_escape_string($label);
+
+            $sql="INSERT INTO noun_patterns_to (`label`, `translate`, `base`, `gender`, `shapes`)
+                VALUES ('$label_format', $langId, '$base_format', $gender, '$shapesSave_format');";
+
+            if ($conn->query($sql) === TRUE) {
+                //ok
+            }else{
+                sqlError($sql,$conn);
+            }
         }
 
-            // Noun
-       for ($i++; $i<$linesLen; $i++) {
+        // Noun
+        // get list from
+        $listFrom=[];
+        {
+            $sqlFrom="SELECT `id`, `label` FROM noun_patterns_cs;";
+            $resultFrom = $conn->query($sqlFrom);
+            if ($resultFrom) {
+                while($row = $resultFrom->fetch_assoc()) {
+                    $listFrom[$row["label"]]=$row["id"];
+                }
+            }
+        }
+
+        // to list
+        $listTo=[];
+        {
+            $sqlTo="SELECT `id`, `label` FROM `noun_patterns_to` WHERE `translate`=$langId;";
+            $resultTo = $conn->query($sqlTo);
+            if ($resultTo) {
+                while($row = $resultFrom->fetch_assoc()) {
+                    $listTo[$row["label"]]=$row["id"];
+                }
+            }
+        }
+
+        for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
-            //    itemsNouns.Add(ItemNoun.Load(line));
+         //   throwInfo($line);
+            $parts = explode('|', $line);
+            //$fromShape=$parts[0];
+            $fromPattern=$parts[1];
+            $uppercase=intval($parts[2]);
+            $shapes=LoadListTranslatingToDataWithPattern($parts, 3);
+
+            // relations
+            {
+                // get id from text
+                $from = $listFrom[$fromPattern] ?? "NULL";
+
+                $sql_rel="INSERT INTO noun_relations (`translate`, `from`) VALUES ($langId, $from);";
+
+                if ($conn->query($sql_rel) === TRUE) {
+                    //ok
+                    //throwInfo("noun_relations inserted");
+                }else{
+                    sqlError($sql_rel, $conn);
+                }
+            }
+            $idRelation=$conn->insert_id;
+
+            // to
+            $resolvePriority=(count($shapes)>0);
+
+            // $shapes = [["Cite"=>...], [], [], ...]
+            for ($j = 0; $j < count($shapes); $j++) {
+                $shape = $shapes[$j];
+
+                // cite
+                $sourceRaw=$shape["Source"]; //$sourceRaw="nbdp|sncj|.."
+                $sources=explode("|", $sourceRaw);// $sources=["nbdp", "sncj", ...]
+                $citeIds=[]; // $citeIds=[0,3,7, ...]
+                foreach ($sources as $source) {// "nbdp", "sncj", ...
+                    if (isset($listCites[$source])) $citeIds[]=$listCites[$source];
+                }
+                $cite=join("|", $citeIds); //"0,3,7,..."
+
+                // priority
+                $prioriry=0;
+                if ($resolvePriority) {
+                    if ($j==0) $prioriry=1;
+                } else {
+                    if ($j>1) $prioriry=-1;
+                }
+
+                // shape
+                $pattern=$shape["Pattern"];
+                $shape_to="null";
+                if (isset($listTo[$pattern])) $shape_to=$listTo[$pattern]; // get id from pattern text
+                $body=$shape["Body"];
+
+                // find pattern to, update values
+                if ($shape_to!="null") {
+                    $sql_pt= /** @lang SQL */
+                        "UPDATE noun_relations `uppercase`=$uppercase WHERE id=$shape_to;";
+
+                    if ($conn->query($sql_pt) === TRUE) {
+                        //ok
+                    }else{
+                        sqlError($sql_rel, $conn);
+                    }
+                }
+
+                // comment
+                $comment=$shape["Comment"];
+                $tags=join("|", tryToGetTags($comment));
+
+                // unresolved, not linked correctly
+                $tmp_imp_from_pattern=null;
+                $pattern_from_body=null;
+                if ($shape_to==null) {
+                    $tmp_imp_from_pattern=$pattern;
+                    $pattern_from_body=$body;
+                }
+
+                $comment_format=$conn->real_escape_string($comment);
+
+                $sqlTo = /** @lang SQL */
+                "INSERT INTO noun_to (`relation`, `priority`, `shape`, `comment`, `tags`, `cite`, `tmp_pattern_from_body`, `tmp_imp_from_pattern`) 
+                VALUES ($idRelation, $prioriry, $shape_to, '$comment_format', '$tags', '$cite', '$pattern_from_body', '$tmp_imp_from_pattern');";
+              
+                if ($conn->query($sqlTo) === TRUE) {
+                    //ok
+                }else{
+                    sqlError($sqlTo, $conn);
+                }
+            }
         }
 
         // PatternAdjectives
@@ -780,8 +950,8 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                            
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $label=$parts[0];
             $base=extractBase($label);
             $category=$parts[1];
@@ -789,11 +959,11 @@ function database_importold() {
             $shapesF=array_slice($parts, 2+14,14);
             $shapesA=array_slice($parts, 2+14*2,14);
             $shapesI=array_slice($parts, 2+14*3,14);
-          
+
             $sql="INSERT INTO adjective_patterns_cs (label, base, category, shapes) ".
                   "SELECT '$label', '$base', '$category', '".implode("|", $shapesA)."|".implode("|", $shapesI)."|".implode("|", $shapesF)."|".implode("|", $shapesN)."' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM adjective_patterns_cs WHERE label = '$label');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -821,16 +991,16 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-") break;
             if ($line == "")  continue;
-                         
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $label=$parts[0];
             $base=extractBase($label);
             $shapes=array_slice($parts, 1);
-          
+
             $sql="INSERT INTO pronoun_patterns_cs (label, base, shapes) ".
                   "SELECT '$label', '$base', '".implode("|",$shapes)."' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM pronoun_patterns_cs WHERE label = '$label');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -859,16 +1029,16 @@ function database_importold() {
             if ($line == "-")  break;
             if ($line == "")  continue;
 
-            $parts = explode('|',$line);            
+            $parts = explode('|',$line);
             $label=$parts[0];
             $base=extractBase($label);
             //show type [1]
             $shapes=array_slice($parts, 2);
-          
+
             $sql="INSERT INTO number_patterns_cs (label, base, shapes) ".
                   "SELECT '$label', '$base', '".implode("|",$shapes)."' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM number_patterns_cs WHERE label = '$label');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql, $conn);
@@ -897,19 +1067,19 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-") break;
             if ($line == "")  continue;
-            
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $label=$parts[0];
             $base=extractBase($label);
             $shapetype=$parts[1];
             $category=$parts[2];
-            $shapes=array_slice($parts, 3);   
-                        
+            $shapes=array_slice($parts, 3);
+
             $sql="INSERT INTO verb_patterns_cs (label, base, shapetype, category, shapes) ".
                   "SELECT '$label', '$base', '$shapetype', '$category', '".implode("|", $shapes)."' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM verb_patterns_cs WHERE label = '$label');";
 
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -939,14 +1109,14 @@ function database_importold() {
             if ($line == "")  continue;
             //    itemsAdverbs.Add(ItemAdverb.Load(line));
 
-            $parts = explode('|',$line);            
+            $parts = explode('|',$line);
             $from=$parts[0];
 
             // insert from cs
             $sql="INSERT INTO adverb_cs (shape) ".
                   "SELECT ('$from') ".
                   "WHERE NOT EXISTS (SELECT 1 FROM adverb_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -958,8 +1128,8 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-     
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $from=$parts[0];
             $falls=$parts[1];
 
@@ -967,7 +1137,7 @@ function database_importold() {
             $sql="INSERT INTO preposition_cs (shape, falls) ".
                   "SELECT '$from', '$falls' ".
                   "WHERE NOT EXISTS (SELECT 1 FROM preposition_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -979,15 +1149,15 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-                             
-            $parts = explode('|',$line);            
+
+            $parts = explode('|',$line);
             $from=$parts[0];
 
             // insert from cs
             $sql="INSERT INTO conjunction_cs (shape) ".
                   "SELECT ('$from') ".
                   "WHERE NOT EXISTS (SELECT 1 FROM conjunction_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
@@ -1002,14 +1172,14 @@ function database_importold() {
             if ($line == "-")  break;
             if ($line == "")  continue;
 
-            $parts = explode('|', $line);            
+            $parts = explode('|', $line);
             $from  = $parts[0];
 
             // insert from cs
             $sql="INSERT INTO particle_cs (shape) ".
                   "SELECT ('$from') ".
                   "WHERE NOT EXISTS (SELECT 1 FROM particle_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             } else {
                 sqlError($sql,$conn);
@@ -1021,15 +1191,15 @@ function database_importold() {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
-           
-            $parts = explode('|', $line);            
+
+            $parts = explode('|', $line);
             $from  = $parts[0];
 
             // insert from cs
             $sql="INSERT INTO interjection_cs (shape) ".
                   "SELECT ('$from') ".
                   "WHERE NOT EXISTS (SELECT 1 FROM interjection_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {            
+            if ($conn->query($sql) === TRUE) {
                 //ok
             } else {
                 sqlError($sql,$conn);
@@ -1089,12 +1259,16 @@ function getUpperCaseType($str) : int {
     return 0; // Unknown case (e.g., mixed case)
 }
 
-function throwError($string) {
+function throwError($string) :void{
     if (!isset($_SESSION["error"])) $_SESSION["error"]="";
     $_SESSION["error"].=$string;
 }
+function throwInfo($string):void {
+    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
+    $_SESSION["info"].="<p>".$string."<p>";
+}
 
-function sqlError($sql, $conn) {
+function sqlError($sql, $conn) :void{
     $maxLen=50;
     $len=strlen($sql);
     if ($len>$maxLen)$sql=substr($sql,0,$maxLen)."...";
@@ -1113,6 +1287,19 @@ function loadListTranslatingToData($rawData, $start) : array{
             $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$rawData[$i+2]];
     }
           
+    return $list;
+}
+
+function loadListTranslatingToDataWithPattern($rawData, $start) : array{
+    $list=[];
+
+    $len=count($rawData);
+    for ($i=$start; $i<$len ; $i+=4) {
+        if ($i<$len-1) $list[]=["Body"=>$rawData[$i], "Pattern"=>$rawData[$i+1], "Comment"=>$rawData[$i+2], "Source"=>""];
+        else if (($i-$start)%2==0 && $i==$len-1)
+            $list[]=["Body"=>$rawData[$i], "Pattern"=>$rawData[$i+1], "Comment"=>$rawData[$i+2], "Source"=>$rawData[$i+3]];
+    }
+
     return $list;
 }
 
