@@ -22,7 +22,8 @@
 
         echo FilteredList($list, "simpleword_relation");           
         
-        $GLOBALS["onload"].="simpleword_changed=function() { 
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "simpleword_changed=function() { 
             let elementsSelected = flist_simpleword.getSelectedItemInList();
         
             // no selected
@@ -61,7 +62,8 @@
         flist_simpleword.EventItemSelectedChanged(simpleword_changed);
         flist_simpleword.EventItemAddedChanged(simpleword_added);";
     
-        $GLOBALS["script"].="var flist_simpleword; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_simpleword; 
         var currentsimplewordCSSave = function() {
             let label=document.getElementById('simplewordLabel').value;
             let simplewordId=document.getElementById('simplewordId').value;

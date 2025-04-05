@@ -126,6 +126,7 @@ function database_init() :void{
             label varchar(255) DEFAULT '$namedef',
             translate INT,
             base varchar(255),
+            tags VARCHAR(255),
             uppercase TINYINT,
             gender TINYINT,
             shapes TEXT
@@ -219,7 +220,7 @@ function database_init() :void{
         );",
 
         // to
-        "CREATE TABLE noun_to (
+        "CREATE TABLE nouns_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `relation` INT,
             `shape` INT,
@@ -249,22 +250,24 @@ function database_init() :void{
             options TEXT
         );",
 
-        // kniha
+        // kniha, ..
         "CREATE TABLE cites (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
-            label VARCHAR(255) DEFAULT '$namedef',
-            data JSON
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,            
+            `label` VARCHAR(255) DEFAULT '$namedef',
+            `type` TINYINT,
+            `data` JSON
         );",
         
         // Ukázky
         "CREATE TABLE piecesofcite (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
-            label VARCHAR(255) DEFAULT '$namedef',
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
+            `label` VARCHAR(255) DEFAULT '$namedef',
             `parent` INT,
-            translate INT,
-            people JSON,
-            cite JSON,
-            `text` TEXT
+            `translate` INT,
+            `people` JSON,
+            `data` JSON,
+            `text` TEXT,
+            `translated` TEXT
         );",
 
         // log
@@ -547,9 +550,14 @@ function database_importold() :void {
 
         // cites
 
-        $citesRawLines=explode("\n", $cites);
+        $citesRawLines=explode('\\n', $cites);
+
         foreach ($citesRawLines as $citeLineRaw) {
-            if ($citeLineRaw!="") {
+            if (str_starts_with($citeLineRaw, "kniha|")
+             || str_starts_with($citeLineRaw, "periodikum|")
+             || str_starts_with($citeLineRaw, "sncj|")
+             || str_starts_with($citeLineRaw, "web|")
+             || str_starts_with($citeLineRaw, "cja|")) {
                 $citeVars=[];
                 $vars=explode("|", $citeLineRaw); //["smt=d", "shgj=df", ...]
 
@@ -560,29 +568,41 @@ function database_importold() :void {
                         $varValue=$var[1];
                         $citeVars[$varCode]=$varValue;
                     } elseif (count($var)==1) {
-                        $citeVars["typ"]=$var;
+                        $citeVars[$var[0]]=true;
                     }
                 }
                 $citeData=[];
                 // more info ./globa/cites.php
-                $citeData[]=["typ"=>$citeVars["typ"]];
-                $shortcut=$citeVars["shortcut"];
-                if (isset($citeVars["shortcut"])) $citeData[]=["shortcut"=>$citeVars["shortcut"]];
-                if (isset($citeVars["nazev"])) $citeData[]=["nazev"=>$citeVars["nazev"]];
-                if (isset($citeVars["podnazev"])) $citeData[]=["podnazev"=>$citeVars["podnazev"]];
-                if (isset($citeVars["odkaz"])) $citeData[]=["odkaz"=>$citeVars["odkaz"]];
-                if (isset($citeVars["issn"])) $citeData[]=["issn"=>$citeVars["issn"]];
-                //TODO: add more
+                $citetypeRaw=$vars[0];
+                $citeType=0;
 
-                $data=json_encode($citeData);
+                if ($citetypeRaw=="kniha") $citeType=1;
+                elseif ($citetypeRaw=="web") $citeType=2;
+                elseif ($citetypeRaw=="sncj") $citeType=3;
+                elseif ($citetypeRaw=="periodikum") $citeType=4;
+
+                $shortcut="";
+                if (isset($citeVars["shortcut"]))$shortcut=$citeVars["shortcut"];
+                else if ($citetypeRaw=="sncj") $shortcut="sncj";
+                else throwError("Missing shortcut: ".$citetypeRaw);
+
+                // only defined cite types
+                $listSame=["shortcut", "nazev", "podnazev", "odkaz", "issn", "ibsn", "autor", "jmeno", "prijmeni", "odkaz", "vydavatel", "spolecnost"];
+                foreach ($listSame as $key) {
+                    if (isset($citeVars[$key])) {
+                        if ($citeVars[$key]!="")$citeData[$key]=$citeVars[$key];
+                    }
+                }
+
+                $data=json_encode($citeData,JSON_UNESCAPED_UNICODE);
 
                 $label="";
-                if (isset($citeVars["shortcut"])) $label=$citeVars["shortcut"];
-                else if (isset($citeVars["typ"])) $label=$citeVars["typ"];
-                else if (isset($citeVars["nazev"])) $label=$citeVars["nazev"];
+                if (isset($citeVars["nazev"])) $label=$citeVars["nazev"];
+                else if (isset($citeVars["typ"]) && ($citeVars["typ"]=="sncj" || $citeVars["typ"]=="cja" || $citeVars["typ"]=="inf")) $label=$citeVars["typ"];
+                else if (isset($citeVars["shortcut"])) $label=$citeVars["shortcut"];
                 else if (isset($citeVars["odkaz"])) $label=$citeVars["odkaz"];
 
-                $sql="INSERT INTO cites (label, data) SELECT '$shortcut', '$data'
+                $sql="INSERT INTO cites (label, data, type) SELECT '$label', '$data', $citeType
                     WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$label')";
 
                 if ($conn->query($sql) === TRUE) {
@@ -594,12 +614,16 @@ function database_importold() :void {
 
                 // Pieces of cite
                 $dataPiece=[];
-                if (isset($citeVars["strany"])) $dataPiece[]=["strany"=>$citeVars["strany"]];
-                //TODO: add more
+                $listSameP=["strany", "cislo", "rocnik", "odkaz", "kapitola", "shortcut", "zpracovano"];
+                foreach ($listSameP as $key) {
+                    if (isset($citeVars[$key])) {
+                        if ($citeVars[$key]!="")$dataPiece[$key]=$citeVars[$key];
+                    }
+                }
 
-                $dataPieceSave=json_encode($dataPiece);
+                $dataPieceSave=json_encode($dataPiece, JSON_UNESCAPED_UNICODE);
 
-                $sqlPiece="INSERT INTO pieceofcite (label, parent, translate, data) VALUES ('$label', '$idcite', '$langId', '$dataPieceSave')";
+                $sqlPiece="INSERT INTO piecesofcite (label, parent, translate, data) VALUES ('$label', '$idcite', '$langId', '$dataPieceSave')";
 
                 if ($conn->query($sqlPiece) === TRUE) {
                     //ok
@@ -611,11 +635,11 @@ function database_importold() :void {
 
         $listCites=[];
         {
-            $sqlPiece="SELECT id, label FROM piecesofcite";
+            $sqlPiece="SELECT id, label FROM piecesofcite WHERE translate = '$langId'";
             $resultCites=$conn->query($sqlPiece);
             if ($resultCites) {
                 while($row = $resultCites->fetch_assoc()) {
-                    $listCites[$row["label"]]=$row["id"];
+                    if ($row["label"]!="") $listCites[$row["label"]]=$row["id"];
                 }
             }else{
                 sqlError($sqlPiece, $conn);
@@ -862,24 +886,28 @@ function database_importold() :void {
         // get list from
         $listFrom=[];
         {
-            $sqlFrom="SELECT `id`, `label` FROM noun_patterns_cs;";
-            $resultFrom = $conn->query($sqlFrom);
-            if ($resultFrom) {
-                while($row = $resultFrom->fetch_assoc()) {
+            $sqlFromP="SELECT `id`, `label` FROM noun_patterns_cs;";
+            $resultFromP = $conn->query($sqlFromP);
+            if ($resultFromP) {
+                while($row = $resultFromP->fetch_assoc()) {
                     $listFrom[$row["label"]]=$row["id"];
                 }
+            }else{
+                throwError("SQL error: ".$sqlFromP);
             }
         }
 
         // to list
-        $listTo=[];
+        $listNounTo=[];
         {
-            $sqlTo="SELECT `id`, `label` FROM `noun_patterns_to` WHERE `translate`=$langId;";
-            $resultTo = $conn->query($sqlTo);
-            if ($resultTo) {
-                while($row = $resultFrom->fetch_assoc()) {
-                    $listTo[$row["label"]]=$row["id"];
+            $sqlToP="SELECT `id`, `label` FROM `noun_patterns_to` WHERE `translate`=$langId;";
+            $resultToP = $conn->query($sqlToP);
+            if ($resultToP) {
+                while($row = $resultToP->fetch_assoc()) {
+                    $listNounTo[$row["label"]]=$row["id"];
                 }
+            }else{
+                throwError("SQL error: ".$resultToP);
             }
         }
 
@@ -937,13 +965,13 @@ function database_importold() :void {
                 // shape
                 $pattern=$shape["Pattern"];
                 $shape_to="null";
-                if (isset($listTo[$pattern])) $shape_to=$listTo[$pattern]; // get id from pattern text
+                if (isset($listNounTo[$pattern])) $shape_to=$listNounTo[$pattern]; // get id from pattern text
                 $body=$shape["Body"];
 
                 // find pattern to, update values
                 if ($shape_to!="null") {
                     $sql_pt= /** @lang SQL */
-                        "UPDATE noun_relations `uppercase`=$uppercase WHERE id=$shape_to;";
+                        "UPDATE noun_patterns_to SET `uppercase` = $uppercase WHERE id = $shape_to;";
 
                     if ($conn->query($sql_pt) === TRUE) {
                         //ok
@@ -959,7 +987,7 @@ function database_importold() :void {
                 // unresolved, not linked correctly
                 $tmp_imp_from_pattern=null;
                 $pattern_from_body=null;
-                if ($shape_to==null) {
+                if ($shape_to=="null") {
                     $tmp_imp_from_pattern=$pattern;
                     $pattern_from_body=$body;
                 }
@@ -967,7 +995,7 @@ function database_importold() :void {
                 $comment_format=$conn->real_escape_string($comment);
 
                 $sqlTo = /** @lang SQL */
-                "INSERT INTO noun_to (`relation`, `priority`, `shape`, `comment`, `tags`, `cite`, `tmp_pattern_from_body`, `tmp_imp_from_pattern`) 
+                "INSERT INTO nouns_to (`relation`, `priority`, `shape`, `comment`, `tags`, `cite`, `tmp_pattern_from_body`, `tmp_imp_from_pattern`) 
                 VALUES ($idRelation, $prioriry, $shape_to, '$comment_format', '$tags', '$cite', '$pattern_from_body', '$tmp_imp_from_pattern');";
               
                 if ($conn->query($sqlTo) === TRUE) {

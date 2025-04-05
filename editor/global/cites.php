@@ -35,6 +35,7 @@
                 if (json.status==='OK'){
                     document.getElementById('citeId').value=id;
                     document.getElementById('citeLabel').value=json.label;
+                    document.getElementById('citeType').value=json.type;
                     
                     PELoadJSON(JSON.parse(json.params));
                 }else console.log('error sql: ', json);
@@ -47,9 +48,11 @@
 
     
         $GLOBALS["script"].= /** @lang JavaScript */
-            "var flist_cites; 
+            "
+        var flist_cites; 
         var currentciteSave = function() {
             let label=document.getElementById('citeLabel').value;
+            let type=document.getElementById('citeType').value;
             let citeId=document.getElementById('citeId').value;
 
             let params=PEGetJSON();
@@ -59,6 +62,7 @@
             formData.append('action', 'cite_update');
             formData.append('id', citeId);
             formData.append('label', label);
+            formData.append('type', type);
             formData.append('params', params);
 
             fetch('index.php', {
@@ -67,7 +71,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_cites.getSelectedItemsInList()[0].innerText=label;
                 }else console.log('error currentciteSave: ',json);
             });
@@ -77,9 +81,20 @@
     </div>
     <div class="editorView">
          <div class="row section">
-            <label id="name">Label</label><br> 
-            <input type="text" id="citeLabel" for="name" value="" placeholder="" style="max-width: 9cm;">
+            <label id="name"for="citeLabel">Popiska</label><br>
+            <input type="text" id="citeLabel" value="" placeholder="" style="max-width: 9cm;">
             <a onclick="" class="button">Sestavit</a>
+        </div>
+
+        <div class="row section">
+            <label id="name"for="citeType">Typ</label><br>
+            <select id="citeType">
+                <option value="0">{nevastaveno}</option>
+                <option value="1">kniha</option>
+                <option value="2">web</option>
+                <option value="3">sncj</option>
+                <option value="4">periodikum</option>
+            </select>
         </div>
 
         <div id="citesview" style="width: fit-content;">
@@ -90,7 +105,7 @@
                    // ["prijmeni", "Svěrák"], 
                 ],
                 [ //[save code,     label,         default,     type,       example]
-                    ["typ",         "typ",     "kniha",         ['kniha', 'periodikum', 'web', 'sncj'],   "kniha"],
+                   // ["typ",         "typ",     "kniha",         ['kniha', 'periodikum', 'web', 'sncj'],   "kniha"],
 
                     ["nazev",       "název",        "",         "text",     "Nářečí na Břeclavsku a v dolním..."], 
                     ["podnazev",    "podnázev",     "",         "text",     ""],
@@ -98,8 +113,9 @@
 
                     ["titul_pred",  "titul před jménem",        "",         "text",     "Ph. Dr."], 
                     ["jmeno",       "jméno",        "",         "text",     "František"], 
-                    ["prijmeni",    "příjmení",     "",         "text",     "Svěrák"], 
-                    ["titul_za",    "titul za jménem","",       "text",     "Ph. Dr."], 
+                    ["prijmeni",    "příjmení",     "",         "text",     "Svěrák"],
+                    ["autor",       "autor",       "",         "text",     "František Svěrák"],
+                    ["titul_za",    "titul za jménem","",       "text",     "Ph. Dr."],
                     ["spoluautori", "spoluautoři",  "",         "text",     "PRIJMENI, Jmeno; PRIJMENI, Jmeno"], 
                     ["spolecnost",  "společnost",   "",         "text",     "Masarykova universita"],
             
@@ -109,7 +125,7 @@
                     ["misto",       "místo vydání", "",         "text",     ""],
                     ["i",           "sncj misto",   "",         "text",     ""],
             
-                    ["odkaz",       "url odkaz",    "",         "text",      "https://..."], 
+                    ["odkaz",       "url odkaz",    "",         "url",      "https://..."],
                     ["format",      "formát",       "online",   "text",     "online"], 
             
                     ["legalnost",   "legálnost",    true,       "checkbox",  true        ],
@@ -129,6 +145,7 @@
                     ["rok_pristupu","rok přístupu", "",         "number",   ""],
                     ["mesic_pristupu","měsíc přístupu", "",     "number",   ""],
                     ["den_pristupu","den přístupu", "",         "number",   ""],
+                    ["shortcut",    "zkratka",      "",         "text",   ""],
                 ],
                 "cite",
                 "Data citace"

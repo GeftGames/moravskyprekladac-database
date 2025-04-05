@@ -57,7 +57,7 @@ class filteredList{
     generateList = (list) => {
         this.ListContainer.innerHTML = "";
         this.filter=this.filterText().toLowerCase();
-
+        if (!Array.isArray(list)) console.log("list is not array", list);
         list.forEach(item => {
             let id=item[0];
             let label=item[1];
@@ -143,7 +143,7 @@ class filteredList{
                 console.log(json); 
                 return; 
             }
-            this.generateList(json);
+            this.generateList(json.list);
             this.ListContainer.lastChild.classList.add("selectedSideItem");
             this.ItemAdded_dispatch();
         });
@@ -304,7 +304,7 @@ function HideContexMenu() {
 function getFilteredListById(id) {
     let e=document.getElementById("list_"+id);
     for (let i of filteredLists) {
-        if (i.ListContainer == e) return i;
+        if (i.ListContainer === e) return i;
     }
 }
 
@@ -317,7 +317,7 @@ function popupShow(name){
 }
 
 function selectMainOption(elToSelect) {
-    let tabs=["source", "global", "attributes", "tools", "patterns", "replaces", "simple", "translate"];
+    let tabs=["source", "global", "attributes", "tools", "patterns", "replaces", "simple", "relations", "translate"];
     for (let tab of tabs) {
         let eMainOption = document.getElementById("mainOption_" + tab);
         eMainOption.classList.remove("selected");

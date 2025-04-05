@@ -1,6 +1,6 @@
 <?php
 
-function multiple_pattern_to($list) {
+function multiple_pattern_to($list, $DDname) {
     $cites=[];
     // $cites=[[label, id], [label, id], [label, id], ...]
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
@@ -15,6 +15,23 @@ function multiple_pattern_to($list) {
 
     // Convert the PHP array to a JavaScript array
     $citesJson = json_encode($cites);
+
+    $listTo=[];
+
+    // to
+    $sqlTo="SELECT `id`, `label` FROM `".$DDname."_patterns_to` WHERE `translate` = ".$_SESSION['translate'].";";
+    $resultTo = $conn->query($sqlTo);
+    if (!$resultTo) {
+        $sqlDone=false;
+        throwError("SQL error: ".$sqlTo);
+    }
+
+    // list to
+    while ($rowTo = $resultTo->fetch_assoc()) {
+        $listTo[]=[$rowTo["id"], $rowTo["label"]];
+    }
+
+    $listToEncoded=json_encode($listTo);
 
     // cites
     $GLOBALS["script"].=
@@ -34,11 +51,21 @@ function multiple_pattern_to($list) {
             for (let e of row) {
                 let typeE=e.getAttribute("seltype");
                 if (typeE!=null) {
-                    if (typeE==="comment" || typeE==="source" || typeE==="priority") {
+                    if (typeE==="comment" || typeE==="priority") {
                         rowObj[typeE]=e.value;
                     } else if (typeE==="shapeto") {
                         rowObj[typeE]=wrap.querySelector("input[type=hidden]");
-                    }else{
+                    }else if (typeE==="source") {
+                        let citeEl=wrap.querySelector(".checkboxCite[type=checkbox]");
+                        let listCites=[];
+                        for (let cite of citeEl) {
+                            if (cite.checked) {
+                                listCites.push(cite.value);
+                                break;
+                            }
+                        }
+                        rowObj[typeE]=listCites.join("|");
+                    } else {
                         console.error("unknown typeE", typeE);
                     }
                 }
@@ -70,20 +97,34 @@ function multiple_pattern_to($list) {
         document.getElementById("listTo").innerHTML="";
         
         for (let item of list) {
-            //let item=list[i];
-            console.log(item);
-            to_add(item["id"], item["priority"], item["shape"], item["comment"], item["cite"]);
+            let cites=item["cite"].split(",");
+            to_add(item["id"], item["priority"], item["shape"], item["comment"], cites);
         }
+    };';
+
+    // Add cite
+    $GLOBALS["script"].=
+    /** @lang JavaScript */'
+    var cite_add = function(id) {
+        let holder=document.getElementById("citeHolder");
+        
+       // let tag=document.createElement("div");
+        
     };';
 
     // add
     $GLOBALS["script"].=
     /** @lang JavaScript */'
-    let maxId='.count($list).';
+    let maxId='.count($list). ';
     var to_add = function(defId, defPriority, defShapeTo, defComment, defCite) {
-        let idAdd = (defId==-1 ? maxId: defId);
+        let idAdd = (defId === -1 ? maxId: defId);
+        let wrapItem=document.createElement("div");
+        wrapItem.style="";   
+        
         let wrap=document.createElement("div");
-        wrap.classList="row";   
+        wrap.className="row";  
+        wrap.style="flex-wrap: wrap;";
+        wrapItem.appendChild(wrap);
         
         // id
         let id_holder=document.createElement("input");
@@ -92,44 +133,97 @@ function multiple_pattern_to($list) {
         id_holder.setAttribute("seltype","id");
         wrap.appendChild(id_holder);
         
+        // priority
         let priority=document.createElement("select");     
         priority.setAttribute("seltype","priority");
         if (defPriority!=null) priority.value=defPriority;
         wrap.appendChild(priority);   
         
-        for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]){
+        for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]) {
             let option=document.createElement("option");
             option.innerText=o[0];
             option.value=o[1];
             priority.appendChild(option);
         }
         
+        let idSelectPattern="To"+maxId;
         let text=document.createElement("div");
-        text.id="select_To"+maxId;
+        text.id="select_"+idSelectPattern;
         text.setAttribute("seltype","shapeto");
-        if (defShapeTo!=null) text.value=defShapeTo;
+       // if (defShapeTo!=null) text.value=defShapeTo;
         wrap.appendChild(text);
+        
+        // add editor
+     //   editor_to(wrapItem);
+        let tags=tagManagerCreate("tagy",maxId);
+        wrap.appendChild(tags);
         
         // comment
         let comment=document.createElement("input");
         comment.type="text";
         comment.className="comment";
         comment.placeholder="komentář";
+         comment.style="   max-width: 9cm;";
         comment.setAttribute("seltype","comment");
         if (defComment!=null) comment.value=defComment;
         wrap.appendChild(comment);
 
-        let source=document.createElement("select");
+        // cite
+        let wrapsource=document.createElement("div");
+        wrap.appendChild(wrapsource); 
+          
+        let wrapmenu=document.createElement("div");
+        wrapmenu.style.display="none";
+        wrapmenu.className="listSearchSelect popupChoose";
+        
+        let source=document.createElement("span");
         source.setAttribute("seltype", "source");
-        if (defCite!=null) source.value=defCite;
-        wrap.appendChild(source); 
+        source.innerText="zdroj";//todo: set label 
+        source.className="filterSelect";
+        source.addEventListener("click", function() {
+            if (wrapmenu.style.display==="block") wrapmenu.style.display="none";
+            else wrapmenu.style.display="block";
+        });
+        wrapsource.appendChild(source); 
+        wrapsource.appendChild(wrapmenu); 
+        
+        let arrow=document.createElement("span");
+        arrow.innerText="▼";
+        arrow.className="filterbtnpop";
+        source.appendChild(arrow); 
+       
         for (let o of cites) {
-            let option=document.createElement("option");
-            option.innerText=o[0];
-            option.value=o[1];
-            source.appendChild(option);
+            let citeId=o[1];
+            let citeLabel=o[0];
+            // row
+            let row=document.createElement("li");
+            row.style="list-style: none";
+            wrapmenu.appendChild(row);
+            
+            // checkbox
+            let idChecked=defId+"_"+citeId;
+            let option=document.createElement("input");
+            option.type="checkbox";  
+            option.className="checkboxCite";
+            option.checked=defCite.includes(citeId);
+           // console.log(defCite, citeId, defCite.includes(citeId));
+            option.value=citeId;
+            option.id=idChecked
+            row.appendChild(option);
+            
+            // label
+            let label=document.createElement("label");
+            label.innerText=citeLabel;
+            label.htmlFor=idChecked;
+            row.appendChild(label);
         }
+        
+        //existing cites
+        let citeHolder=document.createElement("div");
+        citeHolder.id="citeHolder";
+        source.appendChild(citeHolder);
 
+        // remove button
         let btnRemove=document.createElement("a");
         btnRemove.className="button";
         btnRemove.innerText="Smazat";
@@ -139,9 +233,11 @@ function multiple_pattern_to($list) {
         wrap.appendChild(btnRemove);   
         
         let parent=document.getElementById("listTo");
-        parent.appendChild(wrap);
+        parent.appendChild(wrapItem);
         
-        createSelectFilter("To"+maxId);
+        
+        // create select filter element
+        let classselectpattern= createSelectFilter(idSelectPattern, '.$listToEncoded.', defShapeTo);
         maxId++;
     };';
 

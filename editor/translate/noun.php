@@ -1,142 +1,178 @@
- <div class="splitView">
+<div class="splitView">
     <div>
         <?php
         include "components/tags_editor.php";
-      //  include "components/select_fromlist.php";
-        include "components/multiple_pattern_to.php";
 
-        $sqlDone=true;
-
-        // relations
-        $sql="SELECT `id`, `from` FROM `noun_relations` WHERE `translate` = ".$_SESSION['translate'].";";
+        $sql="SELECT id, label, uppercase FROM noun_patterns_to WHERE `translate` = ".$_SESSION['translate'].";";
         $result = $conn->query($sql);
-        if (!$result) {
-            throwError("SQL error: ".$sql);
-            $sqlDone=false;
-        }
-
-        // from
-        $sqlFrom="SELECT `id`, `label` FROM `noun_patterns_cs`;";
-        $resultFrom = $conn->query($sqlFrom);
-        if (!$resultFrom) {
-            $sqlDone=false;
-            throwError("SQL error: ".$sqlFrom);
-        }
-
-        $listFrom=[];
         $list=[];
-
-        if ($sqlDone) {
-            // list from
-            while ($rowFrom = $resultFrom->fetch_assoc()) {
-                $listFrom[]=[$rowFrom["id"], $rowFrom["label"]];
+        if (!$result) throwError("SQL error: ".$sql);
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $uppercase=$row["uppercase"];
+                $label=$row["label"];
+                if ($uppercase==2) $label=ucfirst($label);
+                $list[]=[$row["id"], $label];
             }
-
-            // list relations
-            while ($row = $result->fetch_assoc()) {
-                $idRelation=$row["id"];
-                $idFrom=$row["from"];
-
-                // get from label
-                $from=null;
-                foreach ($listFrom as $item) {
-                    if ($item[0]==$idFrom) {
-                        $from=$item;
-                        break;
-                    }
-                }
-
-                if ($from!=null) {
-                    $list[]=[$idRelation, $from[1]];
-                }else{
-                    $list[]=[$idRelation, "<Nepřiřazené>"];
-                }
-            }
+        } else {
+            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_relations");
+        echo FilteredList($list, "noun_patterns_to");
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        noun_relations_changed=function() { 
-            let id = flist_noun_relations.getSelectedIdInList();
-        
-            // no selected
-            if (id==null) return;
+noun_patterns_to_changed=function() { 
+    let id = flist_noun_patterns_to.getSelectedIdInList();
+
+    // no selected
+    if (id==null) return;
+
+    fetch('index.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `action=noun_pattern_to_item&id=`+id
+    }).then(response => response.json())
+    .then(json => {
+        if (json.status==='OK') {
+            document.getElementById('nounId').value=id;
+            document.getElementById('nounLabel').value=json.label;
+            document.getElementById('nounBase').value=json.base;
+
+            if (json.gender==null) json.gender=0;
+            document.getElementById('nounGender').value=json.gender;
             
-            fetch('index.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=noun_relation_item&id=`+id
-            }).then(response => response.json())
-            .then(json => {
-                if (json.status==='OK') {
-                    document.getElementById('nounId').value=id;
-                    //from
-                    filteredSearchList_noun_from.selectId(json.from);                   
-                    filteredSearchList_noun_from.reload();
-                    //to
-                    to_load(JSON.parse(json.to));
-                }else console.log('error sql', json);
-            });
-        };
+            document.getElementById('nounUppercase').value=json.uppercase;
 
-        refreshFilteredLists();
+            let rawShapes=json.shapes;
+            let shapes;
+            if (rawShapes!=null) {
+                shapes=json.shapes.split('|'); 
+            } else shapes=[];
+            for (let i=0; i<14; i++) {
+                let shape=shapes[i];                            
+                let textbox=document.getElementById('noun'+i);
 
-        flist_noun_relations.EventItemSelectedChanged(noun_relations_changed);";
+                if (shape===undefined) textbox.value='';
+                else textbox.value=shape;
+            }                 
+
+            if (json.tags!=null) {
+                let arrTags=json.tags.split('|');
+                tagSet(arrTags);
+            }else{
+                tagSet([]);
+            }
+           
+        } else console.log('error sql', json);
+    });
+};
+
+refreshFilteredLists();
+
+flist_noun_patterns_to.EventItemSelectedChanged(noun_patterns_to_changed);
+";
 
         $GLOBALS["script"].= /** @lang JavaScript */"
-            var flist_noun_relations; 
-            var currentNounRelationSave = function() {
-                let froms=document.getElementById('listreturnholder_noun_from').value;              
-                let id=document.getElementById('nounId').value;              
-    
-                let formData = new URLSearchParams();
-                formData.append('action', 'noun_relation_update');
-                formData.append('id', id);
-                formData.append('from', froms);
-                
-                formData.append('to', to_save());
-               
-                fetch('index.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                }).then(response => response.json())
-                .then(json => {
-                    if (json.status==='OK') {
-                        let from_label=document.getElementById('selectedLabel_noun_from').innerText;  
-                        flist_noun_relations.getSelectedItemsInList()[0].innerText=from_label;
-                    }else console.log('error currentNounRelationSave', json);
-                });
-            };";
-        ?>
+var flist_noun_patterns_to; 
+var currentNounTOSave = function() {
+    let label=document.getElementById('nounLabel').value;
+    let base=document.getElementById('nounBase').value;
+    let gender=document.getElementById('nounGender').value;
+    let uppercase=document.getElementById('nounUppercase').value;
+    let nounId=document.getElementById('nounId').value;
+    let tags=document.getElementById('noun_todatatags').value;
+    let shapes=[];
+    for (let i=0; i<14; i++) {
+        let textbox=document.getElementById('noun'+i);
+        shapes[i]=textbox.value
+    }
+
+    let formData = new URLSearchParams();
+    formData.append('action', 'noun_to_update');
+    formData.append('id', nounId);
+    formData.append('label', label);
+    formData.append('base', base);
+    formData.append('gender', gender);
+    formData.append('uppercase', uppercase);
+    formData.append('shapes', shapes.join('|'));
+    formData.append('tags', tags);
+
+    fetch('index.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    }).then(response => response.json())
+    .then(json => {
+        if (json.status==='OK'){
+           flist_noun_patterns_to.getSelectedItemInList().innerText=label;
+        }else console.log('error currentRegionSave',json);
+    });
+};
+";
+
+?>
     </div>
     <div class="editorView">
-        <div id="noun">
-            <div class="section">
-                <label for="noun_from" id="name">Z</label>
-                <div id="select_noun_from"></div>
-                <?php createSelectList($listFrom, "noun_from", null);?>
+        <div id="regionsview">
+            <div class="row section">
+                <label id="name" for="nounLabel">Popis</label><br>
+                <input type="text" id="nounLabel" value="" placeholder="pohádKA">
+                <a onclick="" class="button">Sestavit</a>
+            </div>
+
+            <div class="row section">
+                <label id="base" for="nounBase">Základ</label><br>
+                <input type="text" id="nounBase" value="" placeholder="pohád">
             </div>
 
             <div class="section">
-                <label for="noun_from" id="name">Na</label>
-                <?php
-              /*  $listTo=[];
-                $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `noun_to`;";
-                $result = $conn->query($sqlTo);
-                if (!$result) {
-                    throwError("SQL error: ".$sqlTo);
-                }
-                while ($row = $result->fetch_assoc()) {
-                    $listTo[]=[$row["id"], $row["priority"], $row["shape"], $row["comment"], $row["cite"]];
-                }*/
-                echo multiple_pattern_to([]); ?>
+                <label id="name" for="nounShapes">Pád</label>
+                <table>
+                    <tr>
+                        <td class="tableHeader">Pád</td>
+                        <td class="tableHeader">Jednotné</td>
+                        <td class="tableHeader">Množné</td>
+                    </tr>
+                    <?php
+                    $html="";
+                    for ($i=0; $i<7; $i++) {
+                        $html.="<tr><td>".($i+1).".</td>";
+                        for ($j=0; $j<2; $j++) $html.="<td><input id='noun".($j==0 ? $i : 7+$i)."' type='text'></td>";
+                        $html.="</tr>";
+                    }
+                    echo $html;
+                    ?>
+                </table>
+                <input type="hidden" id="nounShapes" value="-1">
             </div>
 
-            <div class="section">
+            <div class="row section">
+                <label for="nounGender">Rod</label>
+                <select id="nounGender" name="type">
+                    <option value="0">Neznámý</option>
+                    <option value="4">Střední</option>
+                    <option value="3">Ženský</option>
+                    <option value="2">Mužský neživotný</option>
+                    <option value="1">Mužský životný</option>
+                </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="nounUppercase">Velké písmena</label>
+                <select id="nounUppercase" name="uppercase">
+                    <option value="0">Neznámý</option>
+                    <option value="1">malé</option>
+                    <option value="2">Počáteční Velké</option>
+                    <option value="3">VŠECHNY VELKÉ</option>
+                </select>
+                <br>
+            </div>
+
+            <?php echo tagsEditor("noun_to", [], "Tagy") ?>
+            <div>
                 <input type="hidden" id="nounId" value="-1">
-                <a onclick="currentNounRelationSave()" class="button">Uložit</a>
+                <a onclick="currentNounTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

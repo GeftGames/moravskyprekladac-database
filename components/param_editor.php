@@ -1,74 +1,7 @@
 <?php
-/*
-function editorSourceSample() {
-    return paramEditor(
-        [], 
-        [
-            ["born_place",      "datum pořízení",       "",         "text",     ""], 
-            ["writer_name",     "jméno zapisovatele",   "",         "text",     ""],
-            ["strany",          "strany publikace",     "",         "text",     ""],
-            ["kapitola",        "kapitoly publikace",   "",         "text",     ""],
-            ["odkaz",           "url odkaz",            "",         "text",     ""],
-            ["cislo_periodika", "číslo periodika",      "",         "text",     ""],
-            ["ročník_periodika", "ročník periodika",      "",         "text",     ""],
-        ],
-        "sourcesample"
-    );
-}*/
-/*
-function editorSource() {
-    return paramEditor(
-        [
-           // ["nazev", "Nážečí na Břeclavsku a v dolním pomoraví"], 
-           // ["jmeno", "František"], 
-           // ["prijmeni", "Svěrák"], 
-        ],
-        [ //[save code,     label,         default,     type,       example]
-            ["typ",         "typ",     "kniha",         ['kniha', 'periodikum', 'web', 'sncj'],   "kniha"],
-
-            ["nazev",       "název",        "",         "text",     "Nářečí na Břeclavsku a v dolním..."], 
-            ["podnazev",    "podnázev",     "",         "text",     ""],
-            ["periodikum",  "periodikum",   "",         "text",     ""],
-
-            ["titul_pred",  "titul před jménem",        "",         "text",     "Ph. Dr."], 
-            ["jmeno",       "jméno",        "",         "text",     "František"], 
-            ["prijmeni",    "příjmení",     "",         "text",     "Svěrák"], 
-            ["titul_za",    "titul za jménem","",       "text",     "Ph. Dr."], 
-            ["spoluautori", "spoluautoři",  "",         "text",     "PRIJMENI, Jmeno; PRIJMENI, Jmeno"], 
-            ["spolecnost",  "společnost",   "",         "text",     "Masarykova universita"],
-            
-            ["vydani",      "číslo vydání", "",         "number",   "1"], 
-            ["rok_vydani",  "rok pořízení", "",         "number",   "1900"], 
-            ["vydavatel",   "vydavatel",    "",         "text",     "Nakladatelství XX"], 
-            ["misto",       "místo vydání", "",         "text",     ""],
-            ["i",           "sncj misto",   "",         "text",     ""],
-            
-            ["odkaz",       "url odkaz",    "",         "text",      "https://..."], 
-            ["format",      "formát",       "online",   "text",     "online"], 
-            
-            ["legalnost",   "legálnost",    true,       "checkbox",  true        ],
-            ["licence",     "licence",      "",         "text",     "Volné dílo"],
-            
-            ["kapitola",    "kapitola",     "",         "text",     ""],
-            ["strany",      "strany",       "",         "text",     ""],
-            
-            ["issn",        "issn",         "",         "text",     ""],
-            ["ibsn",        "ibsn",         "",         "text",     ""],
-
-            ["cislo",       "číslo",        "",         "text",     ""],
-            ["rocnik",      "ročník",       "",         "text",     ""],
-
-            ["poznámka",    "poznámka",     "",        "text",     ""],
-
-            ["rok_pristupu","rok přístupu", "",         "number",   ""],
-            ["mesic_pristupu","měsíc přístupu", "",     "number",   ""],
-            ["den_pristupu","den přístupu", "",         "number",   ""],
-        ]
-    );
-}*/
-
 function paramEditor($params, $allparams, $name, $label) {
-    $GLOBALS["script"].="var AddParam = function(labelText, code, val, typeInput, placeholder, spanTag) {
+    $GLOBALS["script"].= /** @lang JavaScript */"
+    var AddParam = function(labelText, code, val, typeInput, placeholder, spanTag) {
         let parent=document.getElementById('paramEditor$name');
         let wrap=document.createElement('tr');
         wrap.setAttribute('data-code',code);
@@ -83,7 +16,7 @@ function paramEditor($params, $allparams, $name, $label) {
         // create input
         if (Array.isArray(typeInput)){
             let textbox=document.createElement('select');
-            if (val!=undefined) textbox.value=val;
+            if (val!==undefined) textbox.value=val;
             textbox.style.display='table-cell';
             textbox.style.margin='1px';
             wrap.appendChild(textbox); 
@@ -98,16 +31,24 @@ function paramEditor($params, $allparams, $name, $label) {
         } else {
             let textbox=document.createElement('input');
 
-            if (typeInput==undefined) textbox.setAttribute('type', 'text');
+            if (typeInput===undefined) textbox.setAttribute('type', 'text');
             else textbox.setAttribute('type', typeInput);
 
-            if (typeInput=='checkbox') textbox.checked=val;
-            else if (val!=undefined) textbox.value=val;
+            if (typeInput==='checkbox') textbox.checked=val;
+            else if (val!==undefined) textbox.value=val;
             textbox.id='pe'+code;
             textbox.style.display='table-cell';
             textbox.style.margin='1px';
-            if (placeholder!=undefined) textbox.placeholder=placeholder;
+            if (placeholder!==undefined) textbox.placeholder=placeholder;
             wrap.appendChild(textbox); 
+            
+            if (typeInput==='url'){
+                let btnOpen=document.createElement('a');
+                btnOpen.className='button';
+                btnOpen.addEventListener('click', ()=>{ window.open(textbox.value, '_blank').focus(); });
+                btnOpen.innerText='Otevřít';
+                wrap.appendChild(btnOpen); 
+            }
         }
 
         // create remove button
@@ -139,11 +80,11 @@ function paramEditor($params, $allparams, $name, $label) {
             // get value
             let inputE=document.getElementById('pe'+code);
             let val;
-            if (inputE.tagName=='INPUT') {
+            if (inputE.tagName==='INPUT') {
                 let typeE=inputE.getAttribute('type');
-                if (typeE=='checkbox') val=inputE.checked;
+                if (typeE==='checkbox') val=inputE.checked;
                 else val=inputE.value;
-            } else if (inputE.tagName=='SELECT') {
+            } else if (inputE.tagName==='SELECT') {
                 val=inputE.value;
             } else {
                 console.error('get tagname of element '+inputE);
@@ -166,24 +107,54 @@ function paramEditor($params, $allparams, $name, $label) {
 
         document.getElementById('paramEditor$name').innerHTML='';
         
-        if (json!=null && JSON.stringify(json) != '{}') {
+        if (json!=null && JSON.stringify(json) !== '{}') {    
+            let listToAdd=[];
+            let allParams=".json_encode($allparams).";
+            
             // existing
             for (let param in json) {       
                 let paramCode=param;
                 let paramValue=json[param];
 
                 let found=false;
-                for (let paramA of ".json_encode($allparams).") {
-                    if (paramA[0]==paramCode) {
+             
+                // suggested
+                for (let paramA of allParams) {
+                    if (paramA[0]===paramCode) {
+                     //   paramCode   = paramA[0];
+                        paramName   = paramA[1];
+                        //paramValue  = paramA[2];
+                        paramType   = paramA[3];
+                        placeholder = paramA[4];  
+                        listToAdd.push([paramName, paramCode, paramValue, paramType, placeholder]);
                         found=true;
-                        let paramName=paramA[1];
-                        let paramType=paramA[3];
-                        let placeholder=paramA[4];
-                        AddParam(paramName, paramCode, paramValue, paramType, placeholder);
                         break;
                     }
                 }
-                if (!found) AddParam(paramCode+'!', paramCode, paramValue, 'text', '');    
+                
+                // not suggested 
+                if (!found) listToAdd.push([paramCode+'!', paramCode, paramValue, 'text', '']);
+              //  AddParam(paramCode+'!', paramCode, paramValue, 'text', '');    
+            }  
+            
+            // table for quick searching
+            let positionMap = new Map();
+            for (let i = 0; i < allParams.length; i++) {
+                positionMap.set(allParams[i][0], i);
+            }    
+          
+            // sort based on order in allParams
+            listToAdd = listToAdd.sort((a, b) => {
+                let posA = positionMap.get(a[1]) ?? -1; // Default to -1 if not found
+                let posB = positionMap.get(b[1]) ?? -1; // Default to -1 if not found
+                return posA - posB;
+            });
+            
+            console.log(listToAdd);
+            
+            // display params rows
+            for (let itemToAdd of listToAdd) {
+                AddParam(itemToAdd[0], itemToAdd[1], itemToAdd[2], itemToAdd[3], itemToAdd[4]); 
             }
         }
     };";
@@ -238,4 +209,3 @@ function paramEditor($params, $allparams, $name, $label) {
     }
     return $htmlpe;
 }
-?>

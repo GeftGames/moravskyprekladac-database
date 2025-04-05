@@ -70,7 +70,7 @@ if ($result->num_rows > 0) {
     echo "<p>Prázné! Vytvořte nebo importujte překlady</p>";
 }
 selectListScripts();
-createSelectList(list: $listTranslates, id:"translate",defId: $_SESSION["translate"]);
+createSelectList(list: $listTranslates, id:"translate", defId: $_SESSION["translate"]);
 ?>
 <!DOCTYPE html>
 <html lang="cs">
@@ -293,7 +293,7 @@ createSelectList(list: $listTranslates, id:"translate",defId: $_SESSION["transla
         "|",
         [
             ["tools", "nástroje"],
-            [["analyzesentences", "Analýza textu"], ["analyzeSentance", "Analýza vět"], ["searchdup", "Hledat duplikáty"]]
+            [["analysesentences", "Analýza textu"], ["analyzeSentance", "Analýza vět"], ["searchdup", "Hledat duplikáty"]]
         ],
         [
             ["attributes", "Atributy"],
@@ -312,6 +312,10 @@ createSelectList(list: $listTranslates, id:"translate",defId: $_SESSION["transla
             ["replaces", "Náhrady"],
             [["replace_general_start", "Obecně na začátku"], ["replace_general_inside", "Obecně uprostřed"], ["replace_general_end", "Obecně nakonci"],"|",
                 ["replace_defined", "Definované"], ["replace_noun_defined", "Zakončení pods."], ["replace_adjective_defined", "Zakončení příd."]]
+        ],
+        [
+            ["relations", "Vztahy"],
+            [["noun", "Podstatná jména"], ["adjective", "Přídavná jména"], ["pronoun", "Zájmena"], ["number", "Číslovky"], ["verb", "Slovesa"], ["adverb", "Příslovce"], ["preposition", "Předložky"], ["conjunction", "Spojky"], ["particle", "Částice"], ["", "Citoslovce"]]
         ],
         [
             ["translate", "Překlad"],

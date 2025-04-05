@@ -116,41 +116,16 @@ function list_relation_items() {
     $translate=$_SESSION['translate'];
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
-    $sql="SELECT id FROM $table WHERE translate = $translate;";
-    $result = $conn->query($sql);
+    // from
 
-    if ($result) {
-        if ($result->num_rows > 0) {
-            $sqlFrom="SELECT `id`, `label` FROM `".$table."_cs_patterns`";
-            $resultFrom = $conn->query($sql);
-            if (!$resultFrom) {
-                throwError("SQL error: ".$sqlFrom);
-                return;
-            }
+    include "components/give_relations.php";
 
-            $list=[];
-            while ($row = $result->fetch_assoc()) {
-                $idRelation=$row["id"];
-                $from=null;
-
-                while ($rowFrom = $resultFrom->fetch_assoc()) {
-                    if ($rowFrom['id']==$idRelation){
-                        $from=$rowFrom;
-                    }
-                }
-
-                if ($from!=null) {
-                    $list[]=[$idRelation, $from["label"]];
-                } else {
-                    $list[]=[$idRelation, "<Neznámé>"];
-                }
-            }
-
-            echo json_encode(["status" => "OK", "list" => $list]);
-        } else echo json_encode([]);
+    $list=give_relations($conn, "noun");
+    echo json_encode(["status" => "OK", "list" => $list]);
+  /*      } else echo json_encode([]);
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_items", "message" => $conn->error, "sql"=>$sql]);
-    }
+    }*/
 }
 #endregion 
 
@@ -601,7 +576,7 @@ function adverb_cs_update() {
     } 
 }
 
-function interjection_cs_item() {
+function interjection_cs_item() :void {
     if (!isset($_POST['id'])){
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
         return;
@@ -765,13 +740,13 @@ function cite_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, data FROM cites WHERE id = '$id';";
+    $sql="SELECT label, data, type FROM cites WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {  
         if ($result->num_rows > 0) {   
             while($row = $result->fetch_assoc()) {  
-                echo json_encode(["status"=>"OK", "label"=>$row["label"], "params"=>$row["data"]]);
+                echo json_encode(["status"=>"OK", "label"=>$row["label"], "type"=>$row["type"], "params"=>$row["data"]]);
                 return;
             }
         } else {
@@ -784,13 +759,14 @@ function cite_item() {
 }
 
 function cite_update() {
-    if (!isset($_POST['id']) || !isset($_POST['label']) && !isset($_POST['params'])) {
+    if (!isset($_POST['id']) || !isset($_POST['label']) || !isset($_POST['type']) && !isset($_POST['params'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
         return;
     }
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
-    
+
     $id = (int)$_POST['id'];
+    $type = (int)$_POST['type'];
     $label = $conn->real_escape_string($_POST['label']);
     $params = $_POST['params'];
 
@@ -800,7 +776,7 @@ function cite_update() {
         return;
     }
 
-    $sql="UPDATE cites SET label = '$label', data = '$params' WHERE id = $id;";
+    $sql="UPDATE cites SET label = '$label', type = '$type', data = '$params' WHERE id = $id;";
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';
@@ -818,7 +794,7 @@ function pieceofcite_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT `label`, `parent`, `cite`, `people`, `text` FROM piecesofcite WHERE id = '$id';";
+    $sql="SELECT `label`, `parent`, `data`, `people`, `text`, `translated` FROM piecesofcite WHERE id = '$id';";
 
     $result = $conn->query($sql);
     if ($result) {  
@@ -828,9 +804,10 @@ function pieceofcite_item() {
                     "status"=>"OK", 
                     "label" =>$row["label"], 
                     "parent"=>$row["parent"], 
-                    "cite"  =>$row["cite"], 
+                    "data"  =>$row["data"],
                     "people"=>$row["people"],
-                    "text"  =>$row["text"]
+                    "text"  =>$row["text"],
+                    "translated"  =>$row["translated"]
                 ]);
                 return;
             }
@@ -856,6 +833,7 @@ function pieceofcite_update() {
     $cite   = $_POST['cite'];
     $people = $_POST['people'];
     $text = $conn->real_escape_string($_POST['text']);
+    $translated = $conn->real_escape_string($_POST['translated']);
 
     // Ensure valid JSON
     if ($cite !== null && json_decode($cite) === null) {
@@ -867,7 +845,7 @@ function pieceofcite_update() {
         return;
     }
 
-    $sql="UPDATE piecesofcite SET label = '$label', parent = '$parent', people = '$people', cite = '$cite', `text` = '$text' WHERE id = $id;";
+    $sql="UPDATE piecesofcite SET label = '$label', parent = '$parent', people = '$people', cite = '$cite', `text` = '$text', `translated` = '$translated' WHERE id = $id;";
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';
@@ -906,7 +884,7 @@ function noun_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `noun_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `nouns_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -953,7 +931,7 @@ function noun_relation_update() {
         $toShape=$to[2];
         $toComment=$to[3];
         $toSource=$to[4];
-        $sqlTo= /** @lang SQL */"UPDATE noun_to SET `priority` = '$toPriority' WHERE id = $toId;";
+        $sqlTo= /** @lang SQL */"UPDATE nouns_to SET `priority` = '$toPriority' WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
         if (!$resultTo) {
@@ -971,5 +949,94 @@ function noun_relation_update() {
             "message1" => $conn->error, "message2" => $errorto,
             "sql"=>$sql
         ]);
+    }
+}
+
+function noun_pattern_to_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $sql="SELECT label, base, gender, uppercase, shapes, tags FROM noun_patterns_to WHERE id = '$id';";
+    $result = $conn->query($sql);
+
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "shapes"=>$row["shapes"], "gender"=>$row["gender"], "uppercase"=>$row["uppercase"]]);
+                return;
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"noun_pattern_to_item", "message" => $conn->error, "sql"=>$sql]);
+    }
+    $conn->close();
+}
+
+function noun_pattern_to_update() {
+    // Check if all required parameters are set
+    if (!isset($_POST['id'])
+     || !isset($_POST['label'])
+     || !isset($_POST['base'])
+     || !isset($_POST['shapes'])
+     || !isset($_POST['uppercase'])
+     || !isset($_POST['gender'])
+     || !isset($_POST['tags'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+
+    $conn= new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    // Get the values from the POST request
+    $id = (int)$_POST['id'];
+    $label = $conn->real_escape_string($_POST['label']);
+    $gender = (int)$_POST['gender'];
+    $uppercase = (int)$_POST['uppercase'];
+    $shapes = $_POST['shapes'];
+    $tags = $_POST['tags'];
+    $base = $_POST['base'];
+
+    // Update the noun_pattern_to table
+    /*$sql="UPDATE noun_pattern_to SET".
+        "label = '$label',".
+        "base = '$base',".
+        "gender = $gender,".
+        "uppercase = $uppercase,".
+        "shapes = '$shapes',".
+        "tags = '$tags' WHERE id = $id;";
+
+    $result=$conn->query($sql);*/
+
+    $stmt = $conn->prepare("UPDATE noun_patterns_to SET 
+        label = ?, 
+        base = ?, 
+        gender = ?, 
+        uppercase = ?, 
+        shapes = ?, 
+        tags = ? 
+            WHERE id = ?");
+
+    if ($stmt === false) {
+        die(json_encode(["status" => "ERROR", "message" => $conn->error]));
+    }
+
+    // Bind parameters: 'ssiiisi' corresponds to the types:
+    // s = string, i = integer
+    $stmt->bind_param("ssiissi", $label, $base, $gender, $uppercase, $shapes, $tags, $id);
+
+    $result = $stmt->execute();
+
+    // Display result
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "noun_pattern_to_update", "message" => $conn->error, "sql"=>$sql]);
     }
 }

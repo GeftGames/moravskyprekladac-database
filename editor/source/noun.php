@@ -70,7 +70,8 @@
 
         flist_noun_patterns_cs.EventItemSelectedChanged(noun_cs_changed);";
     
-        $GLOBALS["script"].="var flist_noun_patterns_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_noun_patterns_cs; 
         var currentNounCSSave = function() {
             let label=document.getElementById('nounLabel').value;
             let base=document.getElementById('nounBase').value;
@@ -98,7 +99,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_noun_patterns_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });

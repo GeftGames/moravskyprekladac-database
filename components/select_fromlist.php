@@ -1,49 +1,52 @@
 <?php
+// Side menu
+
 function createSelectList($list, $id, $defId) {
     $encodedList=json_encode($list);
+    //echo $defId;
+    $jsVar="filteredSearchList_".$id;
     // Basic form
     $GLOBALS['onload'].= /** @lang JavaScript */"
-        createSelectFilter('$id');
-        filteredSearchList_".$id." = new filteredSearchList($encodedList, '$id');
-        filteredSearchList_".$id.".selectId($defId);
+        $jsVar = createSelectFilter('$id', $encodedList, $defId);
+      //  $jsVar.selectId();
     ";
-
+//echo "('$id', $encodedList, $defId);";
     $GLOBALS['script'].= /** @lang JavaScript */"
-    var filteredSearchList_$id;
+    var $jsVar;
     ";
 }
 
 function selectListScripts() :void{
     // init
     $GLOBALS['script'].= /** @lang JavaScript */'
-    var createSelectFilter = (id) => {
-        let e=document.getElementById("select_"+id);
-  
+    var createSelectFilter = (id, list, defId) => {
+        let selectFilterParent=document.getElementById("select_"+id);
+
         // Create main div
-        const container = document.createElement("div");
-        container.style.display = "flex";
-        container.className = "filterSelect";
-        container.addEventListener("click", ()=>{switchSearch(id)});
+        const containerS = document.createElement("div");
+        containerS.style.display = "flex";
+        containerS.className = "filterSelect";
+        containerS.addEventListener("click", ()=>{switchSearch(id)});
      
         // Create span
-        const span = document.createElement("span");
-        span.id = `selectedLabel_${id}`;
-        span.style.minWidth = "5cm";
-        span.style.display = "block";
-        container.appendChild(span);
+        const spanL = document.createElement("span");
+        spanL.id = `selectedLabel_${id}`;
+        spanL.style.minWidth = "5cm";
+        spanL.style.display = "block";
+        containerS.appendChild(spanL);
      
         // Create dropdown indicator
         const dropdown = document.createElement("div");
         dropdown.className = "filterbtnpop";
         dropdown.textContent = "▼";  
-        container.appendChild(dropdown);
+        containerS.appendChild(dropdown);
     
         // Create hidden input
         const input = document.createElement("input");
         input.type = "hidden";
         input.id = `listreturnholder_${id}`;
-        container.appendChild(input);
-        e.appendChild(container);
+        containerS.appendChild(input);
+        selectFilterParent.appendChild(containerS);
         
         const containerPopup = document.createElement("div");
         containerPopup.id = `searchList_${id}`;
@@ -51,6 +54,7 @@ function selectListScripts() :void{
         containerPopup.style.display = "none";
     
         const inputContainerPopup = document.createElement("div");
+     
         inputContainerPopup.style.display = "flex";
         containerPopup.appendChild(inputContainerPopup);
     
@@ -64,7 +68,9 @@ function selectListScripts() :void{
         listContainerPopup.className = "listSearchSelect";
         containerPopup.appendChild(listContainerPopup);
       
-        e.appendChild(containerPopup);
+        selectFilterParent.appendChild(containerPopup);
+        
+        return new filteredSearchList(id, list, defId);
     };';
 
     // Hide popup
@@ -88,7 +94,7 @@ function selectListScripts() :void{
     $GLOBALS['script'].= /** @lang JavaScript */
         '
     class filteredSearchList{
-        constructor(list, FilteredListName) {
+        constructor(FilteredListName, list, defId) {
             this.handlerItemSelectedChanged=null;
             this.classNameSelected="selectedItem";
             
@@ -98,13 +104,14 @@ function selectListScripts() :void{
             this.ListContainer=document.getElementById("listtoselect_"+FilteredListName);
             this.ReturnHolder =document.getElementById("listreturnholder_"+FilteredListName);
             this.Popup        =document.getElementById("searchList_"+FilteredListName);
-            
+           
             this.FilterElement.addEventListener("input", () => {
                 this.generateList();
             });
             
             this.list=list;
             this.generateList();
+            this.selectId(defId);
         }
     
         getSelectedItemInList = () => {
@@ -183,7 +190,6 @@ function selectListScripts() :void{
         }
         
         selectId(id) {
-            
             // Deselect
             let elementsSelected = this.getSelectedItemInList();
             if (elementsSelected!==undefined) {
@@ -191,13 +197,22 @@ function selectListScripts() :void{
                     e.classList.remove(this.classNameSelected);
                 }
             }
-            if (id!=null){
-                let selectedE;
-                if (id===-1) selectedE=this.ListContainer.lastChild;
-                else selectedE=this.ListContainer.querySelector(`div[data-id="`+id+`"]`);
-                selectedE.classList.add(this.classNameSelected);
-                this.SelectedLabel.innerText=selectedE.innerText;  
-                this.ReturnHolder.value= selectedE.getAttribute("data-id");
+            
+            // select
+            if (id!=null) {
+                if (this.ListContainer.childNodes.length>0) {
+                    let selectedE;
+                    if (id<0) selectedE=this.ListContainer.lastChild;
+                    else {
+                        selectedE=this.ListContainer.querySelector(`div[data-id="`+id+`"]`);
+                        if (selectedE==null) console.warn("selectedE is null", {"file": "select_fromlist", "list": this.ListContainer, "filter": `div[data-id="`+id+`"]`});
+                    }
+                    if (selectedE!=null) {
+                        selectedE.classList.add(this.classNameSelected);
+                        this.SelectedLabel.innerText=selectedE.innerText;  
+                        this.ReturnHolder.value= selectedE.getAttribute("data-id");
+                    }
+                }
             }
         }
     }';

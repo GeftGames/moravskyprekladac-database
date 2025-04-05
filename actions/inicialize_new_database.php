@@ -34,7 +34,7 @@ if (isset($_POST["action"])) rest();
                 <input type="hidden" name="action" value="database_init">
                 <p style="font-weight: bold;">Nový účet admina</p>
                 <label>Uživatelské jméno:</label>
-                <input type="text" name="username" value="admin" placeholder="admin" autocomplete="on" required><br>
+                <input type="text" name="username" value="root" placeholder="admin" autocomplete="on" required><br>
                 <label>Heslo:</label>
                 <input type="password" name="password" autocomplete="on" required><br>
                 <label>Email:</label>
