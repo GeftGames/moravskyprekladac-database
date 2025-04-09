@@ -1,18 +1,25 @@
 <?php
-// Side menu
-
+/* Creates custom <select> with filter
+ * |--------------|
+ * | select     v |
+ * |--------------|
+ * |  filter      |
+ * |--------------|
+ * |  option1     |
+ * |  option2     |
+ * |  option3     |
+ * |--------------|
+ */
 function createSelectList($list, $id, $defId) {
     $encodedList=json_encode($list);
-    //echo $defId;
+
     $jsVar="filteredSearchList_".$id;
+
     // Basic form
+    $GLOBALS['script'].= /** @lang JavaScript */"var $jsVar;";
+
     $GLOBALS['onload'].= /** @lang JavaScript */"
         $jsVar = createSelectFilter('$id', $encodedList, $defId);
-      //  $jsVar.selectId();
-    ";
-//echo "('$id', $encodedList, $defId);";
-    $GLOBALS['script'].= /** @lang JavaScript */"
-    var $jsVar;
     ";
 }
 
@@ -213,6 +220,9 @@ function selectListScripts() :void{
                         this.ReturnHolder.value= selectedE.getAttribute("data-id");
                     }
                 }
+            }else{
+                this.ReturnHolder.value=null;
+                this.SelectedLabel.innerText="<Nenastaveno>";
             }
         }
     }';

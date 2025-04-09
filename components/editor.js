@@ -1,4 +1,5 @@
 let filteredLists=[];
+var sort;
 
 class filteredList{
     constructor(FilteredListName, type) {
@@ -12,6 +13,13 @@ class filteredList{
         this.TableName=FilteredListName;
         this.lastAddedId=-1;
         this.type=type;
+
+        document.getElementById('sortTypeFilterList').addEventListener('change', (e) => {
+
+            let sort=document.getElementById("sortTypeFilterList").value;
+            localStorage.setItem("sort", sort);
+            this.generateList(this.list);
+        });
     }
 
     EventItemSelectedChanged = function(func) {
@@ -58,6 +66,14 @@ class filteredList{
         this.ListContainer.innerHTML = "";
         this.filter=this.filterText().toLowerCase();
         if (!Array.isArray(list)) console.log("list is not array", list);
+
+        let sortType=document.getElementById("sortTypeFilterList").value;
+        if (sortType==="abc") list.sort((a, b) => a[1].localeCompare(b[1]));
+        else if (sortType==="desc") list.sort((a, b) => b[1].localeCompare(a[1]));
+        else if (sortType==="id") list.sort((a, b) => b[0].localeCompare(a[0]));
+        else if (sortType==="none" || sortType==="") {}
+
+        this.list=list;
         list.forEach(item => {
             let id=item[0];
             let label=item[1];

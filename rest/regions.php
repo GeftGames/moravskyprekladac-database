@@ -118,7 +118,7 @@ function list_relation_items() {
 
     // from
 
-    include "components/give_relations.php";
+    include "components/give_relations_pattern.php";
 
     $list=give_relations($conn, "noun");
     echo json_encode(["status" => "OK", "list" => $list]);
@@ -193,13 +193,20 @@ function noun_pattern_cs_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, base, gender, shapes, tags FROM noun_patterns_cs WHERE id = '$id';";
+    $sql="SELECT label, base, gender, shapes, uppercase, tags FROM noun_patterns_cs WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {    
         if ($result->num_rows > 0) {    
             while($row = $result->fetch_assoc()) {
-                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "shapes"=>$row["shapes"], "gender"=>$row["gender"]]);
+                echo json_encode(["status"=>"OK",
+                    "label"=>$row["label"],
+                    "base"=>$row["base"],
+                    "tags"=>$row["tags"],
+                    "shapes"=>$row["shapes"],
+                    "gender"=>$row["gender"],
+                    "uppercase"=>$row["uppercase"]
+                ]);
                 return;
             }
         } else {
@@ -221,11 +228,20 @@ function noun_pattern_cs_update() {
     $id = (int)$_POST['id'];
     $label = $conn->real_escape_string($_POST['label']);
     $gender = (int)$_POST['gender'];
+    $uppercase = (int)$_POST['uppercase'];
     $shapes = $_POST['shapes'];
     $tags = $_POST['tags'];
     $base = $_POST['base'];
 
-    $sql="UPDATE noun_pattern_cs SET label = '$label', base = '$base', gender = $gender, shapes = '$shapes', tags = '$tags' WHERE id = $id;";
+    $sql="UPDATE noun_pattern_cs SET 
+       label = '$label', 
+       base = '$base', 
+       gender = $gender, 
+       gender = $uppercase, 
+       shapes = '$shapes', 
+       tags = '$tags' 
+            WHERE id = $id;";
+
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';
@@ -392,13 +408,34 @@ function verb_pattern_cs_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, base, shapetype, shapes, category, tags FROM verb_patterns_cs WHERE id = '$id';";
+    $sql="SELECT label, base,
+       shapes_infinitive, 
+       shapes_continous, 
+       shapes_future, 
+       shapes_imperative, 
+       shapes_past_active, 
+       shapes_past_passive, 
+       shapes_transgressive_cont, 
+       shapes_transgressive_past, 
+       shapes_auxiliary, 
+       
+       category, tags FROM verb_patterns_cs WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {    
         if ($result->num_rows > 0) {    
             while($row = $result->fetch_assoc()) {
-                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "shapetype"=>$row["shapetype"], "tags"=>$row["tags"], "category"=>$row["category"], "shapes"=>$row["shapes"]]);
+                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "category"=>$row["category"],
+                    "infinitive"        =>$row["shapes_infinitive"],
+                    "continous"         =>$row["shapes_continous"],
+                    "future"            =>$row["shapes_future"],
+                    "imperative"        =>$row["shapes_imperative"],
+                    "past_active"       =>$row["shapes_past_active"],
+                    "past_passive"      =>$row["shapes_past_passive"],
+                    "transgressive_past"=>$row["shapes_transgressive_cont"],
+                    "transgressive_cont"=>$row["shapes_transgressive_past"],
+                    "auxiliary"         =>$row["shapes_auxiliary"]
+                ]);
                 return;
             }
         } else {
@@ -411,7 +448,7 @@ function verb_pattern_cs_item() {
 }
 
 function verb_pattern_cs_update() {
-    if (!isset($_POST['id']) || !isset($_POST['label']) || !isset($_POST['base']) || !isset($_POST['shapes']) || !isset($_POST['shapetype']) || !isset($_POST['category']) || !isset($_POST['tags'])) {
+    if (!isset($_POST['id']) || !isset($_POST['label']) || !isset($_POST['base']) || !isset($_POST['shapes']) || !isset($_POST['category']) || !isset($_POST['tags'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
         return;
     }
@@ -420,12 +457,29 @@ function verb_pattern_cs_update() {
     $id = (int)$_POST['id'];
     $label = $conn->real_escape_string($_POST['label']);
     $base = $_POST['base'];
-    $shapetype = $_POST['shapetype'];
-    $shapes = $_POST['shapes'];
-    $category = $_POST['category'];
     $tags = $_POST['tags'];
+    $category = $_POST['category'];
+    $shapes_infinitive      = $_POST['shapes_infinitive'];
+    $shapes_continous       = $_POST['shapes_continous'];
+    $shapes_future          = $_POST['shapes_future'];
+    $shapes_imperative      = $_POST['shapes_imperative'];
+    $shapes_past_active     = $_POST['shapes_past_active'];
+    $shapes_past_passive    = $_POST['shapes_past_passive'];
+    $shapes_transgressive_cont = $_POST['shapes_transgressive_cont'];
+    $shapes_transgressive_past = $_POST['shapes_transgressive_past'];
+    $shapes_aluxilary       = $_POST['shapes_aluxilary'];
 
-    $sql="UPDATE verb_pattern_cs SET label = '$label', base = '$base', shapetype = '$shapetype', shapes = '$shapes', category = '$category', tags = '$tags' WHERE id = $id;";
+    $sql="UPDATE verb_pattern_cs SET label = '$label', base = '$base', 
+        shapes_infinitive = '$shapes_infinitive', 
+        shapes_continous        = '$shapes_continous',
+        shapes_future           = '$shapes_future',
+        shapes_imperative       = '$shapes_imperative', 
+        shapes_past_active      = '$shapes_past_active',
+        shapes_past_passive     = '$shapes_past_passive',
+        shapes_transgressivecont  = '$shapes_transgressive_cont',
+        shapes_transgressive_past  = '$shapes_transgressive_past',
+        shapes_aluxilary        = '$shapes_aluxilary',       
+            category = '$category', tags = '$tags' WHERE id = $id;";
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';
@@ -538,7 +592,7 @@ function adverb_cs_item() {
 
     $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT shape, tags FROM adverb_cs WHERE id = '$id';";
+    $sql="SELECT shape, tags FROM adverbs_cs WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {    
@@ -567,7 +621,7 @@ function adverb_cs_update() {
     $shape = $conn->real_escape_string($_POST['shape']);
     $tags = $_POST['tags'];
 
-    $sql="UPDATE adverb_cs SET shape = '$shape', tags = '$tags' WHERE id = $id;";
+    $sql="UPDATE adverbs_cs SET shape = '$shape', tags = '$tags' WHERE id = $id;";
     $result=$conn->query($sql);    
     if ($result) {
         echo '{ "status": "OK"}';
@@ -884,14 +938,23 @@ function noun_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `cite` FROM `nouns_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `nouns_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
         return;
     }
     while ($row = $result->fetch_assoc()) {
-        $listTo[]=["id"=>$row["id"], "priority"=>$row["priority"], "shape"=>$row["shape"], "comment"=>$row["comment"], "cite"=>$row["cite"]];
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "custombase"=>$row["custombase"],
+            "undetected"=>"body: ".$row["tmp_pattern_from_body"]." pattern:".$row["tmp_imp_from_pattern"],
+            "cite"=>$row["cite"]
+        ];
     }
 
     echo json_encode([
@@ -931,7 +994,14 @@ function noun_relation_update() {
         $toShape=$to[2];
         $toComment=$to[3];
         $toSource=$to[4];
-        $sqlTo= /** @lang SQL */"UPDATE nouns_to SET `priority` = '$toPriority' WHERE id = $toId;";
+        $toTags=$to[5];
+        $sqlTo= /** @lang SQL */"UPDATE nouns_to SET 
+            `priority` = '$toPriority', 
+            `shape` = '$toShape',  
+            `tags` = '$toTags',  
+            `comment` = '$toComment',  
+            `cite` = '$toSource'  
+                WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
         if (!$resultTo) {
@@ -1037,6 +1107,118 @@ function noun_pattern_to_update() {
     if ($result) {
         echo '{ "status": "OK"}';
     } else {
-        echo json_encode(["status" => "ERROR", "function" => "noun_pattern_to_update", "message" => $conn->error, "sql"=>$sql]);
+        echo json_encode(["status" => "ERROR", "function" => "noun_pattern_to_update", "message" => $conn->error]);
+    }
+}
+
+function adverb_relation_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $relation_id="";
+    $from=-1;
+
+    $sql="SELECT `id`, `from` FROM adverb_relations WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $relation_id=$row["id"];
+                $from=$row["from"];
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+            return;
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
+    }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, cite FROM `adverbs_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "cite"=>$row["cite"]
+        ];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "from" =>$from,
+        "to"=>json_encode($listTo)
+    ]);
+    $conn->close();
+}
+
+function adverb_relation_update() {
+    if (!isset($_POST['id']) || !isset($_POST['from']) || !isset($_POST['to'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id    = (int)$_POST['id'];
+    $from  = $conn->real_escape_string($_POST['from']);
+
+    $sql= /** @lang SQL */"UPDATE adverb_relations SET `from` = '$from' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    // todo: convert $_POST['to'] json array to sql code multiple rows (id, priority, shape, comment, source) and update table nouns_to
+    // check if it's array
+    $toData = json_decode($_POST['to'], true);
+    if ($toData === null) {
+        echo json_encode(["status" => "ERROR", "message" => "Invalid JSON in 'to' parameter"]);
+        return;
+    }
+
+    $tookdone=true;
+    $errorto="";
+    foreach ($toData as $to) {
+        $toId=$to[0];
+        $toPriority=$to[1];
+        $toShape=$to[2];
+        $toComment=$to[3];
+        $toSource=$to[4];
+        $toTags=$to[5];
+        $sqlTo= /** @lang SQL */"UPDATE adverbs_to SET 
+            `priority` = '$toPriority', 
+            `shape` = '$toShape',  
+            `tags` = '$toTags',  
+            `comment` = '$toComment',  
+            `cite` = '$toSource'  
+                WHERE id = $toId;";
+        $resultTo=$conn->query($sqlTo);
+
+        if (!$resultTo) {
+            $tookdone=false;
+            $errorto.=$conn->error.", ";
+        }
+    }
+
+    if ($result && $tookdone) {
+        echo '{ "status": "OK", "idFrom": "'.$id.'"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "cite_update",
+            "message1" => $conn->error, "message2" => $errorto,
+            "sql"=>$sql
+        ]);
     }
 }

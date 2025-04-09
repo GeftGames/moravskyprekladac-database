@@ -20,7 +20,8 @@
 
         echo FilteredList($list, "noun_patterns_cs");  
 
-        $GLOBALS["onload"].= /** @lang JavaScript */"
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "
             noun_cs_changed=function() { 
             let id = flist_noun_patterns_cs.getSelectedIdInList();
         
@@ -38,6 +39,7 @@
                     document.getElementById('nounLabel').value=json.label;
                     document.getElementById('nounBase').value=json.base;
                     document.getElementById('nounGender').value=json.gender;
+                    document.getElementById('nounUppercase').value=json.uppercase;
 
                     if (json.gender==null) json.gender=0;
                     document.getElementById('nounGender').value=json.gender; 
@@ -51,7 +53,7 @@
                         let shape=shapes[i];                            
                         let textbox=document.getElementById('noun'+i);
 
-                        if (shape==undefined) textbox.value='';
+                        if (shape===undefined) textbox.value='';
                         else textbox.value=shape;
                     }                   
 
@@ -78,6 +80,8 @@
             let gender=document.getElementById('nounGender').value;
             let nounId=document.getElementById('nounId').value;
             let tags=document.getElementById('noun_csdatatags').value;
+            let uppercase=document.getElementById('nounUppercase').value;
+            
             let shapes=[];
             for (let i=0; i<14; i++) {
                 let textbox=document.getElementById('noun'+i);
@@ -92,6 +96,7 @@
             formData.append('gender', gender);
             formData.append('shapes', shapes.join('|'));
             formData.append('tags', tags);
+            formData.append('uppercase', uppercase);
 
             fetch('index.php', {
                 method: 'POST',
@@ -110,24 +115,35 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="nounLabel" for="name" value="" placeholder="pohádKA">
+                <label id="name" for="nounLabel">Popis</label><br>
+                <input type="text" id="nounLabel" value="" placeholder="pohádKA">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base">Základ</label><br>
-                <input type="text" id="nounBase" for="name" value="" placeholder="pohád">
+                <label id="base" for="nounBase">Základ</label><br>
+                <input type="text" id="nounBase" value="" placeholder="pohád">
             </div>
 
             <div class="row section">
-                <label>Rod</label>
+                <label for="nounGender">Rod</label>
                 <select id="nounGender" name="type">
                     <option value="0">Neznámý</option>
                     <option value="4">Střední</option>
                     <option value="3">Ženský</option>
                     <option value="2">Mužský neživotný</option>
                     <option value="1">Mužský životný</option>
+                </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="nounUppercase">Velké písmena</label>
+                <select id="nounUppercase" name="uppercase">
+                    <option value="0">Neznámý</option>
+                    <option value="1">malé</option>
+                    <option value="2">Počáteční Velké</option>
+                    <option value="3">VŠECHNY VELKÉ</option>
                 </select>
                 <br>
             </div>

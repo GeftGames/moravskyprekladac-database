@@ -24,6 +24,8 @@
         --ColorBackground: black;
         --ConBack: hsl(0, 0%, 20%);
         --shm: 3px 3px 10px #ffffff15;
+
+        --bsh: 2px 2px 10px rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -35,6 +37,7 @@ body{
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background-color: var(--ColorBackground);
 }
 
 @font-face {
@@ -90,9 +93,6 @@ a{
 .error {
     color: red;
     font-family: var(--f);
-    max-height:4cm;
-    overflow: hidden;
-    overflow-y: scroll;
 }
 
 /*Controls*/
@@ -540,4 +540,12 @@ h1{
 .sideItem.selectedItem{
     background-color: var(--ColorTheme);
     font-weight: bold;
+}
+.trTo{
+    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
+    border-left: solid;
+    padding-left: 7px;
+    align-items: flex-start;
 }

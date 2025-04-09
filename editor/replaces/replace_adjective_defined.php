@@ -3,11 +3,10 @@
         <?php
         
         // Do dashboard stuff
-      //  include "components/filter_list.php";
         include "components/tags_editor.php";
-        
-        $order="ORDER BY LOWER(label) ASC";
-        $sql="SELECT id, label FROM replace $order;";
+
+        $filter=$_SESSION['translate'];
+        $sql="SELECT id, label FROM replaces_defined_adjective WHERE translate=$filter;";
         $result = $conn->query($sql);
         $list=[];
         if ($result->num_rows > 0) {
@@ -20,7 +19,8 @@
 
         echo FilteredList($list, "adjective_pattern_cs");  
 
-        $GLOBALS["onload"].="adjective_cs_changed=function() { 
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "adjective_cs_changed=function() { 
             let elementsSelected = flist_adjective_pattern_cs.getSelectedItemInList();
         
             // no selected
@@ -88,7 +88,8 @@
         flist_adjective_pattern_cs.EventItemSelectedChanged(adjective_cs_changed);
         flist_adjective_pattern_cs.EventItemAddedChanged(adjective_cs_added);";
     
-        $GLOBALS["script"].="var flist_adjective_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_adjective_pattern_cs; 
         var currentadjectiveCSSave = function() {
             let label=document.getElementById('adjectiveLabel').value;
             let base=document.getElementById('adjectiveBase').value;
@@ -175,19 +176,19 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="adjectiveLabel" for="name" value="" placeholder="ré>réj" style="max-width: 9cm;">
+                <label id="name" for="name">Popis</label><br>
+                <input type="text" id="adjectiveLabel" value="" placeholder="ré>réj" style="max-width: 9cm;">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base">Z</label><br>
-                <input type="text" id="adjectiveBase" for="name" value="" placeholder="ré" style="max-width: 9cm;">
+                <label id="base" for="name">Z</label><br>
+                <input type="text" id="adjectiveBase" value="" placeholder="ré" style="max-width: 9cm;">
             </div>
 
             <div class="row section">
-                <label id="base">Na</label><br>
-                <input type="text" id="adjectiveBase" for="name" value="" placeholder="réj" style="max-width: 9cm;">
+                <label id="base" for="name">Na</label><br>
+                <input type="text" id="adjectiveBase" value="" placeholder="réj" style="max-width: 9cm;">
             </div>
 
             <div class="row section">
@@ -213,8 +214,8 @@
             </div>
 
             <div class="row section">
-                <label for="replaceTypeAdjectiveGender">Pád(y)</label>
-                <input type="text" id="adjectiveLabel" for="name" value="" placeholder="7" style="max-width: 9cm;">
+                <label for="replaceTypeAdjectiveGender" for="name">Pád(y)</label>
+                <input type="text" id="adjectiveLabel" value="" placeholder="7" style="max-width: 9cm;">
                 <br>
             </div>
               

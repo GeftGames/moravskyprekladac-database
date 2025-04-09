@@ -1,22 +1,7 @@
 <div class="splitView">
     <div>
         <?php
-        
-        $arrShapeTables=[
-            //[name, show, len]
-            ["Infinitiv", false, 1], 
-            ["Přítomný", true, 6], 
-            ["Budoucí", true, 6], 
-            ["Rozkazovací", true, 3], 
-            ["Minulý činný", true, 8], 
-            ["Minulý trpný", true, 8], 
-            ["Přechodník přítomný", true, 3],
-            ["Přechodník minulý", true, 3],
-            ["Podmiňovací", true, 6]
-        ];
-        
-        // Do dashboard stuff
-      //  include "components/filter_list.php";
+        // side list
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(label) ASC";
@@ -31,8 +16,21 @@
         } else {
             // TODO: echo "0 results ";
         }
+        echo FilteredList($list, "verb_pattern_cs");
 
-        echo FilteredList($list, "verb_pattern_cs");  
+        $arrShapeTables=[
+            //[name, show, len, code, display]
+            ["Infinitiv", false, 1, "infinitive"],
+            ["Přítomný", true, 6, "continous"],
+            ["Budoucí", true, 6, "future"],
+            ["Rozkazovací", true, 3, "imperative"],
+            ["Minulý činný", true, 8, "past_active"],
+            ["Minulý trpný", true, 8, "past_passive"],
+            ["Přechodník přítomný", true, 3, "transgressive_cont"],
+            ["Přechodník minulý", true, 3, "transgressive_past"],
+            ["Podmiňovací", true, 6, "auxiliary"],
+        ];
+        $jsArrShapeTables=json_encode($arrShapeTables, JSON_UNESCAPED_UNICODE);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         verb_cs_changed=function() {             
@@ -47,52 +45,43 @@
                 body: `action=verb_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('verbId').value=id;
                     document.getElementById('verbLabel').value=json.label;
                     document.getElementById('verbBase').value=json.base;
 
-                    if (json.category==null) json.category=0;
+                    if (json.category===null) json.category=0;
                     document.getElementById('verbCategory').value=json.category; 
 
-                    let shapesTypes=".json_encode($arrShapeTables, JSON_UNESCAPED_UNICODE).";
-                    let shapetypes = json.shapetype;
-                    let arrbooleans=[];
-                    let readerE=0;
-                    for (let i=0; i<shapesTypes.length; i++) {
-                        if (!shapesTypes[i][1]) arrbooleans.push(null);
-                        arrbooleans.push((shapetypes>>readerE & 1) == 1);
-                        readerE++;
-                    }   
-                    console.log('arrbooleans', arrbooleans);
-
-                    // shapes
-                    let shapes;
-                    if (json.shapes!=null) shapes=json.shapes.split('|'); 
-                    else shapes=[];
-
-                    let reader=0;
-                    for (let s=0; s<shapesTypes.length; s++) {
+                    let shapesTypes=$jsArrShapeTables;
+                    
+                    // shapes load
+                    let shapeTypeIndex=0;
+                    for (let s of shapesTypes) {
+                        let code=s[3]; // 'contonous', 'future', ...              
+                        let exists=json[code]!==''; // if this type of table conjunction exists
+                        let checkbox=s[1];// if exists checkbox
+                        
                         // checkbox
-                        if (shapesTypes[s][1]) {
-                            document.getElementById('verbforms'+s).checked=arrbooleans[s];
+                        if (checkbox) {
+                            document.getElementById('verbforms'+shapeTypeIndex).checked=exists;
                         }
                       
-
                         // textboxs
-                        if (arrbooleans[s] || arrbooleans[s]==null){  
-                            console.log(shapesTypes[s][0]);
-                            for (let i=0; i<shapesTypes[s][2]; i++) { 
-                                let shape=shapes[reader];                            
-                                let textbox=document.getElementById('verbShape'+s+''+i);
-                                console.log(shape);
-
-                                if (shape==undefined) textbox.value='';
-                                else textbox.value=shape;
-
-                                reader++;
+                        if (exists) {
+                            let shapes=json[code].split('|');
+                            let shapesLen=s[2];
+                            console.log(shapes);
+                            for (let i=0; i<shapesLen; i++) { 
+                                let shape1=shapes[i];                            
+                             //   console.log(shape1,shapeTypeIndex,i);
+                                let textbox=document.getElementById('verbShape'+shapeTypeIndex+''+i);
+                                if (textbox==null) console.error('\"verbShape'+shapeTypeIndex+''+i+'\" does not exists');
+                                if (shape1===undefined) textbox.value='';
+                                else textbox.value=shape1;
                             }
                         }
+                        shapeTypeIndex++;
                     }
 
                     changeVisibility();
@@ -113,7 +102,8 @@
         flist_verb_pattern_cs.EventItemSelectedChanged(verb_cs_changed);
         flist_verb_pattern_cs.EventItemAddedChanged(verb_cs_added);";
     
-        $GLOBALS["script"].="var flist_verb_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_verb_pattern_cs;
         var currentverbCSSave = function() {
             let label=document.getElementById('verbLabel').value;
             let base=document.getElementById('verbBase').value;
@@ -122,8 +112,7 @@
             let tags=document.getElementById('verb_csdatatags').value;
             let shapes=[];
             let st=0;
-            let shapesTypes=".json_encode($arrShapeTables, JSON_UNESCAPED_UNICODE).";
-            console.log(shapesTypes);
+            let shapesTypes=$jsArrShapeTables;
             let shapetype=0;
             for (let s=0; s<shapesTypes.length; s++) {
                 let display=true;
@@ -148,7 +137,10 @@
             formData.append('base', base);
             formData.append('shapes', shapes.join('|'));
             formData.append('category', category);
-            formData.append('shapetype', shapetype);
+            formData.append('shapes_infinitive', shapetype);
+            formData.append('shapes_future', shapetype);
+            formData.append('shapes_imperative', shapetype);
+            formData.append('shapes_past_active', shapetype);
             formData.append('tags', tags);
 
             fetch('index.php', {
@@ -157,7 +149,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK') {
                    flist_verb_pattern_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -165,13 +157,13 @@
 
        
         var changeVisibility = function() {
-            let shapesTypes=".json_encode($arrShapeTables, JSON_UNESCAPED_UNICODE).";
+            let shapesTypes=$jsArrShapeTables;
             
             for (let i=0; i<shapesTypes.length; i++) {
-                // checkbox
+                // checkboxl
                 if (shapesTypes[i][1]) {
                     let display=document.getElementById('verbforms'+i).checked;
-                    document.getElementById('verbtable'+i).style.display=display ? 'block' : 'none';
+                    document.getElementById('verbtable'+i).style.display=display ? 'inline' : 'none';
                 }
             }
         };
@@ -185,81 +177,97 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="verbLabel" for="name" value="" placeholder="dělAT" style="max-width: 9cm;">
+                <label id="name" for="verbLabel" >Popis</label><br>
+                <input type="text" id="verbLabel" value="" placeholder="dělAT" style="max-width: 9cm;">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base">Základ</label><br>
-                <input type="text" id="verbBase" for="name" value="" placeholder="děl" style="max-width: 9cm;">
+                <label id="base" for="verbBase">Základ</label><br>
+                <input type="text" id="verbBase" value="" placeholder="děl" style="max-width: 9cm;">
             </div>
 
             <div class="section">
                 <label id="name">Časování</label> 
                 <style>#verbTables > div{ min-width:14cm; }</style>
-                <div style="display: flex; flex-wrap: wrap;" id="verbTables">
+                <div style="column-count: 2;" id="verbTables">
                     <?php 
-                    // $arrShapeTables=["Infinitiv", "Přítomný", "Budoucí", "Rozkazovací", "Minulý činný", "Minulý trpný", "Podmiňovací"];
-                  
                     $arrGenders=["Mužský životný", "Mužský neživotný", "Ženský", "Střední"];
                     for ($g=0; $g<count($arrShapeTables); $g++) {
                         $html='<div><p>';
                         if ($arrShapeTables[$g][1])$html.='<input type="checkbox" id="verbforms'.$g.'" onclick="changeVisibility()">';
                         $html.='<label for="verbforms'.$g.'" style="user-select:none">'.$arrShapeTables[$g][0].'</label></p>';
                         $html.='<table id="verbtable'.$g.'">';
-                        if ($g==1 || $g==2 || $g==6) {
+                        $typeTable=$arrShapeTables[$g][3];
+
+                        // Infinitive
+                        if ($typeTable=="infinitive") {
+                            $html.= '<input id="verbShape'.$g.'0" type="text">';
+
+                        // Continous, Future, Podmiňovací
+                        } else if ($typeTable=="continous" || $typeTable=="future" || $typeTable=="auxiliary") {
+                            // table header
                             $html.='<tr>
                                     <td class="tableHeader">Osoba</td>
                                     <td class="tableHeader">Jednotné</td>
                                     <td class="tableHeader">Množné</td>
                                 </tr>';               
-                    
+
+                            // table body 3×2
                             for ($i=0; $i<3; $i++) {
-                                $html.="<tr><td>".($i+1).".</td>";
+                                $html.="<tr><td>".($i+1).".</td>"; // label person
                                 for ($j=0; $j<2; $j++) $html.="<td><input id='verbShape".$g.($j==0 ? $i : 3+$i)."' type='text'></td>";
                                 $html.="</tr>";
                             }
-                        }else if ($g==3) {
+
+                        // Imperative
+                        } else if ($typeTable=="imperative") {
+                            // table header
                              $html.='<tr>
                                     <td class="tableHeader">Rod</td>
                                     <td class="tableHeader">Jednotné</td>
                                     <td class="tableHeader">Množné</td>
                                 </tr>';               
-                    
+
+                             // table body 2×2 (-1)
                             $html.="<tr><td>1.</td>";
                             $html.="<td><input disabled style='opacity: .5;' type='text'></td>";
-                            $html.="<td><input id='verbShape".$g."0' type='text'></td>";
+                            $html.="<td><input id='verbShape".$g."1' type='text'></td>";
                             $html.="</tr>";
                             $html.="<tr><td>2.</td>";
-                            $html.="<td><input id='verbShape".$g."1' type='text'></td>";
+                            $html.="<td><input id='verbShape".$g."0' type='text'></td>";
                             $html.="<td><input id='verbShape".$g."2' type='text'></td>";
                             $html.="</tr>";
-                           
-                        }else if ($g==4 || $g==5) {
-                             $html.='<tr>
+
+                        // Past Passive and active
+                        } else if ($typeTable=="past_active" || $typeTable=="past_passive") {
+                            // table header
+                            $html.='<tr>
                                     <td class="tableHeader">Rod</td>
                                     <td class="tableHeader">Jednotné</td>
                                     <td class="tableHeader">Množné</td>
                                 </tr>';               
-                    
+
+                            // table body 4×2
                             for ($i=0; $i<4; $i++) {
-                                $html.="<tr><td>".($i+1).".</td>";
+                                $html.="<tr><td>".($i==0 ? "m. ž" : ($i==1 ? "m. n" : ($i==2 ? "žen" : "stř"))).".</td>"; // gender label
                                 for ($j=0; $j<2; $j++) $html.="<td><input id='verbShape".$g.($j==0 ? $i : 4+$i)."' type='text'></td>";
                                 $html.="</tr>";
                             }
-                        }else if ($g==0) {
-                            $html.="<tr><input id='verbShape".$g."0' type='text'></tr>";
-                        }else if ($g==7 || $g==8) {
+
+                        //transgressive
+                        }else if ($typeTable=="transgressive_cont" || $typeTable=="transgressive_past") {
+                            // table header
                             $html.='<tr>
                                     <td class="tableHeader">Rod</td>
                                     <td class="tableHeader">Jednotné</td>
                                 </tr>';               
-                    
+
+                            // table body 3×1
                             $html.="<tr><td>j. m</td><td><input id='verbShape".$g."0' type='text'></td></tr>";
                             $html.="<tr><td>j. f+n</td><td><input id='verbShape".$g."1' type='text'></td></tr>";
                             $html.="<tr><td>Množný</td><td><input id='verbShape".$g."2' type='text'></td></tr>";
-                        }
+                        }else echo "<p>ERROR: Table does not exists: $typeTable</p>";
                         echo $html.'</table></div>';
                     }                 
                     ?>
@@ -268,7 +276,7 @@
             </div>
 
             <div class="row section">
-                <label>Zvratné</label>
+                <label for="verbCategory">Zvratné</label>
                 <select id="verbCategory" name="type">
                     <option value="0">Neznámý</option>
                     <option value="1">BEZ</option>

@@ -1,7 +1,8 @@
 <?php
 
 function multiple_simple_to($list) {
-    $GLOBALS["script"].='var to_save = function() {
+    $GLOBALS["script"].= /** @lang JavaScript */'
+        var to_save = function() {
         let data=[]; 
         for (let i=0; i<list.length; i++) {
             let item=list[i];
@@ -14,7 +15,8 @@ function multiple_simple_to($list) {
         return data;// send to server
     };'; 
     
-    $GLOBALS["script"].='var to_load = function(list) {
+    $GLOBALS["script"].= /** @lang JavaScript */'
+        var to_load = function(list) {
         console.log(list);
         for (let i=0; i<list.length; i++) {
             let item=list[i];

@@ -18,7 +18,12 @@ function FilteredList($list, $id) : string {
     $html.="<div id='contextmenu_$id' class='mouseContexMenu'><a onclick=\"getFilteredListById('$id').list_duplicate()\">Duplikovat</a> <a onclick=\"getFilteredListById('$id').list_remove()\">Smazat</a></div>";
     
     // Buttons down
-    $html.="<select class='button' onclick=\"\"><option>Neřadit</option><option>ABC</option></select>";
+    $html.="<select id='sortTypeFilterList' class='button'>
+        <option value='none'>Neřadit</option>
+        <option value='abc'>A 🡒 Z</option>
+        <option value='desc'>Z 🡒 A</option>
+        <option value='id'>ID</option>
+    </select>";
     $html.="<a class='button' onclick=\"getFilteredListById('$id').list_add()\">Přidat</a>";
 
     $html.="</div>";

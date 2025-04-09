@@ -11,8 +11,8 @@ function give_relations($conn, $tableName) : ?array {
     }
 
     // from
-    $tableNameFrom=$tableName.'s_cs';
-    $sqlFrom="SELECT `id`, `shape` FROM `$tableNameFrom`;";
+    $tableNameFrom=$tableName.'_patterns_cs';
+    $sqlFrom="SELECT `id`, `label` FROM `$tableNameFrom`;";
     $resultFrom = $conn->query($sqlFrom);
     if (!$resultFrom) {
         $sqlDone=false;
@@ -25,7 +25,7 @@ function give_relations($conn, $tableName) : ?array {
     if ($sqlDone) {
         // list from
         while ($rowFrom = $resultFrom->fetch_assoc()) {
-            $listFrom[]=[$rowFrom["id"], $rowFrom["shape"]];
+            $listFrom[]=[$rowFrom["id"], $rowFrom["label"]];
         }
 
         // list relations

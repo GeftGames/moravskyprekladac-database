@@ -5,9 +5,9 @@
         // Do dashboard stuff
       //  include "components/filter_list.php";
         include "components/tags_editor.php";
-        
-        $order="ORDER BY LOWER(label) ASC";
-        $sql="SELECT id, label FROM replace $order;";
+
+        $filter=$_SESSION['translate'];
+        $sql="SELECT id, label FROM replaces_defined_noun WHERE translate=$filter;";
         $result = $conn->query($sql);
         $list=[];
         if ($result->num_rows > 0) {
@@ -18,9 +18,10 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs");  
+        echo FilteredList($list, "replaces_defined_noun");  
 
-        $GLOBALS["onload"].="pronoun_cs_changed=function() { 
+        $GLOBALS["onload"].= /** @lang JavaScript */
+            "pronoun_cs_changed=function() { 
             let elementsSelected = flist_pronoun_pattern_cs.getSelectedItemInList();
         
             // no selected
@@ -56,7 +57,7 @@
                             let shape=shapes[g*14+i];                            
                             let textbox=document.getElementById('pronoun'+g+''+i);
 
-                            if (shape==undefined) textbox.value='';
+                            if (shape===undefined) textbox.value='';
                             else textbox.value=shape;
                         }  
                     }
@@ -88,7 +89,8 @@
         flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
         flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
     
-        $GLOBALS["script"].="var flist_pronoun_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_pronoun_pattern_cs; 
         var currentpronounCSSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;

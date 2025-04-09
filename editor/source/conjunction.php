@@ -34,10 +34,9 @@
                 body: `action=conjunction_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('conjunctionId').value=id;
                     document.getElementById('conjunctionLabel').value=json.label;
-                    document.getElementById('conjunctionFalls').value=json.falls;
 
                     // tags
                     if (json.tags!=null) {
@@ -56,10 +55,10 @@
         flist_conjunction_cs.EventItemSelectedChanged(conjunction_cs_changed);
         flist_conjunction_cs.EventItemAddedChanged(conjunction_cs_added);";
     
-        $GLOBALS["script"].="var flist_conjunction_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_conjunction_cs; 
         var currentconjunctionCSSave = function() {
             let label=document.getElementById('conjunctionLabel').value;
-            let falls=document.getElementById('conjunctionFalls').value;
             let conjunctionId=document.getElementById('conjunctionId').value;
             let tags=document.getElementById('conjunction_csdatatags').value;
            
@@ -67,7 +66,6 @@
             formData.append('action', 'conjunction_cs_update');
             formData.append('id', conjunctionId);
             formData.append('label', label);
-            formData.append('falls', falls);
             formData.append('tags', tags);
 
             fetch('index.php', {
@@ -76,7 +74,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_conjunction_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });

@@ -54,7 +54,7 @@ if (file_exists($currenteditor)) {
     include($currenteditor);
     $content=ob_get_contents();
     ob_get_clean();
-} else $_SESSION["error"].="ERROR: Editor not found! '".$currenteditor.'"';
+} else $_SESSION["error"].="<p class='error'>ERROR: Editor not found! \"$currenteditor\"</p>";
 
 $listTranslates=[];
 $sql ="SELECT id, translateName FROM translate";
@@ -70,7 +70,7 @@ if ($result->num_rows > 0) {
     echo "<p>Prázné! Vytvořte nebo importujte překlady</p>";
 }
 selectListScripts();
-createSelectList(list: $listTranslates, id:"translate", defId: $_SESSION["translate"]);
+createSelectList($listTranslates, "translate", $_SESSION["translate"]);
 ?>
 <!DOCTYPE html>
 <html lang="cs">
@@ -84,6 +84,10 @@ createSelectList(list: $listTranslates, id:"translate", defId: $_SESSION["transl
         <?php echo $GLOBALS["script"]; ?>
         function onload() {
             <?php echo $GLOBALS["onload"]; ?>
+
+            // default sort type
+            let sort = localStorage.getItem("sort");
+            document.getElementById("sortTypeFilterList").value = sort;
         }
         function selectLang(){
             let id=document.getElementById("listreturnholder_translate").value;
@@ -161,8 +165,8 @@ createSelectList(list: $listTranslates, id:"translate", defId: $_SESSION["transl
             <div class="popupBody">
                 <h1>nastavení</h1>
                 <form>
-                    <label>Motiv</label>
-                    <select>
+                    <label for="theme">Motiv</label>
+                    <select id="theme">
                         <option value="default">Výchozí</option>
                         <option>Světlý</option>
                         <option>Tmavý</option>

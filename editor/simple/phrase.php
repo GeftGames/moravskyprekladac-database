@@ -10,7 +10,6 @@
         $result = $conn->query($sql);
         if (!$result) echo "ERROR: ".$conn->error;
 
-
         $list=[];
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
@@ -22,7 +21,8 @@
 
         echo FilteredList($list, "phrase");  
 
-        $GLOBALS["onload"].="phrase_changed=function() { 
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+            phrase_changed=function() { 
             let elementsSelected = flist_phrase.getSelectedItemInList();
         
             // no selected
@@ -40,7 +40,7 @@
                 body: `action=phrase_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('phraseId').value=id;
                     document.getElementById('phraseFrom').value=json.shape_from;
                     to_load(json.to);
@@ -62,7 +62,8 @@
         flist_phrase.EventItemSelectedChanged(phrase_changed);
         flist_phrase.EventItemAddedChanged(phrase_added);";
     
-        $GLOBALS["script"].="var flist_phrase; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_phrase; 
         var currentphraseCSSave = function() {
             let shape_from=document.getElementById('phraseFrom').value;
             let phraseId=document.getElementById('phraseId').value;
@@ -80,7 +81,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_phrase.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });

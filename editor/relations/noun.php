@@ -1,4 +1,4 @@
- <div class="splitView">
+<div class="splitView">
     <div>
         <?php
         include "components/tags_editor.php";
@@ -6,8 +6,8 @@
         tagsEditorDynamic();
 
         // relations list
-        include "components/give_relations.php";
-        $listR=give_relations($conn,"noun");
+        include "components/give_relations_pattern.php";
+        $listR=give_relations_pattern($conn,"noun", true);
 
         // side menu
         echo FilteredList($listR, "noun_relations");
@@ -26,8 +26,7 @@
             }
         }
 
-        $idFrom=0
-        ;
+        $idFrom=0;
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         noun_relations_changed=function() { 
@@ -55,10 +54,10 @@
 
         refreshFilteredLists();
 
-        flist_noun_relations.EventItemSelectedChanged(noun_relations_changed);";
+        flist_noun_relations.EventItemSelectedChanged(noun_relations_changed);
+        ";
 
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "
+        $GLOBALS["script"].= /** @lang JavaScript */"
             var flist_noun_relations; 
             var currentNounRelationSave = function() {
                 let froms=document.getElementById('listreturnholder_noun_from').value;              

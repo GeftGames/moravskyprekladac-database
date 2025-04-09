@@ -119,7 +119,7 @@ var tagSet=function(list){
 
     $tagsHTML="";
     foreach ($tags as $tag) {
-        $tagsHTML.='<div class="tag"><span>'.$tag.'</span><a class="smallRemoveBtn" onclick="tagRemove(this, \'$iddatatags\')">×</a></div>';
+        $tagsHTML.='<div class="tag"><span>'.$tag.'</span><a class="smallRemoveBtn" onclick="tagRemove(this, \''.$id.'datatags\')">×</a></div>';
     }
     $iddata=$id.'datatags';
     //html
@@ -129,7 +129,7 @@ var tagSet=function(list){
             <input type="text" id="tagAddNew" placeholder="expr." style="margin: 1mm;">
             <a onclick="tagAddFromTextBox(\'$iddata\')" class="button">Přidat</a>
         </div>  
-        <input type="hidden" id="$iddata" value="'.join('|',$tags).'">
+        <input type="hidden" id="'.$iddata.'" value="'.join('|',$tags).'">
         <div id="tagsArea">';
     $html.=$tagsHTML;
     $html.='</div></div>';

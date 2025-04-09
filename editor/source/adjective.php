@@ -2,8 +2,7 @@
     <div>
         <?php
         
-        // Do dashboard stuff
-      //  include "components/filter_list.php";
+        // site list
         include "components/tags_editor.php";
 
         $sql="SELECT id, label FROM adjective_patterns_cs;";
@@ -15,29 +14,30 @@
                 $list[]=[$row["id"], $row["label"]];
             }
         } else {
-            // TODO: echo "0 results ";
+            // TODO: echo "0 results";
         }
-
         echo FilteredList($list, "adjective_patterns_cs");  
 
-        $GLOBALS["onload"].= /** @lang JavaScript */
-            "adjective_cs_changed=function() { 
+
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        adjective_cs_changed=function() { 
             let id = flist_adjective_patterns_cs.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
-
+            
+            // get data
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `action=adjective_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                // set data
+                if (json.status==='OK') {
                     document.getElementById('adjectiveId').value=id;
                     document.getElementById('adjectiveLabel').value=json.label;
                     document.getElementById('adjectiveBase').value=json.base;
-                    document.getElementById('adjectiveCategory').value=json.category;
 
                     if (json.category==null) json.category=0;
                     document.getElementById('adjectiveCategory').value=json.category; 
@@ -47,12 +47,13 @@
                     if (rawShapes!=null) {
                         shapes=json.shapes.split('|'); 
                     } else shapes=[];
-                    for (let g=0; g<4; g++) {
-                        for (let i=0; i<14; i++) {
-                            let shape=shapes[i];                            
+                    console.log(shapes.length/4)
+                    for (let g=0; g<4; g++) {       // tables
+                        for (let i=0; i<18; i++) {  // textboxes 
+                            let shape=shapes[g*18+i];                            
                             let textbox=document.getElementById('adjective'+g+''+i);
 
-                            if (shape==undefined) textbox.value='';
+                            if (shape===undefined) textbox.value='';
                             else textbox.value=shape;
                         }  
                     }
@@ -72,7 +73,8 @@
 
         flist_adjective_patterns_cs.EventItemSelectedChanged(adjective_cs_changed);";
     
-        $GLOBALS["script"].="var flist_adjective_patterns_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_adjective_patterns_cs; 
         var currentadjectiveCSSave = function() {
             let label=document.getElementById('adjectiveLabel').value;
             let base=document.getElementById('adjectiveBase').value;
@@ -100,7 +102,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_adjective_patterns_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -111,18 +113,18 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="adjectiveLabel" for="name" value="" placeholder="mlaDÝ" style="max-width: 9cm;">
+                <label id="name" for="adjectiveLabel" >Popis</label><br>
+                <input type="text" id="adjectiveLabel" value="" placeholder="mlaDÝ" style="max-width: 9cm;">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base">Základ</label><br>
-                <input type="text" id="adjectiveBase" for="name" value="" placeholder="mla" style="max-width: 9cm;">
+                <label id="base" for="adjectiveBase">Základ</label><br>
+                <input type="text" id="adjectiveBase" value="" placeholder="mla" style="max-width: 9cm;">
             </div>
 
             <div class="row section">
-                <label>Kategorie</label>
+                <label for="adjectiveCategory">Kategorie</label>
                 <select id="adjectiveCategory" name="type">
                     <option value="0">Neznámý</option>
                     <option value="1">Tvrdé</option>
@@ -146,9 +148,10 @@
                                 <td class="tableHeader">Množné</td>
                             </tr>';               
                 
-                        for ($i=0; $i<7; $i++) {
-                            $html.="<tr><td>".($i+1).".</td>";
-                            for ($j=0; $j<2; $j++) $html.="<td><input id='adjective".$g.($j==0 ? $i : 7+$i)."' type='text'></td>";
+                        for ($i=0; $i<9; $i++) {
+                            // label falls
+                            $html.="<tr><td>".($i<7 ? $i+1 : ( $i==7 ? "n" : "a")).".</td>";
+                            for ($j=0; $j<2; $j++) $html.="<td><input id='adjective".$g.($j==0 ? $i : 9+$i)."' type='text'></td>";
                             $html.="</tr>";
                         }
                         echo $html.'</table>';

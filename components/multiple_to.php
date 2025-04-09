@@ -1,6 +1,6 @@
 <?php
 
-function multiple_pattern_to($list, $DDname) {
+function multiple_to($list, $DDname) {
     $cites=[];
     // $cites=[[label, id], [label, id], [label, id], ...]
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
@@ -19,7 +19,7 @@ function multiple_pattern_to($list, $DDname) {
     $listTo=[];
 
     // to
-    $sqlTo="SELECT `id`, `label` FROM `".$DDname."_patterns_to` WHERE `translate` = ".$_SESSION['translate'].";";
+    $sqlTo="SELECT `id`, `shape` FROM `".$DDname."s_to` WHERE `relation` = 0;";
     $resultTo = $conn->query($sqlTo);
     if (!$resultTo) {
         $sqlDone=false;
@@ -28,7 +28,7 @@ function multiple_pattern_to($list, $DDname) {
 
     // list to
     while ($rowTo = $resultTo->fetch_assoc()) {
-        $listTo[]=[$rowTo["id"], $rowTo["label"]];
+        $listTo[]=[$rowTo["id"], $rowTo["shape"]];
     }
 
     $listToEncoded=json_encode($listTo);
@@ -147,35 +147,15 @@ function multiple_pattern_to($list, $DDname) {
             priority.appendChild(option);
         }
         
-        // wrap pattern
-        let wrapPattern=document.createElement("div");
-        wrapPattern.className="row";
-        wrapPattern.style="width:100%;";
-        
-            //pattern
-            let idSelectPattern="To"+maxId;
-            let text=document.createElement("div");
-            text.id="select_"+idSelectPattern;
-            text.setAttribute("seltype","shapeto");
-            wrapPattern.appendChild(text);
-            
-            // btn go to pattern
-            let btnGoToPattern=document.createElement("a");
-            btnGoToPattern.className="button";
-            btnGoToPattern.innerText="Zobrazit";
-            btnGoToPattern.addEventListener("click", ()=>{
-                let idHolder=wrap.querySelector("#listreturnholder_"+idSelectPattern).value;
-                let patternId=idHolder.value;
-                if (patternId!=null && patternId!=="") {
-                    window.location.href="?page=translate&editor=noun&id="+patternId;
-                }
-            });            
-            wrapPattern.appendChild(btnGoToPattern);
-            
-        wrap.appendChild(wrapPattern);
-        
-        // tags 
-        //   editor_to(wrapItem);
+        // shape
+        let idSelectPattern="To"+maxId;
+        let text=document.createElement("input");
+        text.id="text_"+idSelectPattern;
+        text.type="text";
+        text.value=defShapeTo;
+        wrap.appendChild(text);
+       
+        // tags
         let tags=tagManagerCreate("tagy",maxId);
         wrap.appendChild(tags);
         
@@ -264,8 +244,6 @@ function multiple_pattern_to($list, $DDname) {
         let parent=document.getElementById("listTo");
         parent.appendChild(wrapItem);
                 
-        // create select filter element
-        let classselectpattern= createSelectFilter(idSelectPattern, '.$listToEncoded. ', defShapeTo);
                 
         maxId++;
     };';
