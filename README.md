@@ -1,14 +1,12 @@
 # moravskyprekladac-database
 # log in
-http://localhost/moravskyprekladac/database/login.php
-user: 
-password: 
+- ./login.php
 
 # register
-http://localhost/moravskyprekladac/database/register.php
+- ./register.php
 
 # new database if empty
-http://localhost/moravskyprekladac/database/system_actions/inicialize_new_database.php
+- ./system_actions/inicialize_new_database.php
 
 
 Database structure
