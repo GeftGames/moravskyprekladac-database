@@ -1,15 +1,10 @@
 <?php 
-function throwError($string) {
-    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
-    $_SESSION["error"].="<p class='error'>ERROR: ".$string."</p>";
-    echo "ERROR: ".$string;
-}
-
-function rest(){   
+function rest(){
    
     require_once "global_database.php";
     require_once "user_manipulation.php";
-    require_once "regions.php";
+    require_once "editor.php";
+    require_once "database_export.php";
 
     $action=$_POST['action'];
     $_SESSION["error"]="";
@@ -49,4 +44,3 @@ function rest(){
         return;
     }
 }
-?>

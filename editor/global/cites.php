@@ -16,10 +16,9 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "cites");  
+        echo FilteredList($list, "cites", ["Sloučit s..."=>"merge()"]);
 
-        $GLOBALS["onload"].= /** @lang JavaScript */
-            "
+        $GLOBALS["onload"].= /** @lang JavaScript */"            
         cites_changed=function() { 
            let id = flist_cites.getSelectedIdInList();
         
@@ -47,8 +46,7 @@
         flist_cites.EventItemSelectedChanged(cites_changed);";
 
     
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "
+        $GLOBALS["script"].= /** @lang JavaScript */"
         var flist_cites; 
         var currentciteSave = function() {
             let label=document.getElementById('citeLabel').value;
@@ -73,21 +71,78 @@
             .then(json => {
                 if (json.status==='OK'){
                    flist_cites.getSelectedItemsInList()[0].innerText=label;
-                }else console.log('error currentciteSave: ',json);
+                }else console.warn('error currentciteSave: ',json);
             });
-        };";
-            
-        ?>
+        };
+        
+        function merge() {
+            // selected container
+            let elementsSelected = flist_cites.getSelectedItemsInList();
+    
+            // no selected
+            if (!elementsSelected) {
+                return;
+            }
+            document.getElementById('mergeName').innerText=elementsSelected[0].innerText;
+            document.getElementById('mergeId').value=elementsSelected[0].dataset.id;
+    
+            // merge with
+            let mergeWith=document.getElementById('mergeWith');
+            let list=flist_cites.list;
+            for (let item of list) {
+                let option=document.createElement('option');
+                option.value=item[0];
+                option.innerText=item[1];
+                console.log(option);
+                mergeWith.appendChild(option);
+            }
+    
+            popupShow('merge');
+        }
+
+        // send merge request
+        function mergeSubmit() {
+            let mergeId=document.getElementById('mergeId').value;
+            let mergeWith=document.getElementById('mergeWith').value;
+    
+            // useless
+            if (mergeId===mergeWith) {
+                popupClose('merge');
+                return;
+            }
+    
+            let formData = new URLSearchParams();
+            formData.append('action', 'pieceofcite_merge');
+            formData.append('current', mergeId);
+            formData.append('with', mergeWith);
+    
+            fetch('index.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            }).then(response => response.json())
+            .then(json => {
+                if (json.status==='OK') {
+                    // update list
+                    flist_cites.list_remove();
+                  //  let jsonList = JSON.parse(json.list);
+                  //  flist_cites.generateList(jsonList);
+                }else console.warn('warn currentciteSave: ',json);
+            }).then(text => console.error('error currentciteSave: ',text));
+            popupClose('merge');
+        }
+        ";?>
+
     </div>
     <div class="editorView">
          <div class="row section">
-            <label id="name"for="citeLabel">Popiska</label><br>
+            <label id="name" for="citeLabel">Popiska</label><br>
             <input type="text" id="citeLabel" value="" placeholder="" style="max-width: 9cm;">
             <a onclick="" class="button">Sestavit</a>
         </div>
 
         <div class="row section">
-            <label id="name"for="citeType">Typ</label><br>
+            <label id="name" for="citeType">Typ</label><br>
             <select id="citeType">
                 <option value="0">{nevastaveno}</option>
                 <option value="1">kniha</option>
@@ -110,6 +165,7 @@
                     ["nazev",       "název",        "",         "text",     "Nářečí na Břeclavsku a v dolním..."], 
                     ["podnazev",    "podnázev",     "",         "text",     ""],
                     ["periodikum",  "periodikum",   "",         "text",     ""],
+                    ["dil",         "díl",   "",         "text",     ""],
 
                     ["titul_pred",  "titul před jménem",        "",         "text",     "Ph. Dr."], 
                     ["jmeno",       "jméno",        "",         "text",     "František"], 
@@ -146,6 +202,8 @@
                     ["mesic_pristupu","měsíc přístupu", "",     "number",   ""],
                     ["den_pristupu","den přístupu", "",         "number",   ""],
                     ["shortcut",    "zkratka",      "",         "text",   ""],
+
+                    ["nazev_webu",  "název webu",      "",         "text",   ""],
                 ],
                 "cite",
                 "Data citace"
@@ -153,6 +211,21 @@
             
             <input type="hidden" id="citeId" value="-1">
             <a class='button' onclick="currentciteSave()">Uložit</a>
+        </div>
+    </div>
+</div>
+
+<div id="popup_merge" class="popupBackground" style="display: none">
+    <div class="popup"'>
+        <div class="popupHeader">Sloučit<span onclick="popupClose('merge')" class="popupClose">×</span></div>
+        <div class="popupBody">
+            <div class="section">
+                <span id="mergeName" style="font-style: italic;">?</span>
+                <label id="mergeWithName" for="mergeWith"> sloučit s </label>
+                <select id="mergeWith"></select>
+                <input type="hidden" id="mergeId">
+            </div>
+            <button onclick="mergeSubmit()">Provést</button>
         </div>
     </div>
 </div>

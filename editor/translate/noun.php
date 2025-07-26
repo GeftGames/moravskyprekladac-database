@@ -18,7 +18,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_patterns_to");
+        echo FilteredList($list, "noun_patterns_to", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 noun_patterns_to_changed=function() { 

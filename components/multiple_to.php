@@ -4,7 +4,7 @@ function multiple_to($list, $DDname) {
     $cites=[];
     // $cites=[[label, id], [label, id], [label, id], ...]
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
-    $sql = "SELECT id, label FROM piecesofcite ORDER BY label";
+    $sql = "SELECT id, label FROM piecesofcite WHERE translate = $_SESSION[translate];";
     $result = $conn->query($sql);
 
     if ($result && $result->num_rows > 0) {
@@ -97,8 +97,8 @@ function multiple_to($list, $DDname) {
         document.getElementById("listTo").innerHTML="";
         
         for (let item of list) {
-            let cites=item["cite"].split(",");
-            to_add(item["id"], item["priority"], item["shape"], item["comment"], cites, item["undetected"]);
+            let itemcites=item["cite"].split(","); // it is not nessesay to convert into numbers            
+            to_add(item["id"], item["priority"], item["shape"], item["comment"], itemcites, item["undetected"]/*, item["certainty"]*/);
         }
     };';
 
@@ -116,7 +116,7 @@ function multiple_to($list, $DDname) {
     $GLOBALS["script"].=
     /** @lang JavaScript */'
     let maxId='.count($list). ';
-    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite, undetected) {
+    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite, undetected/*, defCertainty*/) {
         let idAdd = (defId === -1 ? maxId: defId);
         let wrapItem=document.createElement("div");
         wrapItem.style="";   
@@ -133,6 +133,14 @@ function multiple_to($list, $DDname) {
         id_holder.setAttribute("seltype","id");
         wrap.appendChild(id_holder);
         
+        // shape
+        let idSelectPattern="To"+maxId;
+        let text=document.createElement("input");
+        text.id="text_"+idSelectPattern;
+        text.type="text";
+        text.value=defShapeTo;
+        wrap.appendChild(text);
+        
         // priority
         let priority=document.createElement("select");    
         priority.style="margin-bottom: 3px;";
@@ -145,16 +153,22 @@ function multiple_to($list, $DDname) {
             option.innerText=o[0];
             option.value=o[1];
             priority.appendChild(option);
-        }
+        }   
         
-        // shape
-        let idSelectPattern="To"+maxId;
-        let text=document.createElement("input");
-        text.id="text_"+idSelectPattern;
-        text.type="text";
-        text.value=defShapeTo;
-        wrap.appendChild(text);
-       
+       /* // certainty
+        let certainty=document.createElement("select");    
+        certainty.style="margin-bottom: 3px;";
+        certainty.setAttribute("seltype","certainty");
+        if (defCertainty!=null) certainty.value=defCertainty;
+        wrap.appendChild(certainty);   
+        
+        for (let o of [["<nenastaveno>", 0], ["pravděpodobné", 1], ["téměř jisté", 2], ["jisté", 3]]) {
+            let option=document.createElement("option");
+            option.innerText=o[0];
+            option.value=o[1];
+            certainty.appendChild(option);
+        }*/
+        
         // tags
         let tags=tagManagerCreate("tagy",maxId);
         wrap.appendChild(tags);
@@ -179,14 +193,33 @@ function multiple_to($list, $DDname) {
         
             let source=document.createElement("span");
             source.setAttribute("seltype", "source");
-            source.innerText="zdroj";//todo: set label 
+            //source.innerText="zdroj";//todo: set label 
             source.className="filterSelect";
             source.addEventListener("click", function() {
                 if (wrapmenu.style.display==="block") wrapmenu.style.display="none";
                 else wrapmenu.style.display="block";
             });
             wrapsource.appendChild(source); 
-            wrapsource.appendChild(wrapmenu); 
+            wrapsource.appendChild(wrapmenu);  
+            
+            let citeLabel=document.createElement("span");
+            citeLabel.innerText="zdroj";
+            source.appendChild(citeLabel);
+            
+            
+            function SetLabel(){
+                let labels=[];
+                for (let r of wrapmenu.childNodes) {
+                    let input=r.childNodes[0];
+                    if (input.checked) {
+                        let label=r.childNodes[1].innerText;
+                        labels.push(label.substring(0,7));
+                    }
+                }
+                
+                citeLabel.innerText="zdroj: "+labels.join(", ");
+            }
+           
             
             // arrow [v]
             let arrow=document.createElement("span");
@@ -200,6 +233,7 @@ function multiple_to($list, $DDname) {
                 // row
                 let row=document.createElement("li");
                 row.style="list-style: none";
+                row.id="row"+citeId
                 wrapmenu.appendChild(row);
                 
                 // checkbox
@@ -207,10 +241,22 @@ function multiple_to($list, $DDname) {
                 let option=document.createElement("input");
                 option.type="checkbox";  
                 option.className="checkboxCite";
-                option.checked=defCite.includes(citeId);
+                option.checked=false;
+                for (let c of defCite) {
+                        console.log(citeId,defCite);
+                    if (citeId===c) {
+                        option.checked=true;
+                        break;
+                    }
+                }
+              //  console.log(cites.forEach(l=>l[0]==), citeId);
+                //option.checked=cites.includes(citeId);
                // console.log(defCite, citeId, defCite.includes(citeId));
                 option.value=citeId;
                 option.id=idChecked
+                option.addEventListener("click", function() {
+                    SetLabel();
+                });
                 row.appendChild(option);
                 
                 // label
@@ -218,19 +264,22 @@ function multiple_to($list, $DDname) {
                 label.innerText=citeLabel;
                 label.htmlFor=idChecked;
                 row.appendChild(label);
-            }
+        }
             
-            //existing cites
-            let citeHolder=document.createElement("div");
-            citeHolder.id="citeHolder";
-            source.appendChild(citeHolder);
+        SetLabel();
             
+        //existing cites
+        let citeHolder=document.createElement("div");
+        citeHolder.id="citeHolder";
+        source.appendChild(citeHolder);
+                      
         // info old
         if (undetected!=null) {
             let span=document.createElement("span");
             span.innerText=undetected;
             wrap.appendChild(span);   
         }
+    
         
         // remove button
         let btnRemove=document.createElement("a");
@@ -252,7 +301,9 @@ function multiple_to($list, $DDname) {
     $GLOBALS["script"].=
     /** @lang JavaScript */'
     var to_remove = function(wrap) {
-        wrap.outerHTML="";   
+        if (confirm("Smazat? (nezapomeňte uložit)")){
+            wrap.outerHTML="";               
+        }
     };';
 
     $html='<div id="listTo">';
@@ -267,6 +318,6 @@ function multiple_to($list, $DDname) {
         <a class="button">Smazat</a>
         </div>';
     }*/
-    $html.='</div><a class="button" onclick="to_add(-1, null, null, null, null, null)">Přidat</a>';
+    $html.='</div><a class="button" onclick="to_add(-1, null, null, null, null, null,null)">Přidat</a>';
     return $html;
 }

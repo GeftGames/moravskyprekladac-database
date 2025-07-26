@@ -13,11 +13,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["shape"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "adverbs_cs");
+        echo FilteredList($list, "adverbs_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         adverbs_cs_changed=function() { 
@@ -32,7 +30,7 @@
                 body: `action=adverb_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status === 'OK') {
                     document.getElementById('adverbId').value=id;
                     document.getElementById('adverbShape').value=json.shape;
 
@@ -72,7 +70,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status==='OK'){
+                if (json.status === 'OK'){
                    flist_adverbs_cs.getSelectedItemInList().innerText=shape;
                 }else console.log('error currentRegionSave',json);
             });

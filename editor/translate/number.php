@@ -19,7 +19,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "number_pattern_to");  
+        echo FilteredList($list, "number_pattern_to", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         number_to_changed=function() { 

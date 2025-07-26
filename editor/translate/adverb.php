@@ -7,7 +7,7 @@
         $list=[];
         {
             $filter=$_SESSION['translate'];
-            $sql="SELECT `id`, `label` FROM `preposition_relations` WHERE `translate`=$filter;";
+            $sql="SELECT `id`, `label` FROM `adverb_relations` WHERE `translate`=$filter;";
             $result = $conn->query($sql);
             if (!$result) throwError("SQL error: ".$sql);
             if ($result->num_rows > 0) {
@@ -19,11 +19,11 @@
             }
         }
 
-        echo FilteredList($list, "preposition_to");  
+        echo FilteredList($list, "adverb_to");  
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        preposition_to_changed=function() { 
-            let id = flist_preposition_to.getSelectedIdInList();
+        adverb_to_changed=function() { 
+            let id = flist_adverb_to.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -31,13 +31,12 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=preposition_to_item&id=`+id
+                body: `action=adverb_to_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK') {
-                    document.getElementById('prepositionId').value=id;
-                    document.getElementById('prepositionShape').value=json.shape;
-                    document.getElementById('prepositionFalls').value=json.falls;
+                    document.getElementById('adverbId').value=id;
+                    document.getElementById('adverbShape').value=json.shape;
 
                     // tags
                     if (json.tags!=null) {
@@ -53,22 +52,20 @@
 
         refreshFilteredLists();
 
-        flist_preposition_to.EventItemSelectedChanged(preposition_to_changed);
-        flist_preposition_to.EventItemAddedChanged(preposition_to_added);";
+        flist_adverb_to.EventItemSelectedChanged(adverb_to_changed);
+        flist_adverb_to.EventItemAddedChanged(adverb_to_added);";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_preposition_to; 
-        var currentprepositionTOSave = function() {
-            let shape=document.getElementById('prepositionShape').value;
-            let falls=document.getElementById('prepositionFalls').value;
-            let prepositionId=document.getElementById('prepositionId').value;
-            let tags=document.getElementById('preposition_todatatags').value;
+        var flist_adverb_to; 
+        var currentadverbTOSave = function() {
+            let shape=document.getElementById('adverbShape').value;
+            let adverbId=document.getElementById('adverbId').value;
+            let tags=document.getElementById('adverb_todatatags').value;
            
             let formData = new URLSearchParams();
-            formData.append('action', 'preposition_to_update');
-            formData.append('id', prepositionId);
+            formData.append('action', 'adverb_to_update');
+            formData.append('id', adverbId);
             formData.append('shape', shape);
-            formData.append('falls', falls);
             formData.append('tags', tags);
 
             fetch('index.php', {
@@ -78,14 +75,14 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK'){
-                   flist_preposition_to.getSelectedItemInList().innerText=shape;
+                   flist_adverb_to.getSelectedItemInList().innerText=shape;
                 }else console.log('error currentRegionSave',json);
             });
         };
 
-        var preposition_to_added = function() {
-            flist_preposition_to.lastAddedId;
-            preposition_to_changed();
+        var adverb_to_added = function() {
+            flist_adverb_to.lastAddedId;
+            adverb_to_changed();
         }";
             
         ?>
@@ -93,19 +90,14 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label for="prepositionShape" id="name">Tvar</label><br> 
-                <input type="text" id="prepositionShape" value="" placeholder="z" style="max-width: 9cm;">
+                <label for="adverbShape" id="name">Tvar</label><br> 
+                <input type="text" id="adverbShape" value="" placeholder="z" style="max-width: 9cm;">
             </div>
 
-            <div class="row section">
-                <label for="prepositionFalls" id="fall">Pád(y)</label><br>
-                <input type="text" id="prepositionFalls" value="" placeholder="2,4" style="max-width: 9cm;">
-            </div>
-
-            <?php echo tagsEditor("preposition_to", [], "tagy")?>
+            <?php echo tagsEditor("adverb_to", [], "tagy")?>
             <div> 
-                <input type="hidden" id="prepositionId" value="-1">
-                <a onclick="currentprepositionTOSave()" class="button">Uložit</a>
+                <input type="hidden" id="adverbId" value="-1">
+                <a onclick="currentadverbTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

@@ -16,11 +16,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs");  
+        echo FilteredList($list, "pronoun_pattern_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         pronoun_cs_changed=function() { 
@@ -35,13 +33,14 @@
                 body: `action=pronoun_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('pronounId').value=id;
                     document.getElementById('pronounLabel').value=json.label;
                     document.getElementById('pronounBase').value=json.base;
 
                     if (json.category==null) json.category=0;
                     document.getElementById('pronounCategory').value=json.category; 
+                    document.getElementById('pronounSyn').value=json.syntax; 
 
                     // shapes
                     let shapes;
@@ -85,11 +84,13 @@
         flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
         flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
     
-        $GLOBALS["script"].="var flist_pronoun_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_pronoun_pattern_cs;
         var currentpronounCSSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;
             let category=document.getElementById('pronounCategory').value;
+            let categorySyn=document.getElementById('pronounCategorySyntax').value;
             let pronounId=document.getElementById('pronounId').value;
             let tags=document.getElementById('pronoun_csdatatags').value;
             let shapesType=document.getElementById('pronounShapesType').value;
@@ -120,6 +121,7 @@
             formData.append('label', label);
             formData.append('base', base);
             formData.append('category', category);
+            formData.append('syntax', categorySyn);
             formData.append('shapes', shapes.join('|'));
             formData.append('tags', tags);
 
@@ -129,7 +131,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status === 'OK') {
                    flist_pronoun_pattern_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -172,14 +174,14 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="pronounLabel" for="name" value="" placeholder="niKDO" style="max-width: 9cm;">
+                <label id="pronounLabel" for="name">Popis</label><br>
+                <input type="text" id="pronounLabel" value="" placeholder="niKDO" style="max-width: 9cm;">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base">Základ</label><br>
-                <input type="text" id="pronounBase" for="name" value="" placeholder="ni" style="max-width: 9cm;">
+                <label for="pronounBase" id="base">Základ</label><br>
+                <input type="text" id="pronounBase" value="" placeholder="ni" style="max-width: 9cm;">
             </div>
 
             <div class="row section">
@@ -230,6 +232,16 @@
                     <option value="5">Vztažná</option>
                     <option value="6">Neurčitá</option>
                     <option value="7">Záporná</option>
+                </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="pronounSyn">Syntaktická funkce</label>
+                <select id="pronounSyn" name="typesyn">
+                    <option value="0">Neznámý</option>
+                    <option value="1">Nepřívlastková</option>
+                    <option value="2">Přívlastková</option>
                 </select>
                 <br>
             </div>

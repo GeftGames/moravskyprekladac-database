@@ -15,11 +15,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
-
-        echo FilteredList($list, "piecesofcite");  
+      //  echo "Size: ".count($list);
+        echo FilteredList($list, "piecesofcite", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "region_changed=function() { 
@@ -106,7 +104,9 @@
             <div class="row section">
                 <label id="name" for="pieceofciteParent">Patří k</label><br> 
                 <select id="pieceofciteParent">
-                    <?php   
+                    <?php
+                        echo "<option value='-1'>{Nenastaveno}</option>";
+
                         $sql="SELECT id, label FROM cites;";
                         $result = $conn->query($sql);
                         $list=[];
@@ -140,6 +140,7 @@
                     ["lokalni_zapisovatel", "lokální zapisovatel","",       "boolean", ""],
                     ["lokalni_zapisovatel", "lokální zapisovatel","",       ["slovník", "rozhovor", "píseň", "báseň", "próza"], ""],
                     ["shortcut",        "zkratka",              "",         "text",     ""],
+                    ["zpracovano",      "zpracováno",              "",         "boolean",     "0"],
                 ],
                 "pieceofsource",
                 "Část zdroje"

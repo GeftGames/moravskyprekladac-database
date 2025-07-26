@@ -2,11 +2,10 @@
     <div>
         <?php
         // Do dashboard stuff
-        include "components/tags_editor.php";
         include "components/select_cites.php";
-        
+        $filter=$_SESSION['translate'];
         $order="ORDER BY LOWER(label) ASC";
-        $sql="SELECT id, label FROM replaces_start $order;";
+        $sql="SELECT id, label FROM replaces_start WHERE `translate`=$filter $order;";
         $result = $conn->query($sql);
         $list=[];
         if ($result->num_rows > 0) {
@@ -17,7 +16,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "replaces_start");
+        echo FilteredList($list, "replaces_start", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 replaces_start_changed=function() { 
@@ -40,9 +39,8 @@ replaces_start_changed=function() {
     .then(json => {
         if (json.status==='OK') {
             document.getElementById('replaces_startId').value=id;
-            document.getElementById('replaces_startLabel').value=json.label;
-            document.getElementById('replace_source').value=json.source;
-            document.getElementById('replace_to').value=json.to;
+            document.getElementById('replaces_startSource').value=json.from;
+            document.getElementById('replaces_startTo').value=json.to;
         } else console.log('error sql', json);
     });
 };
@@ -56,18 +54,15 @@ flist_replaces_start.EventItemAddedChanged(replaces_start_added);
         $GLOBALS["script"].= /** @lang JavaScript */"
 var flist_replacesstart; 
 var currentreplaces_startCSSave = function() {
-    let label=document.getElementById('replaces_startLabel').value;
-    let base=document.getElementById('replaces_startBase').value;
-    let category=document.getElementById('replaces_startCategory').value;
+   // let label=document.getElementById('replaces_startLabel').value;
+    let source=document.getElementById('replaces_startFrom').value;
+    let to=document.getElementById('replaces_startTo').value;
     let replaces_startId=document.getElementById('replaces_startId').value;
-    let tags=document.getElementById('replaces_startdatatags').value;
-    let cites=document.getElementById('replaces_startCites').value;
    
     let formData = new URLSearchParams();
     formData.append('action', 'replaces_start_update');
     formData.append('id', replaces_startId);
-    formData.append('label', label);
-    formData.append('source', source);
+    formData.append('from', source);
     formData.append('to', to);
     formData.append('cites', cites);
 
@@ -90,29 +85,32 @@ var replaces_start_added = function() {
         ?>
     </div>
     <div class="editorView">
-        <div id="regionsview">
-            <div class="row section">
-                <label id="name" for="replaces_startLabel">Popis</label><br>
-                <input type="text" id="replaces_startLabel" value="" placeholder="niKDO" style="max-width: 9cm;">
-                <a onclick="" class="button">Sestavit</a>
-            </div>
+        <table id="regionsview" class="section row">
+          <!--  <tr class="section">
+                <td><label id="name" for="replaces_startLabel">Popis</label><br></td>
+                <td style="display: flex;">
+                    <input type="text" id="replaces_startLabel" value="" placeholder="niKDO" style="max-width: 9cm;">
+                    <a onclick="" class="button">Sestavit</a>
+                </td>
+            </tr>-->
 
-            <div class="row section">
-                <label id="source" for="replaces_startSource">Z</label><br>
-                <input type="text" id="replaces_startSource" value="" placeholder="ni" style="max-width: 9cm;">
-            </div>
+            <tr>
+                <td><label id="source" for="replaces_startSource">Z</label></td>
+                <td><input type="text" id="replaces_startSource" value="" placeholder="ni" style="max-width: 9cm;"></td>
+            </tr>
 
-            <div class="row section">
-                <label id="to" for="replaces_startTo">Na</label><br>
-                <input type="text" id="replaces_startTo" value="" placeholder="ni" style="max-width: 9cm;">
-            </div>
+            <tr>
+                <td><label id="to" for="replaces_startTo">Na</label></td>
+                <td><input type="text" id="replaces_startTo" value="" placeholder="ni" style="max-width: 9cm;"></td>
+            </tr>
+        </table>
 
-            <?php echo selectCites([]) ?>
-       
-            <div> 
-                <input type="hidden" id="replaces_startId" value="-1">
-                <a onclick="currentreplace_startCSSave()" class="button">Uložit</a>
-            </div>
+        <div>
+        <?php echo selectCites([]) ?>
+
+        <div class="section row">
+            <input type="hidden" id="replaces_startId" value="-1">
+            <a onclick="currentreplaces_startCSSave()" class="button">Uložit</a>
         </div>
     </div>
 </div>

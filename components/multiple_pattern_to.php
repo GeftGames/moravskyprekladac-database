@@ -98,7 +98,9 @@ function multiple_pattern_to($list, $DDname) {
         
         for (let item of list) {
             let cites=item["cite"].split(",");
-            to_add(item["id"], item["priority"], item["shape"], item["comment"], cites, item["undetected"]);
+            let undetected="";
+            if (item["tmp_pattern_from_body"]!=null || item["tmp_imp_from_pattern"]!=null) undetected="from: "+item["tmp_pattern_from_body"]+"; to: "+item["tmp_imp_from_pattern"]
+            to_add(item["id"], item["priority"], item["shape"], item["comment"], cites, undetected, item["certainty"]);
         }
     };';
 
@@ -116,7 +118,7 @@ function multiple_pattern_to($list, $DDname) {
     $GLOBALS["script"].=
     /** @lang JavaScript */'
     let maxId='.count($list). ';
-    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite, undetected) {
+    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite, undetected, defCertainty) {
         let idAdd = (defId === -1 ? maxId: defId);
         let wrapItem=document.createElement("div");
         wrapItem.style="";   
@@ -132,21 +134,7 @@ function multiple_pattern_to($list, $DDname) {
         id_holder.value=idAdd;      
         id_holder.setAttribute("seltype","id");
         wrap.appendChild(id_holder);
-        
-        // priority
-        let priority=document.createElement("select");    
-        priority.style="margin-bottom: 3px;";
-        priority.setAttribute("seltype","priority");
-        if (defPriority!=null) priority.value=defPriority;
-        wrap.appendChild(priority);   
-        
-        for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]) {
-            let option=document.createElement("option");
-            option.innerText=o[0];
-            option.value=o[1];
-            priority.appendChild(option);
-        }
-        
+      
         // wrap pattern
         let wrapPattern=document.createElement("div");
         wrapPattern.className="row";
@@ -164,16 +152,26 @@ function multiple_pattern_to($list, $DDname) {
             btnGoToPattern.className="button";
             btnGoToPattern.innerText="Zobrazit";
             btnGoToPattern.addEventListener("click", ()=>{
-                let idHolder=wrap.querySelector("#listreturnholder_"+idSelectPattern).value;
-                let patternId=idHolder.value;
-                if (patternId!=null && patternId!=="") {
-                    window.location.href="?page=translate&editor=noun&id="+patternId;
-                }
+                showPatternEditor(defShapeTo);
             });            
             wrapPattern.appendChild(btnGoToPattern);
             
         wrap.appendChild(wrapPattern);
+          
+        // priority
+        let priority=document.createElement("select");    
+        priority.style="margin-bottom: 3px;";
+        priority.setAttribute("seltype","priority");
+        if (defPriority!=null) priority.value=defPriority;
+        wrap.appendChild(priority);   
         
+        for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]) {
+            let option=document.createElement("option");
+            option.innerText=o[0];
+            option.value=o[1];
+            priority.appendChild(option);
+        }
+          
         // tags 
         //   editor_to(wrapItem);
         let tags=tagManagerCreate("tagy",maxId);
@@ -245,6 +243,19 @@ function multiple_pattern_to($list, $DDname) {
             citeHolder.id="citeHolder";
             source.appendChild(citeHolder);
             
+        // certainty
+        let certainty=document.createElement("select");    
+        certainty.style="margin-bottom: 3px;";
+        certainty.setAttribute("seltype","priority");
+        if (defCertainty!=null) certainty.value=defCertainty;
+        wrap.appendChild(certainty);   
+        
+        for (let o of [["<nenastaveno>", 0], ["pravděpodobné", 1], ["téměř jisté", 2], ["jisté", 3]]) {
+            let option=document.createElement("option");
+            option.innerText=o[0];
+            option.value=o[1];
+            certainty.appendChild(option);
+        }
         // info old
         if (undetected!=null) {
             let span=document.createElement("span");

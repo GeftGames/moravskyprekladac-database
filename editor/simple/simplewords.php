@@ -1,39 +1,46 @@
 <div class="splitView">
     <div>
         <?php
-             
-        // Do dashboard stuff
         include "components/tags_editor.php";
+        include "components/multiple_to.php";
 
-        $order="ORDER BY LOWER(shape_from) ASC";
-        $sql="SELECT id, shape_from FROM simpleword_relations $order;";
+        tagsEditorDynamic();
 
+        $filter=$_SESSION['translate'];
+        //$order="ORDER BY LOWER(from) ASC";
+        $sql="SELECT `id`, `from` FROM `simpleword_relations` WHERE `translate`=$filter;";
         $result = $conn->query($sql);
         if (!$result) echo "ERROR: ".$conn->error;
 
         $list=[];
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                $list[]=[$row["id"], $row["shape_from"]];
+                $list[]=[$row["id"], $row["from"]];
             }
         } else {
-            echo "0 results";
+            //echo "0 results";
         }
 
-        echo FilteredList($list, "simpleword_relation");           
+        echo FilteredList($list, "simpleword", []);
         
-        $GLOBALS["onload"].= /** @lang JavaScript */
-            "simpleword_changed=function() { 
-            let elementsSelected = flist_simpleword.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        simpleword_changed=function() { 
+          /*  let elementsSelected = flist_simpleword_relations.getSelectedItemInList();
         
             // no selected
             if (!elementsSelected) {
                 return;
             }
             //no multiple
-            if (Array.isArray(elementsSelected)) return;
+             if (Array.isArray(elementsSelected)) return;
 
             let id=elementsSelected.dataset.id;
+            */
+          
+           let id = flist_simpleword.getSelectedIdInList();
+        
+            // no selected
+            if (id==null) return;  
 
             fetch('index.php', {
                 method: 'POST',
@@ -41,17 +48,19 @@
                 body: `action=simpleword_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('simplewordId').value=id;
-                    document.getElementById('simplewordLabel').value=json.label;
+                    document.getElementById('simplewordFrom').value=json.from;
 
+                    to_load(json.to);//JSON.parse()
+                    
                     // tags
-                    if (json.tags!=null) {
+                   /* if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
                         tagSet(arrTags);
                     } else {
                         tagSet([]);
-                    }
+                    }*/
                    
                 } else console.log('error sql', json);
             });
@@ -60,10 +69,11 @@
         refreshFilteredLists();
 
         flist_simpleword.EventItemSelectedChanged(simpleword_changed);
-        flist_simpleword.EventItemAddedChanged(simpleword_added);";
+        flist_simpleword.EventItemAddedChanged(simpleword_added);
+        ";
     
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "var flist_simpleword; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_simpleword; 
         var currentsimplewordCSSave = function() {
             let label=document.getElementById('simplewordLabel').value;
             let simplewordId=document.getElementById('simplewordId').value;
@@ -81,7 +91,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_simpleword.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -96,28 +106,38 @@
         ?>
     </div>
     <div class="editorView">
+        <table>
+            <tr>
+                <td><label for="simplewordFrom">Z</label></td>
+                <td><input type="text" id="simplewordFrom"></td>
+            </tr>
+
+            <tr>
+                <td><label for="quality">Zobrazit</label></td>
+                <td><label class="switch">
+                        <input id="quality" type="checkbox">
+                        <span class="slider"></span>
+                    </label></td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td><label for="simplewordTo">Na</label></td>
+            </tr><tr>
+                <td><?php echo multiple_to([],"simpleword"); ?></td>
+            </tr>
+</table>
+        <hr>
         <div>
-            <div class="row">
-                <label id="name">Název</label>
-                <input type="text" for="name">
-            </div>
+            <input type="hidden" id="simplewordId" value="-1">
+            <a onclick="currentsimplewordCSSave()" class="button">Uložit</a>
+        </div>
 
-            <div class="row">
-                <label id="name">Z</label>
-                <input type="text" for="name">
-            </div>
-
-            <div class="row">
-                <label id="name">Na</label>
-                <input type="text" for="name">
-            </div>
-            <hr>
-            <div>
-                <label id="name">Info</label>
-                <p>"dny,dny" čárkou bez mezery oddělit více možností, primární je první</p>
-                <p>"?" Neznámý tvar</p>
-                <p>"-" Neexistuje tvar</p>
-            </div>
+        <div style="color: gray">
+            <h4>Info</h4>
+            <p>"dny,dny" čárkou bez mezery oddělit více možností, primární je první</p>
+            <p>"?" Neznámý tvar</p>
+            <p>"-" Neexistuje tvar</p>
         </div>
     </div>
 </div>

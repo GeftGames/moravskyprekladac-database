@@ -3,6 +3,7 @@ session_start();
 include "./data/config.php";
 include "components/select_fromlist.php";
 
+
 // Check if database exists
 $conn_check = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"]);
 $result = $conn_check->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '".$GLOBALS["databaseName"]."'");
@@ -20,6 +21,7 @@ $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["p
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+include "./data/sql_help.php";
 
 // rest api
 include "./rest/handler.php";
@@ -57,13 +59,13 @@ if (file_exists($currenteditor)) {
 } else $_SESSION["error"].="<p class='error'>ERROR: Editor not found! \"$currenteditor\"</p>";
 
 $listTranslates=[];
-$sql ="SELECT id, translateName FROM translate";
+$sql ="SELECT id, name FROM translate";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
     $listTranslates=[];
     while ($row = $result->fetch_assoc()) {
-        $listTranslates[]=[$row["id"], $row["translateName"]];
+        $listTranslates[]=[$row["id"], $row["name"]];
     }
     //    echo FilteredList($listTranslates, "lang", "");
 } else {
@@ -98,8 +100,26 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
             }).then(response => response.json())
             .then(json => {
                 if (json.status==="ERROR") console.error(json.error);
+
+                // Refresh the page
+                else location.reload();
             });
             popupClose('selectLang');
+        }
+        function export_database(){
+            fetch('index.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=database_export'
+            }).then(response => response.json())
+                .then(json => {
+                    if (json.status==="ERROR") console.error(json.error);
+
+                    //download?
+                    let filename=json.file;
+
+            });
+
         }
     </script>
 </head>
@@ -208,27 +228,27 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
             </div>
         </div>
     </div>
-    <!--<div id="popup_info" class="popupBackground" style="display:none">
+    <div id="popup_info" class="popupBackground" style="display:none">
             <div class="popup">
                 <div class="popupHeader"><span onclick="popupClose('info')" class="popupClose">×</span></div>
                 <div class="popupBody">
                     <h1>Schválit uživatele</h1>
                     <div style="overflow: scroll;    max-height: 50vh;">
-                        <?php // echo "Upload size:".ini_get("post_max_size") . " / " . ini_get("upload_max_filesize");?>
+                        <?php  echo "Upload size:".ini_get("post_max_size") . " / " . ini_get("upload_max_filesize");?>
                         <?php
-    //   ob_start();
-    //  phpinfo();
+       ob_start();
+      phpinfo();
 
-    // remove css
-    // $php=ob_get_clean();
-    // $phpE=substr($php, strpos($php, "<div"));
-    // echo $phpE;
+     //remove css
+     $php=ob_get_clean();
+     $phpE=substr($php, strpos($php, "<div"));
+     echo $phpE;
     ?>
                     </div>
                     <a class="button">Uložit</a>
                 </div>
             </div>
-        </div>-->
+        </div><!---->
 </div>
 <div id="content">
     <!-- Navbar -->
@@ -240,7 +260,7 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
                 <span class="dropDownListItem" onclick="popupShow('databaseImportOld')">Importovat *.trw</span>
                 <hr>
                 <span class="dropDownListItem" onclick="popupShow('databaseUpload')">Načíst databázi</span>
-                <span class="dropDownListItem" onclick="popupShow('databaseExport')">Exportovat databázi</span>
+                <span class="dropDownListItem" onclick="export_database()">Exportovat</span>
             </div>
         </div>
         <div class="dropdown">
@@ -280,7 +300,7 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         </div>
     </div>
 
-    <div style="max-height: 5cm">
+    <div style="max-height: 5cm;overflow: hidden;overflow-y: scroll;">
         <?php if (isset($_SESSION["error"])) echo $_SESSION["error"]; ?>
     </div>
 
@@ -292,12 +312,12 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         ],
         [
             ["global", "Globální"],
-            [["cites", "Citace"], ["regions", "Regiony"], ["nations", "Národnosti"]]
+            [["cites", "Citace"], ["regions", "Regiony"], ["nations", "Národnosti"], ["langs", "Jazyky"]]
         ],
         "|",
         [
             ["tools", "nástroje"],
-            [["analysesentences", "Analýza textu"], ["analyzeSentance", "Analýza vět"], ["searchdup", "Hledat duplikáty"]]
+            [["extract_sentences", "Z textu věty"], ["extract_words", "Z vět slova"]/*, ["searchdup", "Hledat duplikáty"]*/]
         ],
         [
             ["attributes", "Atributy"],
@@ -315,15 +335,15 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         [
             ["replaces", "Náhrady"],
             [["replace_general_start", "Obecně na začátku"], ["replace_general_inside", "Obecně uprostřed"], ["replace_general_end", "Obecně nakonci"],"|",
-                ["replace_defined", "Definované"], ["replace_noun_defined", "Zakončení pods."], ["replace_adjective_defined", "Zakončení příd."]]
+                ["replace_defined", "Definované"], ["replace_noun_defined", "Zak. podstatných jm."], ["replace_adjective_defined", "Zak. přídídavných jm."], ["replace_verb_defined", "Zak. sloves"]]
         ],
         [
             ["relations", "Vztahy"],
-            [["noun", "Podstatná jména"], ["adjective", "Přídavná jména"], ["pronoun", "Zájmena"], ["number", "Číslovky"], ["verb", "Slovesa"], ["adverb", "Příslovce"], ["preposition", "Předložky"], ["conjunction", "Spojky"], ["particle", "Částice"], ["", "Citoslovce"]]
+            [["noun", "Podstatná jména"], ["adjective", "Přídavná jména"], ["pronoun", "Zájmena"], ["number", "Číslovky"], ["verb", "Slovesa"], ["adverb", "Příslovce"], ["preposition", "Předložky"], ["conjunction", "Spojky"], ["particle", "Částice"], ["interjection", "Citoslovce"]]
         ],
         [
             ["translate", "Překlad"],
-            [["noun", "Podstatná jména"], ["adjective", "Přídavná jména"], ["pronoun", "Zájmena"], ["number", "Číslovky"], ["verb", "Slovesa"], ["adverb", "Příslovce"], ["preposition", "Předložky"], ["conjunction", "Spojky"], ["particle", "Částice"], ["", "Citoslovce"]]
+            [["noun", "Podstatná jména"], ["adjective", "Přídavná jména"], ["pronoun", "Zájmena"], ["number", "Číslovky"], ["verb", "Slovesa"]/*, ["adverb", "Příslovce"], ["preposition", "Předložky"], ["conjunction", "Spojky"], ["particle", "Částice"], ["", "Citoslovce"]*/]
         ]
     ];
 

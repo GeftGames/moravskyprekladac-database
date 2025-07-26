@@ -16,7 +16,7 @@
         } else {
             // TODO: echo "0 results";
         }
-        echo FilteredList($list, "adjective_patterns_cs");  
+        echo FilteredList($list, "adjective_patterns_cs", []);
 
 
         $GLOBALS["onload"].= /** @lang JavaScript */"

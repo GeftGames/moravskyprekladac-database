@@ -3,37 +3,34 @@
         <?php
         
         include "components/tags_editor.php";
-        include "components/multiple_simple_to.php";
-        
-        $order="ORDER BY LOWER(shape_from) ASC";
-        $sql="SELECT id, shape_from FROM phrase_relations $order;";
+        include "components/multiple_to.php";
+
+        tagsEditorDynamic();
+
+        $filter=$_SESSION['translate'];
+       // $order="ORDER BY LOWER(from) ASC";
+        $sql="SELECT `id`, `from` FROM phrase_relations WHERE `translate`=$filter;";
         $result = $conn->query($sql);
         if (!$result) echo "ERROR: ".$conn->error;
 
         $list=[];
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                $list[]=[$row["id"], $row["shape_from"]];
+                $list[]=[$row["id"], $row["from"]];
             }
         } else {
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "phrase");  
+        echo FilteredList($list, "phrase", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-            phrase_changed=function() { 
-            let elementsSelected = flist_phrase.getSelectedItemInList();
+        phrase_changed=function() {
+            let id = flist_phrase.getSelectedIdInList();
         
             // no selected
-            if (!elementsSelected) {
-                return;
-            }
-            //no multiple
-            if (Array.isArray(elementsSelected)) return;
-
-            let id=elementsSelected.dataset.id;
-
+            if (id==null) return; 
+            
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -42,7 +39,8 @@
             .then(json => {
                 if (json.status==='OK') {
                     document.getElementById('phraseId').value=id;
-                    document.getElementById('phraseFrom').value=json.shape_from;
+                    document.getElementById('phraseFrom').value=json.from;
+                    
                     to_load(json.to);
                     
                     // tags
@@ -96,16 +94,34 @@
     </div>
     <div class="editorView">
         <div id="regionsview">
-            <div class="row section">
-                <label for="phraseFrom" id="name">Z</label><br> 
-                <input type="text" id="phraseFrom" value="" placeholder="ušel jsi" style="max-width: 9cm;">
-            </div>
-            <?php echo tagsEditor("phrase", [], "Tagy");?>
-            
-            <!-- Translate to -->
-            <?php echo multiple_simple_to([[]]); ?>
+            <table>
+                <div class="row section">
+                    <label for="phraseFrom">Z&nbsp;</label><br>
+                    <input type="text" id="phraseFrom" value="" placeholder="ušel jsi" style="max-width: 9cm;">
+                </div>
 
-            <div> 
+                <tr>
+                    <td><label for="quality">Zobrazit</label></td>
+                    <td><label class="switch">
+                            <input id="quality" type="checkbox">
+                            <span class="slider"></span>
+                        </label></td>
+                </tr>
+
+                <tr>
+                    <?php echo tagsEditor("phrase", [], "Tagy");?>
+                </tr>
+            </table>
+
+            <div class="section">
+                <label for="phraseFrom">Na&nbsp;</label><br>
+                <!-- Translate to -->
+                <div>
+                <?php echo multiple_to([], "phrase"); ?>
+                </div>
+            </div>
+            <div>
+                <hr>
                 <input type="hidden" id="phraseId" value="-1">
                 <a onclick="currentphraseCSSave()" class="button">Uložit</a>
             </div>

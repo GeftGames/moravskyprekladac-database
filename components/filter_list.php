@@ -1,5 +1,5 @@
 <?php
-function FilteredList($list, $id) : string {
+function FilteredList($list, $id, $btns) : string {
     $type="";
     if (str_contains($id,"relation")) $type="_relation";
 
@@ -15,7 +15,19 @@ function FilteredList($list, $id) : string {
     $GLOBALS["onload"].="flist_$id=new filteredList('$id', '$type');\nflist_$id.generateList(".json_encode($list).");\n";
     $html.="</div>";
     // Mouse context menu
-    $html.="<div id='contextmenu_$id' class='mouseContexMenu'><a onclick=\"getFilteredListById('$id').list_duplicate()\">Duplikovat</a> <a onclick=\"getFilteredListById('$id').list_remove()\">Smazat</a></div>";
+    $html.="<div id='contextmenu_$id' class='mouseContexMenu'>
+        <a onclick=\"getFilteredListById('$id').list_duplicate()\">Duplikovat</a> 
+        <a onclick=\"getFilteredListById('$id').list_remove()\">Smazat</a>";
+
+    // other buttons
+    foreach ($btns as $key => $value) {
+        $name = $key;
+        $link = $value;
+
+        $html.="<a onclick=\"$link\">$name</a>";
+    }
+
+    $html.="</div>";
     
     // Buttons down
     $html.="<select id='sortTypeFilterList' class='button'>
@@ -24,6 +36,8 @@ function FilteredList($list, $id) : string {
         <option value='desc'>Z 🡒 A</option>
         <option value='id'>ID</option>
     </select>";
+
+    // build in buttons
     $html.="<a class='button' onclick=\"getFilteredListById('$id').list_add()\">Přidat</a>";
 
     $html.="</div>";

@@ -1,13 +1,12 @@
 <div class="splitView">
     <div>
-        <?php
-        
+        <?php        
         // Do dashboard stuff
-       // include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(label) ASC";
-        $sql="SELECT id, label FROM replaces_defined $order;";
+        $filter=$_SESSION['translate'];
+        $sql="SELECT id, label FROM replaces_defined WHERE $filter $order;";
         $result = $conn->query($sql);
         $list=[];
         if ($result->num_rows > 0) {
@@ -18,12 +17,12 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs");  
+        echo FilteredList($list, "replaces_defined", []);
 
-        $GLOBALS["onload"].= /** @lang JavaScript */
-            "
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+            
 pronoun_cs_changed=function() { 
-    let elementsSelected = flist_pronoun_pattern_cs.getSelectedItemInList();
+    let elementsSelected = flist_replaces_defined.getSelectedItemInList();
 
     // no selected
     if (!elementsSelected) {
@@ -37,7 +36,7 @@ pronoun_cs_changed=function() {
     fetch('index.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=pronoun_pattern_cs_item&id=`+id
+        body: `action=replaces_defined_item&id=`+id
     }).then(response => response.json())
     .then(json => {
         if (json.status==='OK') {
@@ -87,12 +86,12 @@ pronoun_cs_changed=function() {
 
 refreshFilteredLists();
 
-flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
-flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);
+flist_replaces_defined.EventItemSelectedChanged(pronoun_cs_changed);
+flist_replaces_defined.EventItemAddedChanged(pronoun_cs_added);
 ";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-var flist_pronoun_pattern_cs; 
+var flist_replaces_defined; 
 var currentpronounCSSave = function() {
     let label=document.getElementById('pronounLabel').value;
     let base=document.getElementById('pronounBase').value;
@@ -122,7 +121,7 @@ var currentpronounCSSave = function() {
     }
 
     let formData = new URLSearchParams();
-    formData.append('action', 'pronoun_pattern_cs_update');
+    formData.append('action', 'replaces_defined_update');
     formData.append('id', pronounId);
     formData.append('label', label);
     formData.append('base', base);
@@ -137,7 +136,7 @@ var currentpronounCSSave = function() {
     }).then(response => response.json())
     .then(json => {
         if (json.status==='OK'){
-           flist_pronoun_pattern_cs.getSelectedItemInList().innerText=label;
+           flist_replaces_defined.getSelectedItemInList().innerText=label;
         }else console.log('error currentRegionSave',json);
     });
 };
@@ -170,7 +169,7 @@ var changeVisibility = function() {
 };
 
 var pronoun_cs_added = function() {
-    flist_pronoun_pattern_cs.lastAddedId;
+    flist_replaces_defined.lastAddedId;
     pronoun_cs_changed();
 }
         
@@ -185,55 +184,60 @@ var createLabel = function() {
     </div>
     <div class="editorView">
         <div id="regionsview">
-            <div class="row section">
-                <label id="name" for="replaceLabel">Popis</label><br>
-                <input type="text" id="replaceLabel" name="label" value="" placeholder="ka>kaj (přís.)" style="max-width: 9cm;">
-                <a onclick="createLabel()" class="button">Sestavit</a>
-            </div>
+            <table>
+                <tr class="section">
+                    <td><label id="name" for="replaceLabel">Popis</label></td>
+                    <td class="row">
+                        <input type="text" id="replaceLabel" name="label" value="" placeholder="ka>kaj (přís.)" style="max-width: 9cm;">
+                        <a onclick="createLabel()" class="button">Sestavit</a>
+                    </td>
+                </tr>
 
-            <div class="row section">
-                <label id="base" for="replaceFrom">Z</label><br>
-                <input type="text" id="replaceFrom" name="from" value="" placeholder="ka" style="max-width: 9cm;">
-            </div>
+                <tr class="section">
+                    <td><label id="base" for="replaceFrom">Z</label><br></td>
+                    <td><input type="text" id="replaceFrom" name="from" value="" placeholder="ka" style="max-width: 9cm;"></td>
+                </tr>
 
-            <div class="row section">
-                <label id="base" for="replaceTo">Na</label><br>
-                <input type="text" id="replaceTo" name="to" value="" placeholder="kaj" style="max-width: 9cm;">
-            </div>
+                <tr class="section">
+                    <td><label id="base" for="replaceTo">Na</label><br></td>
+                    <td><input type="text" id="replaceTo" name="to" value="" placeholder="kaj" style="max-width: 9cm;"></td>
+                </tr>
 
-             <div class="row section">
-                <label for="replacePartOfSpeech">Druh</label>
-                <select id="replacePartOfSpeech" name="partofSspeech">
-                    <option value="0">Jakékoliv</option>
-                    <option value="1">Podstatné jméno</option>
-                    <option value="2">Přídavné jméno</option>
-                    <option value="3">Zájmeno</option>
-                    <option value="4">Číslovka</option>
-                    <option value="5">Sloveso</option>
-                    <option value="6">Příslovce</option>
-                    <option value="7">Předložka</option>
-                    <option value="8">Spojka</option>
-                    <option value="9">Částice</option>
-                    <option value="10">Citoslovce</option>
-                </select>
-                <br>
-            </div>
+                 <tr class="section">
+                     <td><label for="replacePartOfSpeech">Druh</label></td>
+                     <td><select id="replacePartOfSpeech" name="partofSspeech">
+                        <option value="0">Jakékoliv</option>
+                        <option value="1">Podstatné jméno</option>
+                        <option value="2">Přídavné jméno</option>
+                        <option value="3">Zájmeno</option>
+                        <option value="4">Číslovka</option>
+                        <option value="5">Sloveso</option>
+                        <option value="6">Příslovce</option>
+                        <option value="7">Předložka</option>
+                        <option value="8">Spojka</option>
+                        <option value="9">Částice</option>
+                        <option value="10">Citoslovce</option>
+                    </select></td>
+                </tr>
 
-            <div class="row section">
-                <label for="replacePos">Pozice</label>
-                <select id="replacePos" name="pos">
-                    <option value="0">Nesklonné</option>
-                    <option value="1">na začátku</option>
-                    <option value="2">kdekoliv</option>
-                    <option value="3">na konci</option>
-                </select>
-                <br>
-            </div>
-               
-            <?php echo tagsEditor("replace_noun_includes", [], "Obsahuje")?>
+                <tr class="section">
+                    <td><label for="replacePos">Pozice</label></td>
+                    <td><select id="replacePos" name="pos">
+                        <option value="0">Nesklonné</option>
+                        <option value="1">na začátku</option>
+                        <option value="2">kdekoliv</option>
+                        <option value="3">na konci</option>
+                    </select></td>
+                </tr>
 
-            <?php echo tagsEditor("replace_noun_not_includes", [], "neobsahuje")?>
+                <tr class="row section">
+                    <?php echo tagsEditor("replace_noun_includes", [], "Obsahuje")?>
+                </tr>
 
+                <tr class="row section">
+                    <?php echo tagsEditor("replace_noun_not_includes", [], "Neobsahuje")?>
+                </tr>
+            </table>
             <div> 
                 <input type="hidden" id="pronounId" value="-1">
                 <a onclick="currentpronounCSSave()" class="button">Uložit</a>

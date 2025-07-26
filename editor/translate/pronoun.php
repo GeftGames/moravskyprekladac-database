@@ -19,7 +19,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs");  
+        echo FilteredList($list, "pronoun_pattern_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         pronoun_cs_changed=function() { 
@@ -84,7 +84,8 @@
         flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
         flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
     
-        $GLOBALS["script"].="var flist_pronoun_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_pronoun_pattern_cs; 
         var currentpronounCSSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;
@@ -219,7 +220,7 @@
             </div>
 
             <div class="row section">
-                <label>Druh</label>
+                <label for="pronounCategory">Druh</label>
                 <select id="pronounCategory" name="type">
                     <option value="0">Neznámý</option>
                     <option value="1">Osobní</option>
@@ -229,6 +230,16 @@
                     <option value="5">Vztažná</option>
                     <option value="6">Neurčitá</option>
                     <option value="7">Záporná</option>
+                </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="pronounCategorySyntaktics">Syntaktická funkce</label>
+                <select id="pronounCategorySyntaktics" name="type">
+                    <option value="0">Neznámý</option>
+                    <option value="1">Nepřívlastková</option>
+                    <option value="2">Přívlastková</option>
                 </select>
                 <br>
             </div>

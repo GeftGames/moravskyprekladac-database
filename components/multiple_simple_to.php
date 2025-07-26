@@ -49,7 +49,7 @@ function multiple_simple_to($list) {
     $html='<div class="section">';
     $html.='<label for="phraseto" id="name">Na</label><br>';
     $i=0;
-    foreach ($list as $item) {
+ /*   foreach ($list as $item) {
         // text to, comment, cite
         $html.='<div class="lineFromTo">
         <input id="id'.$i.'" type="hidden" value="'.$item[0].'">
@@ -58,7 +58,7 @@ function multiple_simple_to($list) {
         &nbsp; &nbsp; <span>Zdroj</span>&nbsp;<select id="cite'.$i.'" value="'.$item[2].'"><option value="0">Bez zdroje</option></select>
         <a class="button">Smazat</a>
         </div>';
-    }
+    }*/
     $html.='</div><a class="button">Přidat</a>';
     return $html;
 }

@@ -98,23 +98,22 @@ let idDataTags=id+'datatags';
 function tagsEditor($id, $tags, $label) {
     // onload
     $GLOBALS["script"].= /** @lang JavaScript */"
-
-var tagSet=function(list){      
-    // crear tags hidden
-    let tags=document.getElementById('".$id. "datatags');
-    tags.value='';
-
-    // Clear add
-    tagAddNew.valu='';
-
-    // crear tags hidden
-    let area=document.getElementById('tagsArea');
-    area.innerHTML='';
-
-    for (let i of list){  
-        if (i!=='') tagAdd(i, '$id'+'datatags');
-    }
-};
+    var tagSet=function(list){      
+        // crear tags hidden
+        let tags=document.getElementById('".$id. "datatags');
+        tags.value='';
+    
+        // Clear add
+        tagAddNew.valu='';
+    
+        // crear tags hidden
+        let area=document.getElementById('tagsArea');
+        area.innerHTML='';
+    
+        for (let i of list){  
+            if (i!=='') tagAdd(i, '$id'+'datatags');
+        }
+    };
     ";
 
     $tagsHTML="";
@@ -122,16 +121,24 @@ var tagSet=function(list){
         $tagsHTML.='<div class="tag"><span>'.$tag.'</span><a class="smallRemoveBtn" onclick="tagRemove(this, \''.$id.'datatags\')">×</a></div>';
     }
     $iddata=$id.'datatags';
+
     //html
-    $html = '<div class="section">
-        <label>'.(isset($label) ? $label : 'Tagy').'</label> 
-        <div class="row">
-            <input type="text" id="tagAddNew" placeholder="expr." style="margin: 1mm;">
-            <a onclick="tagAddFromTextBox(\'$iddata\')" class="button">Přidat</a>
-        </div>  
-        <input type="hidden" id="'.$iddata.'" value="'.join('|',$tags).'">
+    $html = '
+        <tr>
+            <td><label>'.(isset($label) ? $label : 'Tagy').'</label></td>
+            <td>
+                <div class="row">
+                    <input type="text" id="tagAddNew" placeholder="expr." style="margin: 1mm;">
+                    <a onclick="tagAddFromTextBox(\'$iddata\')" class="button">Přidat</a>
+                </div>
+                <input type="hidden" id="'.$iddata.'" value="'.join('|',$tags).'">
+            </td>
+        </tr>
+                
+        <tr><td>
         <div id="tagsArea">';
     $html.=$tagsHTML;
-    $html.='</div></div>';
+    $html.='</div></td></tr>';
+
     return $html;
 }

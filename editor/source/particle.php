@@ -1,13 +1,10 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-    //    include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(shape) ASC";
-        $sql="SELECT id, shape FROM particle_cs $order;";
+        $sql="SELECT id, shape FROM particles_cs $order;";
         $result = $conn->query($sql);
         $list=[];
         if (!$result) throwError("SQL error: ".$sql);
@@ -15,15 +12,13 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["shape"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "particle_cs");  
+        echo FilteredList($list, "particles_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         particle_cs_changed=function() { 
-            let id = flist_particle_cs.getSelectedIdInList();
+            let id = flist_particles_cs.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -34,7 +29,7 @@
                 body: `action=particle_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status === 'OK') {
                     document.getElementById('particleId').value=id;
                     document.getElementById('particleShape').value=json.shape;
 
@@ -52,10 +47,11 @@
 
         refreshFilteredLists();
 
-        flist_particle_cs.EventItemSelectedChanged(particle_cs_changed);
-        flist_particle_cs.EventItemAddedChanged(particle_cs_added);";
+        flist_particles_cs.EventItemSelectedChanged(particle_cs_changed);
+        flist_particles_cs.EventItemAddedChanged(particle_cs_added);";
     
-        $GLOBALS["script"].="var flist_particle_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_particles_cs; 
         var currentparticleCSSave = function() {
             let shape=document.getElementById('particleShape').value;
             let particleId=document.getElementById('particleId').value;
@@ -73,14 +69,14 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
-                   flist_particle_cs.getSelectedItemInList().innerText=shape;
+                if (json.status === 'OK'){
+                   flist_particles_cs.getSelectedItemInList().innerText=shape;
                 }else console.log('error currentRegionSave',json);
             });
         };
 
         var particle_cs_added = function() {
-            flist_particle_cs.lastAddedId;
+            flist_particles_cs.lastAddedId;
             particle_cs_changed();
         }";
             
@@ -88,12 +84,14 @@
     </div>
     <div class="editorView">
         <div id="regionsview">
-            <div class="row section">
-                <label for="particleShape" id="name">Tvar</label><br> 
-                <input type="text" id="particleShape" value="" placeholder="z" style="max-width: 9cm;">
-            </div>
+            <table>
+                <tr>
+                    <td><label for="particleShape">Tvar</label></td>
+                    <td><input type="text" id="particleShape" value="" placeholder="z" style="max-width: 9cm;"></td>
+                </tr>
 
-            <?php echo tagsEditor("particle_cs", [], "Tagy")?>
+                <?php echo tagsEditor("particle_cs", [], "Tagy")?>
+            </table>
             <div> 
                 <input type="hidden" id="particleId" value="-1">
                 <a onclick="currentparticleCSSave()" class="button">Uložit</a>

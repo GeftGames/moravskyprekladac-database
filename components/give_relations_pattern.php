@@ -1,5 +1,5 @@
 <?php
-function give_relations($conn, $tableName) : ?array {
+function give_relations_pattern($conn, $tableName) : ?array {
     // relations
     $tableNameRelations=$tableName.'_relations';
     $sql="SELECT `id`, `from` FROM `$tableNameRelations` WHERE `translate` = ".$_SESSION['translate'].";";

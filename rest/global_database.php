@@ -1,10 +1,10 @@
 <?php 
 // Rest api - database global tools 
 namespace REST;
-
+require_once "help.php";
 use function Safe\mysql_real_escape_string;
 
-function database_init() :void{
+function database_init(): void{
     $dev=$GLOBALS["dev"];
     if (!isset($_POST["password"]) || !isset($_POST["email"])) {
         throwError("Přihlašovací údaje jsou nekorektní!");
@@ -59,6 +59,7 @@ function database_init() :void{
             base VARCHAR(255),
             shapes TEXT,
             gender TINYINT DEFAULT 0,
+            pattern TINYINT DEFAULT 0,
             uppercase TINYINT DEFAULT 0,
             tags VARCHAR(255)
         );",
@@ -76,6 +77,9 @@ function database_init() :void{
             base VARCHAR(255),
             shapes TEXT,
             category TINYINT DEFAULT 0,
+            syntax TINYINT DEFAULT 0,
+            pattern TINYINT DEFAULT 0,
+            uppercase TINYINT DEFAULT 0,
             tags VARCHAR(255)
         );",
         "CREATE TABLE number_patterns_cs (
@@ -107,24 +111,24 @@ function database_init() :void{
             shape VARCHAR(255),
             tags VARCHAR(255)
         );",
-        "CREATE TABLE preposition_cs (
+        "CREATE TABLE prepositions_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             shape VARCHAR(255),
             falls VARCHAR(255),
             tags VARCHAR(255)
         );",
-        "CREATE TABLE conjunction_cs (
+        "CREATE TABLE conjunctions_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             shape VARCHAR(255),
             type TINYINT,
             tags VARCHAR(255)
         );",
-        "CREATE TABLE particle_cs (
+        "CREATE TABLE particles_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             shape VARCHAR(255),
             tags VARCHAR(255)
         );",
-        "CREATE TABLE interjection_cs (
+        "CREATE TABLE interjections_cs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             shape VARCHAR(255),
             tags VARCHAR(255)
@@ -138,6 +142,7 @@ function database_init() :void{
             base VARCHAR(255),
             tags VARCHAR(255),
             uppercase TINYINT,
+            pattern TINYINT,
             gender TINYINT,
             shapes TEXT
         );",
@@ -181,12 +186,6 @@ function database_init() :void{
             shapes_transgressive_past TEXT, 
             shapes_auxiliary TEXT
         );",
-        "CREATE TABLE prepositions_to (
-            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            shapes varchar(255),
-            translate INT,
-            falls VARCHAR(255)
-        );",
 
         "CREATE TABLE adverbs_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -195,8 +194,22 @@ function database_init() :void{
             `cite` VARCHAR(255),
             `comment` VARCHAR(255),
             `tags` VARCHAR(255),
-            `priority` TiNYINT
+            `priority` TiNYINT,
+            `certainty` TINYINT
         );",
+
+        "CREATE TABLE prepositions_to (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `shape` varchar(255),
+            `relation` INT,
+            `comment` VARCHAR(255),
+            `cite` VARCHAR(255),
+            `falls` VARCHAR(255),
+            `tags` VARCHAR(255),
+            `priority` TiNYINT,
+            `certainty` TINYINT
+        );",
+
         "CREATE TABLE conjunctions_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `relation` INT,
@@ -204,7 +217,8 @@ function database_init() :void{
             `cite` VARCHAR(255),
             `comment` VARCHAR(255),
             `tags` VARCHAR(255),
-            `priority` TiNYINT
+            `priority` TiNYINT,
+            `certainty` TINYINT
         );",
         "CREATE TABLE particles_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -213,7 +227,8 @@ function database_init() :void{
             `cite` VARCHAR(255),
             `comment` VARCHAR(255),
             `tags` VARCHAR(255),
-            `priority` TiNYINT
+            `priority` TiNYINT,
+            `certainty` TINYINT
         );",
         "CREATE TABLE interjections_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -222,7 +237,8 @@ function database_init() :void{
             `cite` VARCHAR(255),
             `comment` VARCHAR(255),
             `tags` VARCHAR(255),
-            `priority` TiNYINT
+            `priority` TiNYINT,
+            `certainty` TINYINT
         );",
 
         // to
@@ -235,6 +251,7 @@ function database_init() :void{
             `comment` VARCHAR(255),
             `tags` VARCHAR(255),
             `priority` TiNYINT,
+            `certainty` TiNYINT,
             `tmp_pattern_from_body` VARCHAR(255),
             `tmp_imp_from_pattern` VARCHAR(255)
         );",
@@ -245,10 +262,23 @@ function database_init() :void{
             `custombase` VARCHAR(255),
             `cite` TEXT,
             `comment` VARCHAR(255),
+            `certainty` TiNYINT,
             `tags` VARCHAR(255),
             `priority` TiNYINT,
             `tmp_pattern_from_body` VARCHAR(255),
             `tmp_imp_from_pattern` VARCHAR(255)
+        );",
+
+        // slovník search
+        "CREATE TABLE noun_cs_synonyms (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `source` INT,
+            `another` INT
+        );",
+        "CREATE TABLE adverb_cs_synonyms (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `source` INT,
+            `another` INT
         );",
 
 
@@ -258,25 +288,26 @@ function database_init() :void{
             `translate` INT,
             `from` INT
         );",
+
         "CREATE TABLE adjective_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            pattern_from INT
+            `from` INT
         );",
         "CREATE TABLE pronoun_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            pattern_from INT
+            `from` INT
         );",
         "CREATE TABLE number_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            pattern_from INT
+            `from` INT
         );",
         "CREATE TABLE verb_relations (
             id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            pattern_from INT
+            `from` INT
         );",
         "CREATE TABLE adverb_relations (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -284,43 +315,43 @@ function database_init() :void{
             `from` VARCHAR(255)
         );",
         "CREATE TABLE preposition_relations (
-            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate INT,
-            shape_from INT
+            `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `label` VARCHAR(255),
+            `translate` INT,
+            `from` INT
         );",
-        "CREATE TABLE conjuction_relations (
+        "CREATE TABLE conjunction_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shape_from INT
+            `from` INT
         );",
         "CREATE TABLE particle_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shape_from INT
+            `from` INT
         );",
         "CREATE TABLE interjection_relations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             translate INT,
-            shape_from VARCHAR(255)
+            `from` VARCHAR(255)
         );",
-
 
         // translate
         "CREATE TABLE translate (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translateName VARCHAR(255),
+            name VARCHAR(255),
+            nameVariants VARCHAR(255),
             administrativeTown VARCHAR(255),
             gpsX float,
             gpsY float,
-            region INT,
-            subregion INT,
             country TINYINT,
             langtype TINYINT,
             quality TINYINT,
             dialect TINYINT,
             editors VARCHAR(255),
             devinfo TEXT,
-            options TEXT
+            options TEXT,
+            showInMaps TINYINT
         );",
 
         // kniha, ..
@@ -358,62 +389,64 @@ function database_init() :void{
             edit_time DATETIME
         );",
 
-        // simpleword_relations
-        "CREATE TABLE simpleword_relations (
-            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate int,
-            shape_from varchar(255),
-            display tinyint,
-            tags varchar(255),
-            uppercase tinyint
-        );",
-
-        // simpleword_to
-        "CREATE TABLE simpleword_to (
-            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            parent int,
-            shapes varchar(255),
-            tags varchar(255),
-            comment varchar(255),
-            source int
-        );",
-
-        // phrase_relations
-        "CREATE TABLE phrase_relations (
-            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            translate int,
-            shape_from varchar(255),
-            display tinyint,
-            pos tinyint,
-            tags varchar(255)
-        );",
-
-        // phrase_to
-        "CREATE TABLE phrase_to (
-            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            parent int,
-            shape varchar(255),
-            tags varchar(255),
-            comment varchar(255),
-            source int
-        );",
 
         // regions
         "CREATE TABLE regions (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
+            label varchar(255) NOT NULL DEFAULT '$namedef',
+            type TINYINT, 
+            parent INT,            
+            translates TEXT /*json of cs, pl, de, ...*/
+        );",
+
+        // regions
+        "CREATE TABLE nations (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
             label varchar(255) NOT NULL DEFAULT '$namedef',
             type TINYINT,
             parent INT,
-            translates JSON
+            translates TEXT /*json of cs, pl, de, ...*/
+        );",
+
+        // langs
+        "CREATE TABLE langs (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
+            label varchar(255) NOT NULL DEFAULT '$namedef',
+            type TINYINT,
+            parent INT,
+            translates TEXT /*json of cs, pl, de, ...*/
         );",
 
         // regions ploace
         "CREATE TABLE place_regions (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            region_id INT,
-            zone_type TINYINT,
-            confinence TINYINT,
-            comment VARCHAR(255)
+            region_id INT ,
+            region_id_production INT, /*for export*/
+            translate INT, /*translate parent*/
+            zone_type TINYINT NOT NULL,
+            confinence TINYINT NOT NULL,
+            comment VARCHAR(255) NOT NULL
+        );",
+
+        "CREATE TABLE place_nations (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            nation_id INT,
+            nation_id_production INT, /*for export*/
+            translate INT, /*translate parent*/
+            confinence TINYINT NOT NULL,
+            comment VARCHAR(255) NOT NULL
+        );",
+
+        "CREATE TABLE place_langs (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            lang_id INT,
+            lang_id_production INT, /*for export*/
+            translate INT, /*translate parent*/
+            confinence TINYINT NOT NULL,
+            comment VARCHAR(255) NOT NULL
         );",
 
         // replaces
@@ -421,7 +454,7 @@ function database_init() :void{
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
             `label` VARCHAR(255) DEFAULT '$namedef',
-            `source` VARCHAR(255),
+            `from` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
         );",
@@ -429,7 +462,7 @@ function database_init() :void{
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
             `label` VARCHAR(255) DEFAULT '$namedef',
-            `source` VARCHAR(255),
+            `from` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
         );",
@@ -437,7 +470,7 @@ function database_init() :void{
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `translate` INT,
             `label` VARCHAR(255) DEFAULT '$namedef',
-            `source` VARCHAR(255),
+            `from` VARCHAR(255),
             `to` VARCHAR(255),
             `cite` INT
         );",
@@ -450,6 +483,115 @@ function database_init() :void{
             `cite` INT,
             `partOfSpeech` TINYINT,            
             `pos` TINYINT            
+        );",
+        "CREATE TABLE replaces_defined_noun (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `translate` INT,
+            `label` VARCHAR(255) DEFAULT '$namedef',
+            `source` VARCHAR(255),
+            `to` VARCHAR(255),
+            `cite` INT,          
+            `fall` TINYINT,          
+            `gender` TINYINT,          
+            `number` TINYINT,          
+            `pattern` TINYINT,          
+            `pos` TINYINT            
+        );",
+        "CREATE TABLE replaces_defined_adjective (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `translate` INT,
+            `label` VARCHAR(255) DEFAULT '$namedef',
+            `source` VARCHAR(255),
+            `to` VARCHAR(255),
+            `cite` INT,
+            `fall` TINYINT,          
+            `pattern` TINYINT,          
+            `number` TINYINT,          
+            `pos` TINYINT            
+        );",
+        "CREATE TABLE replaces_defined_verb (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `translate` INT,
+            `label` VARCHAR(255) DEFAULT '$namedef',
+            `source` VARCHAR(255),
+            `to` VARCHAR(255),
+            `cite` INT,
+            `type` TINYINT, 
+            `subtype` VARCHAR(255),     
+            `pos` TINYINT            
+        );",
+
+        // simpleword_relations
+        "CREATE TABLE simpleword_relations (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            translate int,
+            `from` varchar(255),
+            display tinyint,
+            tags varchar(255) NOT NULL,
+            uppercase tinyint
+        );",
+
+        // simpleword_to
+        "CREATE TABLE simplewords_to (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            relation int,
+            `pos` tinyint,
+            shape varchar(255),
+            tags varchar(255) NOT NULL,
+            comment varchar(255) NOT NULL,
+            cite varchar(255) NOT NULL
+        );",
+
+        // phrase_relations
+        "CREATE TABLE phrase_relations (
+            `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `translate` int,
+            `from` varchar(255),
+            `display` tinyint,
+            `tags` varchar(255) NOT NULL
+        );",
+
+        // phrases_to
+        "CREATE TABLE phrases_to (
+            id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            relation INT,
+            `pos` tinyint,
+            shape varchar(255) NOT NULL ,
+            tags varchar(255) NOT NULL ,
+            comment varchar(255) NOT NULL ,
+            cite varchar(255) NOT NULL 
+        );",
+        "CREATE TABLE sentencepart_relations (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `from` VARCHAR(255) DEFAULT '$namedef',
+            `translate` INT,
+            `display` tinyint NOT NULL ,
+            `tags` varchar(255) NOT NULL 
+        );",
+        "CREATE TABLE sentenceparts_to (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `relation` INT,
+            `pos` tinyint NOT NULL ,
+            `tags` VARCHAR(255) NOT NULL ,
+            `shape` VARCHAR(255) NOT NULL ,
+            `cite` VARCHAR(255) NOT NULL ,
+            `comment` VARCHAR(255) NOT NULL         
+        );",
+        "CREATE TABLE sentence_relations (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `from` VARCHAR(255) DEFAULT '$namedef',
+            `translate` INT,
+            `display` tinyint NOT NULL ,
+            `tags` varchar(255) NOT NULL 
+        );",
+        "CREATE TABLE sentences_to (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `relation` INT,
+            `pos` tinyint NOT NULL ,
+            `shape` VARCHAR(255),
+            `tags` VARCHAR(255) NOT NULL ,
+            `cite` VARCHAR(255) NOT NULL,
+            `comment` VARCHAR(255) NOT NULL    
         );",
     ];
 
@@ -509,6 +651,9 @@ function database_importold() :void {
 
     // Files
     foreach ($files["tmp_name"] as $key => $tmpName) {
+
+        echo "file: ".htmlspecialchars($files["name"][$key])."<br>";
+
         // Check before upload
         if (pathinfo($files["name"][$key], PATHINFO_EXTENSION) !== "trw") {
             throwError("Neplatný typ souboru!");
@@ -548,6 +693,7 @@ function database_importold() :void {
         $i=0;
         $linesLen=count($lines);
 
+        echo "head: ";
         for (;$i<$linesLen;$i++) {
             $line=$lines[$i];
             if (is_string($line) && strlen($line) > 0) {
@@ -612,35 +758,39 @@ function database_importold() :void {
                 }
             }
         }
+        echo "(adding head...)";
+
+
         $devinfo_saveFormat = $conn->real_escape_string($devinfo);
         $options_saveFormat = $conn->real_escape_string($options);
 
         // insert translate
-        $sql="INSERT INTO translate (`translateName`, `administrativeTown`, `gpsX`, `gpsY`, `country`, `langtype`, `quality`, `dialect`, `editors`, `devinfo`, `options`) SELECT 
+        $sql="INSERT INTO translate (`name`, `administrativeTown`, `gpsX`, `gpsY`, `country`, `langtype`, `quality`, `dialect`, `editors`, `devinfo`, `options`) SELECT 
         '$name', '$administrativeTown', $gpsX, $gpsY, $country, $langtype, $quality, $dialect, '$editors', '$devinfo_saveFormat', '$options_saveFormat'
-        WHERE NOT EXISTS (SELECT 1 FROM translate WHERE translateName = '$name')";
+        WHERE NOT EXISTS (SELECT 1 FROM translate WHERE name = '$name')";
 
         if ($conn->query($sql) === TRUE) {
             //ok
             if (mysqli_affected_rows($conn) > 0) {
             } else {
-                throwError("Překlad s tímto názvem už v databázi existuje!");
+                echo ("Překlad s tímto názvem už v databázi existuje!");
             }
         }else{
             sqlError($sql, $conn);
         }
         $langId=$conn->insert_id;
+        echo "done<br>";
 
+        echo "cites: ";
         // cites
-
         $citesRawLines=explode('\\n', $cites);
-
         foreach ($citesRawLines as $citeLineRaw) {
+            echo $citeLineRaw;
             if (str_starts_with($citeLineRaw, "kniha|")
-             || str_starts_with($citeLineRaw, "periodikum|")
-             || str_starts_with($citeLineRaw, "sncj|")
-             || str_starts_with($citeLineRaw, "web|")
-             || str_starts_with($citeLineRaw, "cja|")) {
+            ||  str_starts_with($citeLineRaw, "periodikum|")
+            ||  str_starts_with($citeLineRaw, "sncj|")
+            ||  str_starts_with($citeLineRaw, "web|")
+            ||  str_starts_with($citeLineRaw, "cja|")) {
                 $citeVars=[];
                 $vars=explode("|", $citeLineRaw); //["smt=d", "shgj=df", ...]
 
@@ -649,60 +799,101 @@ function database_importold() :void {
                     if (count($var)==2){
                         $varCode=$var[0];
                         $varValue=$var[1];
-                        $citeVars[$varCode]=$varValue;
+                        // fix
+                        if ($varCode=="primeni") $citeVars["prijmeni"]=$varValue;
+                        else $citeVars[$varCode]=$varValue;
                     } elseif (count($var)==1) {
                         $citeVars[$var[0]]=true;
                     }
                 }
+
                 $citeData=[];
                 // more info ./globa/cites.php
                 $citetypeRaw=$vars[0];
                 $citeType=0;
 
-                if ($citetypeRaw=="kniha") $citeType=1;
-                elseif ($citetypeRaw=="web") $citeType=2;
-                elseif ($citetypeRaw=="sncj") $citeType=3;
+                // cite type
+                if     ($citetypeRaw=="kniha") $citeType=1;
+                elseif ($citetypeRaw=="web"  ) $citeType=2;
+                elseif ($citetypeRaw=="sncj" ) $citeType=3;
                 elseif ($citetypeRaw=="periodikum") $citeType=4;
+                elseif ($citetypeRaw=="cja") $citeType=1;
 
                 $shortcut="";
                 if (isset($citeVars["shortcut"]))$shortcut=$citeVars["shortcut"];
                 else if ($citetypeRaw=="sncj") $shortcut="sncj";
-                else throwError("Missing shortcut: ".$citetypeRaw);
-
-                // only defined cite types
-                $listSame=["shortcut", "nazev", "podnazev", "odkaz", "issn", "ibsn", "autor", "jmeno", "prijmeni", "odkaz", "vydavatel", "spolecnost"];
-                $sql = "INSERT INTO cites (label, data, type)
-                    SELECT ?, ?, ?
-                    WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = ?)";
-
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssis", $label, $data, $citeType, $label);
-
-                $data=json_encode($citeData,JSON_UNESCAPED_UNICODE);
-
-                $label="";
-                if (isset($citeVars["nazev"])) $label=$citeVars["nazev"];
-                else if (isset($citeVars["typ"]) && ($citeVars["typ"]=="sncj" || $citeVars["typ"]=="cja" || $citeVars["typ"]=="inf")) $label=$citeVars["typ"];
-                else if (isset($citeVars["shortcut"])) $label=$citeVars["shortcut"];
-                else if (isset($citeVars["odkaz"])) $label=$citeVars["odkaz"];
-
-                $sql="INSERT INTO cites (label, data, type) SELECT '$label', '$data', $citeType
-                    WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$label')";
-
-                $idcite=-1;
-                if ($stmt->execute()) {
-                    $idcite=$conn->insert_id;
-                }else{
-                    sqlError($sql, $conn);
+                else if ($citetypeRaw=="cja") $shortcut="cja";
+                else {
+                    throwError("Missing shortcut: ".$citetypeRaw);
                 }
 
+                $idcite=-1;
+
+                // Check if cite already exists
+                {
+                    $sql = "SELECT id FROM cites WHERE JSON_VALUE(data,'$.shortcut') = ?"; //todo fix
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("s", $shortcut);
+                    if ($stmt->execute()) {
+                        $stmt->bind_result($idCiteExiting);
+                        // if shortcut found
+                        if ($idCiteExiting!=null) $idcite=$idCiteExiting;
+                    }else{
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
+
+                // label for cite and subcite
+                $label="";
+                if ($citetypeRaw=="sncj" || $citetypeRaw=="cja" || $citetypeRaw=="inf") {
+                    if ($citetypeRaw=="sncj") $label="SNČJ";
+                    if ($citetypeRaw=="cja" ) $label="ČJA";
+                    if ($citetypeRaw=="inf" ) $label="informátor";
+                }else if (isset($citeVars["nazev"]) && $citeVars["nazev"]!="")    $label=$citeVars["nazev"];
+                else if (isset($citeVars["prispevek"]) && $citeVars["prispevek"]!="") $label=$citeVars["prispevek"];
+                else if (isset($citeVars["periodikum"]) && $citeVars["periodikum"]!="")$label=$citeVars["periodikum"];
+                else if (isset($citeVars["shortcut"]) && $citeVars["shortcut"]!="")  $label=$citeVars["shortcut"];
+                else if (isset($citeVars["odkaz"]) && $citeVars["odkaz"]!="")     $label=$citeVars["odkaz"];
+
+                // insert non-existing cite
+                if ($idcite==-1) {
+                    // save only params
+                    $listSame=["shortcut", "nazev", "nazev_webu", "rok_vydani", "strany", "podnazev", "dil", "kapitola", "odkaz", "issn", "ibsn", "autor", "jmeno", "prijmeni", "odkaz", "vydavatel", "spolecnost", "i"/*sncj place*/];
+
+                    foreach ($listSame as $key) {
+                        if (isset($citeVars[$key])) {
+                            if ($citeVars[$key]!="") $citeData[$key]=$citeVars[$key];
+                        }
+                    }
+
+                    // only defined cite types
+                    $sql = "INSERT INTO cites (label, data, type)
+                        SELECT ?, ?, ?
+                        WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = ?)";
+
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssis", $label, $data, $citeType, $label);
+
+                    $data=json_encode($citeData,JSON_UNESCAPED_UNICODE);
+
+                  /*  $sql="INSERT INTO cites (label, data, type) SELECT '$label', '$data', $citeType
+                        WHERE NOT EXISTS (SELECT 1 FROM cites WHERE label = '$label')";*/
+
+                    if ($stmt->execute()) {
+                        $idcite=$conn->insert_id;
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
 
                 // Pieces of cite
                 $dataPiece=[];
                 $listSameP=["strany", "cislo", "rocnik", "odkaz", "kapitola", "shortcut", "zpracovano"];
                 foreach ($listSameP as $key) {
                     if (isset($citeVars[$key])) {
-                        if ($citeVars[$key]!="")$dataPiece[$key]=$citeVars[$key];
+                        if ($citeVars[$key]!="") $dataPiece[$key]=$citeVars[$key];
                     }
                 }
 
@@ -712,7 +903,7 @@ function database_importold() :void {
 
                 if ($conn->query($sqlPiece) === TRUE) {
                     //ok
-                }else{
+                } else {
                     sqlError($sqlPiece, $conn);
                 }
             }
@@ -730,7 +921,9 @@ function database_importold() :void {
                 sqlError($sqlPiece, $conn);
             }
         }
+        echo "done<br>";
 
+        echo "sentencepattern: ";
         // SentencePattern
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -738,7 +931,9 @@ function database_importold() :void {
             if ($line == "")  continue;
            // itemsSentencePatterns.Add(ItemSentencePattern.Load(line));
         }
+        echo "done<br>";
 
+        echo "sentencepatternpart: ";
         // SentencePatternPart
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -746,24 +941,10 @@ function database_importold() :void {
             if ($line == "")  continue;
            // itemsSentencePatternParts.Add(ItemSentencePatternPart.Load(line));
         }
+        echo "done<br>";
 
+        echo "sentences: ";
         // Sentences
-        for ($i++; $i<$linesLen; $i++) {
-            $line = $lines[$i];
-            if ($line == "-")  break;
-            if ($line == "")  continue;
-            //itemsSentences.Add(ItemSentence.Load(line));
-        }
-
-        // SentencePart
-        for ($i++; $i<$linesLen; $i++) {
-            $line = $lines[$i];
-            if ($line == "-") break;
-            if ($line == "")  continue;
-         //   itemsSentenceParts.Add(ItemSentencePart.Load(line));
-        }
-
-        // Phrase
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
             if ($line == "-") break;
@@ -775,7 +956,7 @@ function database_importold() :void {
             $pos=$parts[2];
             $tags="";
 
-            $sql="INSERT INTO phrase_relations (translate, shape_from, display, pos, tags) VALUES ($langId, '$from', $display, $pos, '$tags');";
+            $sql="INSERT INTO sentence_relations (`translate`, `from`) VALUES ($langId, '$from');";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
@@ -787,23 +968,112 @@ function database_importold() :void {
             $sql_to=[];
             $tos=loadListTranslatingToData($parts, 3);
             foreach ($tos as $to) {
-                $shape=$to["Text"];
-                $comment=$to["Comment"];
+                $shape=mysqli_escape_string($conn, $to["Text"]);
+                $comment=mysqli_escape_string($conn, $to["Comment"]);
                 $source=$to["Source"];
                 $tags=join(",", tryToGetTags($comment));
-                $sourceId=0;
+                $sourceIds=convertCites($source,$listCites);
 
-                $sql_to[]="($idPhrase, '$shape', '$tags', '$comment', $sourceId)";
+                $sql_to[]="($idPhrase, '$shape', '$tags', '$comment', '$sourceIds')";
             }
 
-            $sqlTo="INSERT INTO phrase_to (parent, shape, tags, comment, source) VALUES ".implode(", ", $sql_to).";";
+            $sqlTo="INSERT INTO sentences_to (relation, shape, tags, comment, cite) VALUES ".implode(", ", $sql_to).";";
             if ($conn->query($sqlTo) === TRUE) {
                 //ok
             }else{
                 sqlError($sqlTo,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "sentecepart: ";
+        // SentencePart
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-") break;
+            if ($line == "")  continue;
+
+            $parts = explode('|',$line);
+            $from=mysqli_escape_string($conn, $parts[0]);
+            if ($parts[1]=="1") $display=1;
+            else $display=0;
+            //$pos="";//$parts[2];
+            //$tags="";
+
+            $sql="INSERT INTO `sentencepart_relations` (`from`, `translate`, `display`) VALUES ('$from', $langId, $display);";
+            if ($conn->query($sql) === TRUE) {
+                //ok
+            }else{
+                sqlError($sql,$conn);
+            }
+
+            $idSentencePart=$conn->insert_id;
+
+            $sql_to=[];
+            $tos=loadListTranslatingToData($parts, 2);
+            foreach ($tos as $to) {
+                $shape=mysqli_escape_string($conn, $to["Text"]);
+                $comment=mysqli_escape_string($conn, $to["Comment"]);
+                $source=$to["Source"];
+                $tags=join(",", tryToGetTags($comment));
+                $sourceIds=convertCites($source,$listCites);
+                $sql_to[]="($idSentencePart, '$shape', '$tags', '$comment', '$sourceIds')";
+            }
+
+            $sqlTo="INSERT INTO sentenceparts_to (relation, shape, tags, comment, cite) VALUES ".implode(", ", $sql_to).";";
+            if ($conn->query($sqlTo) === TRUE) {
+                //ok
+            }else{
+                sqlError($sqlTo,$conn);
+            }
+        }
+        echo "done<br>";
+
+        echo "phrase: ";
+        // Phrase
+        for ($i++; $i<$linesLen; $i++) {
+            $line = $lines[$i];
+            if ($line == "-") break;
+            if ($line == "")  continue;
+
+            $parts = explode('|',$line);
+            $from=mysqli_escape_string($conn, $parts[0]);
+            if ($parts[1]=="1")$display=1;
+            else $display=0;
+            $pos=$parts[2];
+            //$tags="";
+
+            $sql="INSERT INTO phrase_relations (`translate`, `from`, `display`, `pos`, `tags`) VALUES ($langId, '$from', $display, $pos, '$tags');";
+            if ($conn->query($sql) === TRUE) {
+                //ok
+            }else{
+                sqlError($sql,$conn);
+            }
+
+            $idPhrase=$conn->insert_id;
+
+            $sql_to=[];
+            $tos=loadListTranslatingToData($parts, 3);
+            foreach ($tos as $to) {
+                $shape=mysqli_escape_string($conn, $to["Text"]);
+                $comment=mysqli_escape_string($conn, $to["Comment"]);
+                $source=$to["Source"];
+                $sourceIds=convertCites($source, $listCites);
+                $tags=join(",", tryToGetTags($comment));
+
+                $sql_to[]="($idPhrase, '$shape', '$tags', '$comment', '$sourceIds')";
+            }
+
+            $sqlTo="INSERT INTO phrases_to (relation, shape, tags, comment, cite) VALUES ".implode(", ", $sql_to).";";
+            if ($conn->query($sqlTo) === TRUE) {
+                //ok
+            }else{
+                sqlError($sqlTo,$conn);
+            }
+        }
+        echo "done<br>";
+
+        echo "simplewords: ";
         // SimpleWords
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -816,7 +1086,7 @@ function database_importold() :void {
             $uppercase=getUpperCaseType($from);
             $tags="";
 
-            $sql="INSERT INTO simpleword_relations (translate, shape_from, display, tags, uppercase) VALUES ($langId, '$from', $display, '$tags', $uppercase);";
+            $sql="INSERT INTO simpleword_relations (translate, `from`, display, tags, uppercase) VALUES ($langId, '$from', $display, '$tags', $uppercase);";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
@@ -828,16 +1098,17 @@ function database_importold() :void {
             $tos=loadListTranslatingToData($parts,2);
             $sql_to=[];
             foreach ($tos as $to) {
-                $shape=$to["Text"];
+                $shape=mysqli_escape_string($conn, $to["Text"]);
                 $comment=$to["Comment"];
                 $source=$to["Source"];
                 $tags=join(",", tryToGetTags($comment));
-                $sourceId=0;
+                //$sourceId=0;
 
-                $sql_to[]="($idSimpleWord, '$shape', '$tags', '$comment', $sourceId)";
+                $sourceIds=convertCites($source,$listCites);
+                $sql_to[]="($idSimpleWord, '$shape', '$tags', '$comment', '$sourceIds')";
             }
 
-            $sql="INSERT INTO simpleword_to (parent, shapes, tags, comment, source) VALUES".implode(", ", $sql_to).";";
+            $sql="INSERT INTO simplewords_to (relation, shape, tags, comment, cite) VALUES".implode(", ", $sql_to).";";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
@@ -845,30 +1116,37 @@ function database_importold() :void {
             }
 
         }
+        echo "done<br>";
 
+        echo "replaceS: ";
         // ReplaceS
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
 
-            $parts = explode('|',$line);
+            $parts = explode('|', $line);
             $from="";
             $to="";
-            if (count($parts)==1) $from=$to=$parts[0];
-            else {
+            if (count($parts)==1) {
+                $from=$parts[0];
+                $to=$parts[0];
+            } else {
                 $from=$parts[0];
                 $to=$parts[1];
             }
+            $label=$from." > ".$to;
 
-            $sql="INSERT INTO replaces_start (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
+            $sql="INSERT INTO replaces_start (`translate`, `from`, `to`, label) VALUES ($langId, '$from', '$to', '$label');";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "replaceG: ";
         // ReplaceG
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -880,18 +1158,21 @@ function database_importold() :void {
             $to="";
             if (count($parts)==1) $from=$to=$parts[0];
             else {
-                $from=$parts[0];
-                $to=$parts[1];
+                $from=mysqli_escape_string($conn, $parts[0]);
+                $to=mysqli_escape_string($conn, $parts[1]);
             }
+            $label=$from." > ".$to;
 
-            $sql="INSERT INTO replaces_inside (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
+            $sql="INSERT INTO replaces_inside (`translate`, `from`, `to`, `label`) VALUES ($langId, '$from', '$to', '$label');";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "replaceE: ";
         // ReplaceE
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -903,18 +1184,21 @@ function database_importold() :void {
             $to="";
             if (count($parts)==1) $from=$to=$parts[0];
             else {
-                $from=$parts[0];
-                $to=$parts[1];
+                $from=mysqli_escape_string($conn, $parts[0]);
+                $to=mysqli_escape_string($conn, $parts[1]);
             }
+            $label=$from." > ".$to;
 
-            $sql="INSERT INTO replaces_end (`translate`, `source`, `to`) VALUES ($langId, '$from', '$to');";
+            $sql="INSERT INTO replaces_end (`translate`, `from`, `to`, `label`) VALUES ($langId, '$from', '$to', '$label');";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "patternnounfrom: ";
         // PatternNounFrom
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -938,7 +1222,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "patternnounto: ";
         // PatternNounTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -966,7 +1252,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "noun: ";
         // Noun
         // get list from
         $listFrom=[];
@@ -1110,7 +1398,9 @@ function database_importold() :void {
                 }
             }
         }
+        echo "done<br>";
 
+        echo "patternadjectives: ";
         // PatternAdjectives
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1136,7 +1426,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "patternAdjectivesTo: ";
         // PatternAdjectivesTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1161,7 +1453,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "Adjectives: ";
         // Adjectives
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1169,7 +1463,9 @@ function database_importold() :void {
             if ($line == "")  continue;
                 //itemsAdjectives.Add(ItemAdjective.Load(line));
         }
+        echo "done<br>";
 
+        echo "pronounFrom: ";
         // PatternPronounsFrom
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1190,7 +1486,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "patternpronounto: ";
         // PatternPronounsTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1199,18 +1497,20 @@ function database_importold() :void {
 
             $parts = explode('|',$line);
             $label=$parts[0];
-            $base=extractBase($label);
+            $base=mysqli_escape_string($conn,extractBase($label));
             $shapes=array_slice($parts, 1);
 
             $sql="INSERT INTO pronoun_patterns_to (translate, label, base, shapes) ".
-                "SELECT $langId, '$label', '$base', '".implode("|",$shapes)."';";
+                "SELECT $langId, '$label', '$base', '".mysqli_escape_string($conn, implode("|",$shapes))."';";
             if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "pronouns: ";
         // Pronouns
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1218,7 +1518,9 @@ function database_importold() :void {
             if ($line == "")  continue;
           //      itemsPronouns.Add(ItemPronoun.Load(line));
         }
+        echo "done<br>";
 
+        echo "numbersfrom: ";
         // PatternNumbersFrom
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1240,7 +1542,9 @@ function database_importold() :void {
                 sqlError($sql, $conn);
             }
         }
+        echo "done<br>";
 
+        echo "numbersto: ";
         // PatternNumbersTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1261,7 +1565,9 @@ function database_importold() :void {
                 sqlError($sql, $conn);
             }
         }
+        echo "done<br>";
 
+        echo "numbers: ";
         // Numbers
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1269,7 +1575,9 @@ function database_importold() :void {
             if ($line == "")  continue;
             //    itemsNumbers.Add(ItemNumber.Load(line));
         }
+        echo "done<br>";
 
+        echo "verbs: ";
         // PatternVerbsFrom
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1305,14 +1613,14 @@ function database_importold() :void {
 
             $GLOBALS["index"]=1;
 
-            if ($SContinous)        $Continous         = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
-            if ($SFuture)           $Future            = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
-            if ($SImperative)       $Imperative        = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($SPastActive)       $PastActive        = implode("|", GetArray($shapes, $GLOBALS["index"], 8));
-            if ($SPastPassive)      $PastPassive       = implode("|", GetArray($shapes, $GLOBALS["index"], 8));
-            if ($STransgressiveCont)$TransgressiveCont = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($STransgressivePast)$TransgressivePast = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($SAuxiliary)        $Auxiliary         = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
+            if ($SContinous)        $Continous         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
+            if ($SFuture)           $Future            = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
+            if ($SImperative)       $Imperative        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($SPastActive)       $PastActive        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 8));
+            if ($SPastPassive)      $PastPassive       = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 8));
+            if ($STransgressiveCont)$TransgressiveCont = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($STransgressivePast)$TransgressivePast = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($SAuxiliary)        $Auxiliary         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
 
             $category=$parts[2];
 
@@ -1344,7 +1652,9 @@ function database_importold() :void {
                 sqlError($sql,$conn);
             }
         }
+        echo "done<br>";
 
+        echo "verbsto: ";
         // PatternVerbsTo
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1352,8 +1662,8 @@ function database_importold() :void {
             if ($line == "")  continue;
 
             $parts = explode('|',$line);
-            $label=$parts[0];
-            $base=extractBase($label);
+            $label=mysqli_escape_string($conn, $parts[0]);
+            $base=mysqli_escape_string($conn, extractBase($label));
             $shapetype=$parts[1];
 
             // convert shapetype from
@@ -1380,18 +1690,18 @@ function database_importold() :void {
 
             $GLOBALS["index"]=1;
 
-            if ($SContinous)        $Continous         = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
-            if ($SFuture)           $Future            = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
-            if ($SImperative)       $Imperative        = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($SPastActive)       $PastActive        = implode("|", GetArray($shapes, $GLOBALS["index"], 8));
-            if ($SPastPassive)      $PastPassive       = implode("|", GetArray($shapes, $GLOBALS["index"], 8));
-            if ($STransgressiveCont)$TransgressiveCont = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($STransgressivePast)$TransgressivePast = implode("|", GetArray($shapes, $GLOBALS["index"], 3));
-            if ($SAuxiliary)        $Auxiliary         = implode("|", GetArray($shapes, $GLOBALS["index"], 6));
+            if ($SContinous)        $Continous         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
+            if ($SFuture)           $Future            = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
+            if ($SImperative)       $Imperative        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($SPastActive)       $PastActive        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 8));
+            if ($SPastPassive)      $PastPassive       = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 8));
+            if ($STransgressiveCont)$TransgressiveCont = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($STransgressivePast)$TransgressivePast = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
+            if ($SAuxiliary)        $Auxiliary         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
 
             $category=$parts[2];
 
-            $sql="INSERT INTO verb_patterns_to (translate, label, base, category, 
+            /*$sql="INSERT INTO verb_patterns_to (translate, label, base, category,
                     shapes_infinitive, 
                     shapes_continous, 
                     shapes_future, 
@@ -1401,7 +1711,7 @@ function database_importold() :void {
                     shapes_transgressive_cont, 
                     shapes_transgressive_past, 
                     shapes_auxiliary) ".
-                "SELECT $langId, '$label', '$base', '$category', 
+                "SELECT $langId, '$label', '$base', $category, 
                     '$Infinitive', 
                     '$Continous', 
                     '$Future', 
@@ -1410,15 +1720,57 @@ function database_importold() :void {
                     '$PastPassive', 
                     '$TransgressiveCont',
                     '$TransgressivePast',
-                    '$Auxiliary';";
+                    '$Auxiliary';";*/
 
-            if ($conn->query($sql) === TRUE) {
+            // only defined cite types
+           $sql="INSERT INTO verb_patterns_to (translate, label, base, category,
+                shapes_infinitive,
+                shapes_continous,
+                shapes_future,
+                shapes_imperative,
+                shapes_past_active,
+                shapes_past_passive,
+                shapes_transgressive_cont,
+                shapes_transgressive_past,
+                shapes_auxiliary) ".
+                "SELECT ?, ?, ?, ?, 
+                    ?, 
+                    ?, 
+                    ?, 
+                    ?, 
+                    ?, 
+                    ?, 
+                    ?,
+                    ?,
+                    ?;";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ississsssssss", $langId, $label, $base, $category, $Infinitive,
+                $Continous,
+                $Future,
+                $Imperative,
+                $PastActive,
+                $PastPassive,
+                $TransgressiveCont,
+                $TransgressivePast,
+                $Auxiliary
+            );
+
+            if ($stmt->execute()) {
+            } else {
+                sqlError($sql, $conn);
+            }
+            $stmt->close();
+
+         /*   if ($conn->query($sql) === TRUE) {
                 //ok
             }else{
                 sqlError($sql,$conn);
-            }
+            }*/
         }
+        echo "done<br>";
 
+        echo "verbs: ";
         // Verb
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
@@ -1426,191 +1778,534 @@ function database_importold() :void {
             if ($line == "")  continue;
             //    itemsVerbs.Add(ItemVerb.Load(line));
         }
+        echo "done<br>";
 
+        echo "adverbs: ";
         // Adverb
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
             if ($line == "-") break;
             if ($line == "")  continue;
 
-            $parts = explode('|',$line);
-            $from=$parts[0];
-
-            // check if exists
-            $adverbFromId = -1;
-            $sql = "SELECT id FROM adverbs_cs WHERE shape = ? LIMIT 1";
-
-            if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("s", $from);
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result) {
-                    if ($row = $result->fetch_assoc()) {
-                        $adverbFromId = $row["id"];
-                    }
-                } else {
-                    sqlError($sql, $conn);
-                }
-
-                $stmt->close();
-            } else {
-                sqlError($sql, $conn);
-            }
-            echo "adverbFromId: $adverbFromId<br>";
-
-            // insert into from if not exists
-            if ($adverbFromId==-1) {
-                $sql="INSERT INTO adverbs_cs (shape) VALUES (?)";
-                $stmt = $conn->prepare($sql);
-                if (!$stmt) {
-                    sqlError($sql, $conn);
-                    die();
-                }
-                $stmt->bind_param("s", $from);
-
-                if ($stmt->execute()) {
-                    // set id
-                    $adverbFromId=$conn->insert_id;
-                }else{
-                    sqlError($sql, $conn);
-                    die();
-                }
-                $stmt->close();
-            }
-
-            // relation
-            $adverbRelationId=-1;
-            {
-                $sql="INSERT INTO adverb_relations (`translate`, `from`) VALUES (?, ?);";
-                $stmt = $conn->prepare($sql);
-                if (!$stmt) {
-                    sqlError($sql, $conn);
-                }
-                $stmt->bind_param("ii", $langId, $adverbFromId);
-
-                if ($stmt->execute()) {
-                    //ok
-                    $adverbRelationId=$conn->insert_id;
-                }else{
-                    sqlError($sql,$conn);
-                }
-                $stmt->close();
-            }
-
-            // to
+            $parts = explode('|',$line); // "teď,nyní|..."
+            $rawfrom=explode(",", $parts[0]); // "teď,nyní" -> ["teď", "nyní"]
             $tos = loadListTranslatingToData($parts, 1);
 
-            // Prepare the SQL statement with placeholders for multiple rows
-            $sql = "INSERT INTO adverbs_to (shape, relation, cite, comment, tags) VALUES ";
-            $values = [];
+            for ($s=0; $s<count($rawfrom); $s++) {
+                $from=$rawfrom[$s]; // "teď", "nyní"
 
-            for ($t = 0; $t < count($tos); $t++) {
-                $to = $tos[$t];
+                // check if exists
+                $adverbFromId = -1;
+                $sql = "SELECT id FROM adverbs_cs WHERE shape = ? LIMIT 1";
 
-                $shape = $conn->real_escape_string($to["Text"]);
-                $comment = $conn->real_escape_string($to["Comment"]);
-                $rawCite = $to["Source"];
-                $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
-                $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+                if ($stmt = $conn->prepare($sql)) {
+                    $stmt->bind_param("s", $from);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
 
-                // Add a row of values to the $values array
-                $values[] = "('$shape', $adverbRelationId, '$cites', '$comment', '$tags')";
-            }
+                    if ($result) {
+                        if ($row = $result->fetch_assoc()) {
+                            $adverbFromId = $row["id"];
+                        }
+                    } else {
+                        sqlError($sql, $conn);
+                    }
 
-            if (count($values)>0) {
-                // Concatenate all the rows into the SQL statement
-                $sql .= implode(", ", $values).";";
-
-                // Execute the single SQL statement
-                if ($conn->query($sql) === TRUE) {
-                    // ok
+                    $stmt->close();
                 } else {
                     sqlError($sql, $conn);
+                }
+                //echo "adverbFromId: $adverbFromId<br>";
+
+                // insert into from if not exists
+                if ($adverbFromId==-1) {
+                    $sql="INSERT INTO adverbs_cs (shape) VALUES (?)";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                        die();
+                    }
+                    $stmt->bind_param("s", $from);
+
+                    if ($stmt->execute()) {
+                        // set id
+                        $adverbFromId=$conn->insert_id;
+                    }else{
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
+
+                // relation
+                $adverbRelationId=-1;
+                {
+                    $sql="INSERT INTO adverb_relations (`translate`, `from`) VALUES (?, ?);";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->bind_param("ii", $langId, $adverbFromId);
+
+                    if ($stmt->execute()) {
+                        //ok
+                        $adverbRelationId=$conn->insert_id;
+                    }else{
+                        sqlError($sql,$conn);
+                    }
+                    $stmt->close();
+                }
+
+                // to
+                $values = [];
+
+                for ($t = 0; $t < count($tos); $t++) {
+                    $to = $tos[$t];
+
+                    $shape = $conn->real_escape_string($to["Text"]);
+                    $comment = $conn->real_escape_string($to["Comment"]);
+                    $rawCite = $to["Source"];
+                    $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
+                    $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+
+                    // Add a row of values to the $values array
+                    $values[] = "('$shape', $adverbRelationId, '$cites', '$comment', '$tags')";
+                }
+
+                if (count($values)>0) {
+                    // Concatenate all the rows into the SQL statement
+                    $sql = "INSERT INTO adverbs_to (shape, relation, cite, comment, tags) VALUES ".implode(", ", $values).";";
+
+                    // Execute the single SQL statement
+                    if ($conn->query($sql) === TRUE) {
+                        // ok
+                    } else {
+                        sqlError($sql, $conn);
+                    }
                 }
             }
         }
+        echo "done<br>";
 
+        echo "prepositions: ";
         // Preposition
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
             if ($line == "-")  break;
             if ($line == "")  continue;
 
-            $parts = explode('|',$line);
-            $from=$parts[0];
+            $parts = explode('|', $line); // "teď,nyní|..."
+            $rawfrom=explode(",", $parts[0]); // "teď,nyní" -> ["teď", "nyní"]
             $falls=$parts[1];
+            $tos = loadListTranslatingToData($parts, 2);
 
-            // insert from cs
-            $sql="INSERT INTO preposition_cs (shape, falls) ".
-                  "SELECT '$from', '$falls' ".
-                  "WHERE NOT EXISTS (SELECT 1 FROM preposition_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {
-                //ok
-            }else{
-                sqlError($sql,$conn);
+            for ($s=0; $s<count($rawfrom); $s++) {
+                $from=$rawfrom[$s]; // "teď", "nyní"
+
+                // check if exists
+                $prepositionFromId = -1;
+                $sql = "SELECT id FROM prepositions_cs WHERE shape = ? LIMIT 1";
+
+                if ($stmt = $conn->prepare($sql)) {
+                    $stmt->bind_param("s", $from);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result) {
+                        if ($row = $result->fetch_assoc()) {
+                            $prepositionFromId = $row["id"];
+                        }
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+
+                    $stmt->close();
+                } else {
+                    sqlError($sql, $conn);
+                }
+
+                // insert into from if not exists
+                if ($prepositionFromId==-1) {
+                    $sql="INSERT INTO prepositions_cs (shape) VALUES (?)";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                        die();
+                    }
+                    $stmt->bind_param("s", $from);
+
+                    if ($stmt->execute()) {
+                        // set id
+                        $prepositionFromId=$conn->insert_id;
+                    }else{
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
+
+                // relation
+                $prepositonRelationId=-1;
+                {
+                    $sql="INSERT INTO preposition_relations (`translate`, `from`, `label`) VALUES (?, ?, ?);";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->bind_param("iis", $langId, $prepositionFromId, $from);
+
+                    if ($stmt->execute()) {
+                        //ok
+                        $prepositionRelationId=$conn->insert_id;
+                    }else{
+                        sqlError($sql,$conn);
+                    }
+                    $stmt->close();
+                }
+
+                // to
+                $values = [];
+
+                for ($t = 0; $t < count($tos); $t++) {
+                    $to = $tos[$t];
+
+                    $shape = $conn->real_escape_string($to["Text"]);
+                    $comment = $conn->real_escape_string($to["Comment"]);
+                    $rawCite = $to["Source"];
+                    $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
+                    $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+
+                    // Add a row of values to the $values array
+                    $values[] = "('$shape', $adverbRelationId, '$cites', '$comment', '$tags')";
+                }
+
+                if (count($values)>0) {
+                    // Concatenate all the rows into the SQL statement
+                    $sql = "INSERT INTO prepositions_to (shape, relation, cite, comment, tags) VALUES ".implode(", ", $values).";";
+
+                    // Execute the single SQL statement
+                    if ($conn->query($sql) === TRUE) {
+                        // ok
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+                }
             }
         }
+        echo "done<br>";
 
+        echo "conjunction: ";
         // Conjunction
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
 
-            $parts = explode('|',$line);
-            $from=$parts[0];
+            $parts = explode('|',$line); // "teď,nyní|..."
+            $rawfrom=explode(",", $parts[0]); // "teď,nyní" -> ["teď", "nyní"]
+            $tos = loadListTranslatingToData($parts, 1);
 
-            // insert from cs
-            $sql="INSERT INTO conjunction_cs (shape) ".
-                  "SELECT ('$from') ".
-                  "WHERE NOT EXISTS (SELECT 1 FROM conjunction_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {
-                //ok
-            }else{
-                sqlError($sql,$conn);
+            for ($s=0; $s<count($rawfrom); $s++) {
+                $from=$rawfrom[$s]; // "teď", "nyní"
+
+                // check if exists
+                $conjunctionFromId = -1;
+                $sql = "SELECT id FROM conjunctions_cs WHERE shape = ? LIMIT 1";
+
+                if ($stmt = $conn->prepare($sql)) {
+                    $stmt->bind_param("s", $from);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result) {
+                        if ($row = $result->fetch_assoc()) {
+                            $conjunctionFromId = $row["id"];
+                        }
+                    } else {
+                        sqlError($sql, $conn);
+                        exit;
+                    }
+
+                    $stmt->close();
+                } else {
+                    sqlError($sql, $conn);
+                    exit;
+                }
+                //echo "adverbFromId: $adverbFromId<br>";
+
+                // insert into from if not exists
+                if ($conjunctionFromId==-1) {
+                    $sql="INSERT INTO conjunctions_cs (shape) VALUES (?)";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                        die();
+                    }
+                    $stmt->bind_param("s", $from);
+
+                    if ($stmt->execute()) {
+                        // set id
+                        $conjunctionFromId=$conn->insert_id;
+                    }else{
+                        sqlError($sql, $conn);
+                        exit;
+                    }
+                    $stmt->close();
+                }
+
+                // relation
+                $conjunctionRelationId=-1;
+                {
+                    $sql="INSERT INTO conjunction_relations (`translate`, `from`) VALUES (?, ?);";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->bind_param("ii", $langId, $conjunctionFromId);
+
+                    if ($stmt->execute()) {
+                        //ok
+                        $conjunctionRelationId=$conn->insert_id;
+                    }else{
+                        sqlError($sql,$conn);
+                        exit;
+                    }
+                    $stmt->close();
+                }
+
+                // to
+                $values = [];
+
+                for ($t = 0; $t < count($tos); $t++) {
+                    $to = $tos[$t];
+
+                    $shape = $conn->real_escape_string($to["Text"]);
+                    $comment = $conn->real_escape_string($to["Comment"]);
+                    $rawCite = $to["Source"];
+                    $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
+                    $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+
+                    // Add a row of values to the $values array
+                    $values[] = "('$shape', $conjunctionRelationId, '$cites', '$comment', '$tags')";
+                }
+
+                if (count($values)>0) {
+                    // Concatenate all the rows into the SQL statement
+                    $sql = "INSERT INTO conjunctions_to (shape, relation, cite, comment, tags) VALUES ".implode(", ", $values).";";
+
+                    // Execute the single SQL statement
+                    if ($conn->query($sql) === TRUE) {
+                        // ok
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+                }
             }
-
-            // TODO: insert to, relationship
         }
 
         // Particle
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
 
-            $parts = explode('|', $line);
-            $from  = $parts[0];
+            $parts = explode('|',$line); // "teď,nyní|..."
+            $rawfrom=explode(",", $parts[0]); // "teď,nyní" -> ["teď", "nyní"]
+            $tos = loadListTranslatingToData($parts, 1);
 
-            // insert from cs
-            $sql="INSERT INTO particle_cs (shape) ".
-                  "SELECT ('$from') ".
-                  "WHERE NOT EXISTS (SELECT 1 FROM particle_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {
-                //ok
-            } else {
-                sqlError($sql,$conn);
+            for ($s=0; $s<count($rawfrom); $s++) {
+                $from=$rawfrom[$s]; // "teď", "nyní"
+
+                // check if exists
+                $particleFromId = -1;
+                $sql = "SELECT id FROM particles_cs WHERE shape = ? LIMIT 1";
+
+                if ($stmt = $conn->prepare($sql)) {
+                    $stmt->bind_param("s", $from);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result) {
+                        if ($row = $result->fetch_assoc()) {
+                            $particleFromId = $row["id"];
+                        }
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+
+                    $stmt->close();
+                } else {
+                    sqlError($sql, $conn);
+                }
+                //echo "adverbFromId: $adverbFromId<br>";
+
+                // insert into from if not exists
+                if ($particleFromId==-1) {
+                    $sql="INSERT INTO particles_cs (shape) VALUES (?)";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                        die();
+                    }
+                    $stmt->bind_param("s", $from);
+
+                    if ($stmt->execute()) {
+                        // set id
+                        $particleFromId=$conn->insert_id;
+                    }else{
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
+
+                // relation
+                $particleRelationId=-1;
+                {
+                    $sql="INSERT INTO particle_relations (`translate`, `from`) VALUES (?, ?);";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->bind_param("ii", $langId, $particleFromId);
+
+                    if ($stmt->execute()) {
+                        //ok
+                        $particleRelationId=$conn->insert_id;
+                    }else{
+                        sqlError($sql,$conn);
+                    }
+                    $stmt->close();
+                }
+
+                // to
+                $values = [];
+
+                for ($t = 0; $t < count($tos); $t++) {
+                    $to = $tos[$t];
+
+                    $shape = $conn->real_escape_string($to["Text"]);
+                    $comment = $conn->real_escape_string($to["Comment"]);
+                    $rawCite = $to["Source"];
+                    $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
+                    $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+
+                    // Add a row of values to the $values array
+                    $values[] = "('$shape', $particleRelationId, '$cites', '$comment', '$tags')";
+                }
+
+                if (count($values)>0) {
+                    // Concatenate all the rows into the SQL statement
+                    $sql = "INSERT INTO particles_to (shape, relation, cite, comment, tags) VALUES ".implode(", ", $values).";";
+
+                    // Execute the single SQL statement
+                    if ($conn->query($sql) === TRUE) {
+                        // ok
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+                }
             }
         }
 
         // Interjection
         for ($i++; $i<$linesLen; $i++) {
             $line = $lines[$i];
-            if ($line == "-")  break;
+            if ($line == "-") break;
             if ($line == "")  continue;
 
-            $parts = explode('|', $line);
-            $from  = $parts[0];
+            $parts = explode('|',$line); // "teď,nyní|..."
+            $rawfrom=explode(",", $parts[0]); // "teď,nyní" -> ["teď", "nyní"]
+            $tos = loadListTranslatingToData($parts, 1);
 
-            // insert from cs
-            $sql="INSERT INTO interjection_cs (shape) ".
-                  "SELECT ('$from') ".
-                  "WHERE NOT EXISTS (SELECT 1 FROM interjection_cs WHERE shape = '$from');";
-            if ($conn->query($sql) === TRUE) {
-                //ok
-            } else {
-                sqlError($sql,$conn);
+            for ($s=0; $s<count($rawfrom); $s++) {
+                $from=$rawfrom[$s]; // "teď", "nyní"
+
+                // check if exists
+                $interjectionFromId = -1;
+                $sql = "SELECT `id` FROM interjections_cs WHERE shape = ? LIMIT 1";
+
+                if ($stmt = $conn->prepare($sql)) {
+                    $stmt->bind_param("s", $from);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result) {
+                        if ($row = $result->fetch_assoc()) {
+                            $interjectionFromId = $row["id"];
+                        }
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+
+                    $stmt->close();
+                } else {
+                    sqlError($sql, $conn);
+                }
+                //echo "adverbFromId: $adverbFromId<br>";
+
+                // insert into from if not exists
+                if ($interjectionFromId==-1) {
+                    $sql="INSERT INTO interjections_cs (shape) VALUES (?)";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                        die();
+                    }
+                    $stmt->bind_param("s", $from);
+
+                    if ($stmt->execute()) {
+                        // set id
+                        $interjectionFromId=$conn->insert_id;
+                    }else{
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->close();
+                }
+
+                // relation
+                $interjectionRelationId=-1;
+                {
+                    $sql="INSERT INTO interjection_relations (`translate`, `from`) VALUES (?, ?);";
+                    $stmt = $conn->prepare($sql);
+                    if (!$stmt) {
+                        sqlError($sql, $conn);
+                    }
+                    $stmt->bind_param("ii", $langId, $interjectionFromId);
+
+                    if ($stmt->execute()) {
+                        //ok
+                        $interjectionRelationId=$conn->insert_id;
+                    }else{
+                        sqlError($sql,$conn);
+                    }
+                    $stmt->close();
+                }
+
+                // to
+                $values = [];
+
+                for ($t = 0; $t < count($tos); $t++) {
+                    $to = $tos[$t];
+
+                    $shape = $conn->real_escape_string($to["Text"]);
+                    $comment = $conn->real_escape_string($to["Comment"]);
+                    $rawCite = $to["Source"];
+                    $cites = getCitesIdsFromString($rawCite, $listCites); // "90,35,78,.."
+                    $tags = implode(',', tryToGetTags($comment));// "0,5,8,.."
+
+                    // Add a row of values to the $values array
+                    $values[] = "('$shape', $interjectionRelationId, '$cites', '$comment', '$tags')";
+                }
+
+                if (count($values)>0) {
+                    // Concatenate all the rows into the SQL statement
+                    $sql = "INSERT INTO interjections_to (shape, relation, cite, comment, tags) VALUES ".implode(", ", $values).";";
+
+                    // Execute the single SQL statement
+                    if ($conn->query($sql) === TRUE) {
+                        // ok
+                    } else {
+                        sqlError($sql, $conn);
+                    }
+                }
             }
         }
 
@@ -1676,30 +2371,14 @@ function getUpperCaseType($str) : int {
     return 0; // Unknown case (e.g., mixed case)
 }
 
-function throwError($string) :void{
-    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
-    $_SESSION["error"].=$string;
-}
-function throwInfo($string):void {
-    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
-    $_SESSION["info"].="<p>".$string."<p>";
-}
-
-function sqlError($sql, $conn) :void{
-    $maxLen=50;
-    $len=strlen($sql);
-    if ($len>$maxLen)$sql=substr($sql,0,$maxLen)."...";
-
-    if (!isset($_SESSION["error"])) $_SESSION["error"]="";
-    $_SESSION["error"].="<p class='error'>Problém s SQL: ".$sql."; ".$conn->error."</p>";
-}
-
 function loadListTranslatingToData($rawData, $start) : array{
     $list=[];
          
     $len=count($rawData);
-    for ($i=$start; $i<$len ; $i+=3) {
-        if ($i<$len-1) $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$rawData[$i+2]];
+    for ($i=$start; $i<$len; $i+=3) {
+        if ($i<$len-1) {
+            $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$i+2>$len ? $rawData[$i+2]:""];
+        }
         else if (($i-$start)%2==0 && $i==$len-1) 
             $list[]=["Text"=>$rawData[$i], "Comment"=>$rawData[$i+1], "Source"=>$rawData[$i+2]];
     }
@@ -1731,12 +2410,14 @@ function tryToGetTags($comment) : array{
           
     return $list;
 }
-function GetArray($source, $pos, $len) : array {
+
+function GetArray($conn, $source, $pos, $len) : array {
     $arr = [];
-    for ($i=0; $i<$len; $i++) $arr[$i]=$source[$pos+$i];
+    for ($i=0; $i<$len; $i++) $arr[$i]=mysqli_escape_string($conn, $source[$pos+$i]);
     $GLOBALS["index"]+=$len;
     return $arr;
 }
+
 function getCategoryAdjective($shapeA1) {
     // tvrdé
     if (str_ends_with($shapeA1,"é"))    return 1;
@@ -1761,11 +2442,26 @@ function getCategoryAdjective($shapeA1) {
 function getCitesIdsFromString($string, $listCites) : ?string {
     // parse
     if ($string==null) return null;
-    $sources=explode("|", $string); // $sources=["nbdp", "sncj", ...]
+    $sources=explode(",", $string); // $sources=["nbdp", "sncj", ...]
     $citeIds=[]; // $citeIds=[0,3,7, ...]
+
+    // check existing id string (shortcut) and convert into id list
     foreach ($sources as $source) {// "nbdp", "sncj", ...
         if (isset($listCites[$source])) $citeIds[]=$listCites[$source];
     }
 
+    return implode("|", $citeIds); //"0,3,7,..."
+}
+
+/* @param array $listCites
+ *
+ */
+function convertCites($rawCites, $listCites) {
+    $sourceRaw=$rawCites; //$sourceRaw="nbdp|sncj|.."
+    $sources=explode("|", $sourceRaw);// $sources=["nbdp", "sncj", ...]
+    $citeIds=[]; // $citeIds=[0,3,7, ...]
+    foreach ($sources as $source) {// "nbdp", "sncj", ...
+        if (isset($listCites[$source])) $citeIds[]=$listCites[$source];
+    }
     return join("|", $citeIds); //"0,3,7,..."
 }

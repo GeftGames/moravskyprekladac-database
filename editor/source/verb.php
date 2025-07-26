@@ -13,10 +13,8 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
-        echo FilteredList($list, "verb_pattern_cs");
+        echo FilteredList($list, "verb_pattern_cs", []);
 
         $arrShapeTables=[
             //[name, show, len, code, display]

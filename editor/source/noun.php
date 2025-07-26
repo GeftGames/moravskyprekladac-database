@@ -18,7 +18,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_patterns_cs");  
+        echo FilteredList($list, "noun_patterns_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "
@@ -34,11 +34,10 @@
                 body: `action=noun_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                     document.getElementById('nounId').value=id;
                     document.getElementById('nounLabel').value=json.label;
                     document.getElementById('nounBase').value=json.base;
-                    document.getElementById('nounGender').value=json.gender;
                     document.getElementById('nounUppercase').value=json.uppercase;
 
                     if (json.gender==null) json.gender=0;
@@ -78,6 +77,7 @@
             let label=document.getElementById('nounLabel').value;
             let base=document.getElementById('nounBase').value;
             let gender=document.getElementById('nounGender').value;
+            let pattern=document.getElementById('nounPattern').value;
             let nounId=document.getElementById('nounId').value;
             let tags=document.getElementById('noun_csdatatags').value;
             let uppercase=document.getElementById('nounUppercase').value;
@@ -94,6 +94,7 @@
             formData.append('label', label);
             formData.append('base', base);
             formData.append('gender', gender);
+            formData.append('pattern', pattern);
             formData.append('shapes', shapes.join('|'));
             formData.append('tags', tags);
             formData.append('uppercase', uppercase);
@@ -134,7 +135,38 @@
                     <option value="2">Mužský neživotný</option>
                     <option value="1">Mužský životný</option>
                 </select>
-                <br>
+            </div>
+
+            <div class="row section">
+                <label for="nounPattern">Vzor</label>
+                <select id="nounPattern" name="type">
+                    <option value="0">Neznámý</option>
+                        <optgroup label="Střední">
+                        <option value="1">Město</option>
+                        <option value="2">Moře</option>
+                        <option value="3">Kuře</option>
+                        <option value="4">Stavení</option>
+                    </optgroup>
+                    <optgroup label="Ženský">
+                        <option value="5">Žena</option>
+                        <option value="6">Růže</option>
+                        <option value="7">Píseň</option>
+                        <option value="8">Kost</option>
+                    </optgroup>
+                    <optgroup label="Mužský">
+                        <option value="9">Pán</option>
+                        <option value="10">Hrad</option>
+                        <option value="11">Les</option>
+                        <option value="12">Muž</option>
+                        <option value="13">Stroj</option>
+                        <option value="14">Předseda</option>
+                        <option value="15">Soudce</option>
+                    </optgroup>
+                    <optgroup label="Přídavné">
+                        <option value="16">Mladý</option>
+                        <option value="17">Jarní</option>
+                    </optgroup>
+                </select>
             </div>
 
             <div class="row section">

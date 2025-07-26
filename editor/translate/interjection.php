@@ -1,22 +1,21 @@
 <div class="splitView">
     <div>
         <?php
+        
         // Do dashboard stuff
         include "components/tags_editor.php";
 
+        $filter=$_SESSION['translate'];
+        $sql="SELECT `id`, `from` FROM `preposition_relations` WHERE `translate`=$filter;";
+        $result = $conn->query($sql);
         $list=[];
-        {
-            $filter=$_SESSION['translate'];
-            $sql="SELECT `id`, `label` FROM `preposition_relations` WHERE `translate`=$filter;";
-            $result = $conn->query($sql);
-            if (!$result) throwError("SQL error: ".$sql);
-            if ($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
-                    $list[]=[$row["id"], $row["label"]];
-                }
-            } else {
-                // TODO: echo "0 results ";
+        if (!$result) throwError("SQL error: ".$sql);
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $list[]=[$row["id"], $row["shape"]];
             }
+        } else {
+            // TODO: echo "0 results ";
         }
 
         echo FilteredList($list, "preposition_to");  

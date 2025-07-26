@@ -6,7 +6,7 @@
         tagsEditorDynamic();
 
         // list from
-        $sqlFrom="SELECT `id`, `shape` FROM adverbs_cs;";
+        $sqlFrom="SELECT `id`, `shape` FROM conjunctions_cs;";
 
         $listFrom=[];
         $resultFrom = $conn->query($sqlFrom);
@@ -22,7 +22,7 @@
 
         // relations list
         $listR=[];
-        $sqlR="SELECT `id`, `from` FROM adverb_relations WHERE translate = ".$_SESSION['translate'].";";
+        $sqlR="SELECT `id`, `from` FROM conjunction_relations WHERE translate = ".$_SESSION['translate'].";";
         $resultR = $conn->query($sqlR);
         if ($resultR) {
             while ($rowR = $resultR->fetch_assoc()) {
@@ -42,11 +42,11 @@
 
 
         // side menu
-        echo FilteredList($listR, "adverb_relations", []);
+        echo FilteredList($listR, "conjunction_relations", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        var adverb_relation_changed = function() { 
-            let id = flist_adverb_relations.getSelectedIdInList();
+        var conjunction_relation_changed = function() { 
+            let id = flist_conjunction_relations.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -54,14 +54,14 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=adverb_relation_item&id=`+id
+                body: `action=conjunction_relation_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK') {
-                    document.getElementById('adverbId').value=id;
+                    document.getElementById('conjunctionId').value=id;
                     //from
-                    filteredSearchList_adverb_from.selectId(json.from);                   
-                    filteredSearchList_adverb_from.reload();
+                    filteredSearchList_conjunction_from.selectId(json.from);                   
+                    filteredSearchList_conjunction_from.reload();
                    
                     //to
                     to_load(JSON.parse(json.to));
@@ -72,22 +72,20 @@
 
         refreshFilteredLists();
 
-        flist_adverb_relations.EventItemSelectedChanged(adverb_relation_changed);
+        flist_conjunction_relations.EventItemSelectedChanged(conjunction_relation_changed);
         ";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_adverb_relations; 
-        var currentAdverbTOSave = function() {           
+        var flist_conjunction_relations; 
+        var currentconjunctionTOSave = function() {
+            let shape=document.getElementById('conjunctionShape').value;
+            let conjunctionId=document.getElementById('conjunctionId').value;
+            let tags=document.getElementById('conjunction_todatatags').value;
+           
             let formData = new URLSearchParams();
-            formData.append('action', 'adverb_to_update');
-            
-            let adverbId=document.getElementById('adverbId').value;
-            formData.append('id', adverbId);
-            
-            let shape=document.getElementById('adverbShape').value;
+            formData.append('action', 'conjunction_to_update');
+            formData.append('id', conjunctionId);
             formData.append('shape', shape);
-            
-            let tags=document.getElementById('adverb_todatatags').value;
             formData.append('tags', tags);
 
             fetch('index.php', {
@@ -97,7 +95,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK'){
-                   flist_adverb_relations.getSelectedItemInList().innerText=shape;
+                   flist_conjunction_relations.getSelectedItemInList().innerText=shape;
                 }else console.log('error currentRegionSave',json);
             });
         };
@@ -107,19 +105,19 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="section row">
-                <label for="adverb_from" id="name">Z</label>&nbsp;
-                <div id="select_adverb_from"></div>
-                <?php createSelectList($listFrom, "adverb_from", $idFrom);?>
+                <label for="conjunction_from" id="name">Z</label>&nbsp;
+                <div id="select_conjunction_from"></div>
+                <?php createSelectList($listFrom, "conjunction_from", $idFrom);?>
             </div>
 
             <div class="section">
-                <label for="adverb_from" id="name">Na</label>
-                <?php echo multiple_to([], "adverb"); ?>
+                <label for="conjunction_from" id="name">Na</label>
+                <?php echo multiple_to([], "conjunction"); ?>
             </div>
 
             <div> 
-                <input type="hidden" id="adverbId" value="-1">
-                <a onclick="currentAdverbTOSave()" class="button">Uložit</a>
+                <input type="hidden" id="conjunctionId" value="-1">
+                <a onclick="currentconjunctionTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

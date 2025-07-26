@@ -4,11 +4,12 @@
     --ColorText: black;
     --ConBack: rgb(239, 239, 239);
     --ColorBackground: white;
+    --ColorBackground2: #eee;
     --ColorOrig: hsl(208deg 100% 50%);
     --ColorTheme: hsl(208deg 100% 90%);
     --ColorThemeForward: hsl(208deg 30% 10%);
 
-    --bsh: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    --bsh: 2px 2px 10px rgba(0, 0, 0, 0.3);
     --fontSizeMedium: normal;
     --headerSize: 12mm;
 
@@ -24,8 +25,8 @@
         --ColorBackground: black;
         --ConBack: hsl(0, 0%, 20%);
         --shm: 3px 3px 10px #ffffff15;
-
-        --bsh: 2px 2px 10px rgba(255, 255, 255, 0.1);
+        --ColorBackground2: #111;
+        --bsh: 2px 2px 10px rgba(255, 255, 255, 0.3);
     }
 }
 
@@ -93,6 +94,7 @@ a{
 .error {
     color: red;
     font-family: var(--f);
+    margin: 0;
 }
 
 /*Controls*/
@@ -271,6 +273,7 @@ input:focus-visible+.slider {
     height: -webkit-fill-available;
     border: solid 2px;
     border-color: var(--ConBack);
+    max-width: 7cm;
 }
 
 .tab {
@@ -372,9 +375,12 @@ input:focus-visible+.slider {
 
     position: absolute;
     z-index: 100;
+
+    top: 0;
+    left:0;
 }
 .popup{
-    background-color: var(--ColorBackground);
+    background-color: var(--ColorBackground2);
     border-radius: 4px;
     box-shadow: var(--bsh);
     max-width: 95vw;
@@ -385,7 +391,12 @@ input:focus-visible+.slider {
     height:  var(--headerSize);
     border-radius: 4px 4px 0  0;
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+.pupupTitle{
+    margin-left: 13px;
 }
 .popupBody{
     margin: 10px;
@@ -531,7 +542,7 @@ h1{
     position: absolute;
     z-index: 100;
     background-color: var(--ConBack);
-    box-shadow: 0px 0px 12px var(--ColorBackground);
+    box-shadow: 0px 0px 12px var(--ColorText);
 }
 .listSearchSelect{
     max-height: 5cm;
@@ -548,4 +559,17 @@ h1{
     border-left: solid;
     padding-left: 7px;
     align-items: flex-start;
+    margin-bottom: 7px;
 }
+.loading{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+}
+.boxwithitems>span.selected{
+    background-color: var(--ColorOrig);
+}
+.boxwithitems>span{
+    cursor: pointer;
+ }

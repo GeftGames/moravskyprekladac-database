@@ -1,13 +1,10 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-   //     include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(shape) ASC";
-        $sql="SELECT id, shape FROM preposition_cs $order;";
+        $sql="SELECT id, shape FROM prepositions_cs $order;";
         $result = $conn->query($sql);
         $list=[];
         if (!$result) throwError("SQL error: ".$sql);
@@ -19,11 +16,11 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "preposition_cs");  
+        echo FilteredList($list, "prepositions_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         preposition_cs_changed=function() { 
-            let id = flist_preposition_cs.getSelectedIdInList();
+            let id = flist_prepositions_cs.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -34,7 +31,7 @@
                 body: `action=preposition_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status === 'OK') {
                     document.getElementById('prepositionId').value=id;
                     document.getElementById('prepositionShape').value=json.shape;
                     document.getElementById('prepositionFalls').value=json.falls;
@@ -53,10 +50,11 @@
 
         refreshFilteredLists();
 
-        flist_preposition_cs.EventItemSelectedChanged(preposition_cs_changed);
-        flist_preposition_cs.EventItemAddedChanged(preposition_cs_added);";
+        flist_prepositions_cs.EventItemSelectedChanged(preposition_cs_changed);
+        flist_prepositions_cs.EventItemAddedChanged(preposition_cs_added);";
     
-        $GLOBALS["script"].="var flist_preposition_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_prepositions_cs; 
         var currentprepositionCSSave = function() {
             let shape=document.getElementById('prepositionShape').value;
             let falls=document.getElementById('prepositionFalls').value;
@@ -76,14 +74,14 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
-                   flist_preposition_cs.getSelectedItemInList().innerText=shape;
+                if (json.status === 'OK'){
+                   flist_prepositions_cs.getSelectedItemInList().innerText=shape;
                 }else console.log('error currentRegionSave',json);
             });
         };
 
         var preposition_cs_added = function() {
-            flist_preposition_cs.lastAddedId;
+            flist_prepositions_cs.lastAddedId;
             preposition_cs_changed();
         }";
             

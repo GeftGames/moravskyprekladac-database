@@ -16,7 +16,7 @@
         } else {
             // TODO: echo "0 results ";
         }
-        echo FilteredList($list, "verb_pattern_to");
+        echo FilteredList($list, "verb_pattern_to", []);
 
         $arrShapeTables=[
             //[name, show, len, code, display]
@@ -283,6 +283,12 @@
                     <option value="2">SI</option>
                     <option value="3">SE</option>
                 </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="verbFallReaction">Reakce pádů</label>
+                <input id="verbFallReaction" type="text" placeholder="4,6">
                 <br>
             </div>
 

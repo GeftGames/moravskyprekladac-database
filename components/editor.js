@@ -1,4 +1,4 @@
-let filteredLists=[];
+var filteredLists=[];
 var sort;
 
 class filteredList{
@@ -65,7 +65,7 @@ class filteredList{
     generateList = (list) => {
         this.ListContainer.innerHTML = "";
         this.filter=this.filterText().toLowerCase();
-        if (!Array.isArray(list)) console.log("list is not array", list);
+        if (!Array.isArray(list)) console.warn("list is not array", list);
 
         let sortType=document.getElementById("sortTypeFilterList").value;
         if (sortType==="abc") list.sort((a, b) => a[1].localeCompare(b[1]));
@@ -159,6 +159,7 @@ class filteredList{
                 console.log(json); 
                 return; 
             }
+
             this.generateList(json.list);
             this.ListContainer.lastChild.classList.add("selectedSideItem");
             this.ItemAdded_dispatch();
@@ -187,7 +188,7 @@ class filteredList{
             body: 'action=list_'+this.type+'remove&table='+this.TableName+'&id='+id
         }).then(response => response.json())
         .then(json => {
-            this.generateList(json);
+            this.generateList(json.list);
         });
     }
 
@@ -210,7 +211,7 @@ class filteredList{
             body: 'action=list_'+this.type+'duplicate&table='+this.TableName+'&id='+id
         }).then(response => response.json())
         .then(json => {
-            this.generateList(json);
+            this.generateList(json.list);
         });
     }
 }

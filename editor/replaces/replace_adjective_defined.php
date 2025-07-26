@@ -17,7 +17,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "adjective_pattern_cs");  
+        echo FilteredList($list, "adjective_pattern_cs", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "adjective_cs_changed=function() { 
@@ -38,7 +38,7 @@
                 body: `action=adjective_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('adjectiveId').value=id;
                     document.getElementById('adjectiveLabel').value=json.label;
                     document.getElementById('adjectiveBase').value=json.base;
@@ -133,7 +133,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status==='OK'){
                    flist_adjective_pattern_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -175,54 +175,59 @@
     </div>
     <div class="editorView">
         <div id="regionsview">
-            <div class="row section">
-                <label id="name" for="name">Popis</label><br>
-                <input type="text" id="adjectiveLabel" value="" placeholder="ré>réj" style="max-width: 9cm;">
-                <a onclick="" class="button">Sestavit</a>
-            </div>
+            <table>
+                <tr>
+                    <td><label id="name" for="adjectiveLabel">Popis</label></td>
+                    <td class="row">
+                        <input type="text" id="adjectiveLabel" value="" placeholder="ré>réj" style="max-width: 9cm;">
+                        <a onclick="" class="button">Sestavit</a>
+                    </td>
+                </tr>
 
-            <div class="row section">
-                <label id="base" for="name">Z</label><br>
-                <input type="text" id="adjectiveBase" value="" placeholder="ré" style="max-width: 9cm;">
-            </div>
+                <tr>
+                    <td><label id="base" for="adjReplaceFrom">Z</label</td>
+                    <td><input type="text" id="adjReplaceFrom" value="" placeholder="ré" style="max-width: 9cm;"></td>
+                </tr>
 
-            <div class="row section">
-                <label id="base" for="name">Na</label><br>
-                <input type="text" id="adjectiveBase" value="" placeholder="réj" style="max-width: 9cm;">
-            </div>
+                <tr>
+                    <td><label id="base" for="adjReplaceTo">Na</label></td>
+                    <td><input type="text" id="adjReplaceTo" value="" placeholder="réj" style="max-width: 9cm;"></td>
+                </tr>
 
-            <div class="row section">
-                <label for="replaceTypeAdjectiveGender">Rod</label>
-                <select id="replaceTypeAdjectiveGender" name="replaceTypeAdjectiveGender">
-                    <option value="0">Jakékoliv</option>
-                    <option value="1">Mužský životný</option>
-                    <option value="2">Mužský neživotný</option>
-                    <option value="3">Ženský</option>
-                    <option value="4">Střední</option>
-                </select>
-                <br>
-            </div>
+                <tr>
+                    <td><label for="replaceTypeAdjectiveGender">Rod</label></td>
+                    <td><select id="replaceTypeAdjectiveGender" name="replaceTypeAdjectiveGender">
+                        <option value="0">Jakékoliv</option>
+                        <option value="1">Mužský životný</option>
+                        <option value="2">Mužský neživotný</option>
+                        <option value="3">Ženský</option>
+                        <option value="4">Střední</option>
+                    </select></td>
+                </tr>
 
-            <div class="row section">
-                <label for="replaceTypeAdjectiveGender">Číslo</label>
-                <select id="replaceTypeAdjectiveGender" name="replaceTypeAdjectiveGender">
-                    <option value="0">Jakékoliv</option>
-                    <option value="1">Jednotné</option>
-                    <option value="2">Množné</option>
-                </select>
-                <br>
-            </div>
+                <tr>
+                    <td><label for="replaceTypeAdjectiveGender">Číslo</label></td>
+                    <td><select id="replaceTypeAdjectiveGender" name="replaceTypeAdjectiveGender">
+                        <option value="0">Jakékoliv</option>
+                        <option value="1">Jednotné</option>
+                        <option value="2">Množné</option>
+                    </select>
+                    </td>
+                </tr>
 
-            <div class="row section">
-                <label for="replaceTypeAdjectiveGender" for="name">Pád(y)</label>
-                <input type="text" id="adjectiveLabel" value="" placeholder="7" style="max-width: 9cm;">
-                <br>
-            </div>
-              
-            <?php echo tagsEditor("replace_adjective_includes", [], "Obsahuje")?>
+                <tr>
+                    <td><label for="replaceTypeAdjectiveGender" for="name">Pád(y)</label></td>
+                    <td><input type="text" id="adjectiveLabel" value="" placeholder="7" style="max-width: 9cm;"></td>
+                </tr>
 
-            
-            <?php echo tagsEditor("replace_adjective_not_includes", [], "neobsahuje")?>
+                <tr class="row section">
+                    <?php echo tagsEditor("replace_adjective_includes", [], "Obsahuje")?>
+                </tr>
+
+                <tr class="row section">
+                    <?php echo tagsEditor("replace_adjective_not_includes", [], "neobsahuje")?>
+                </tr>
+            </table>
 
             <div> 
                 <input type="hidden" id="adjectiveId" value="-1">

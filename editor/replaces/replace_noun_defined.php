@@ -1,9 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-      //  include "components/filter_list.php";
         include "components/tags_editor.php";
 
         $filter=$_SESSION['translate'];
@@ -18,7 +15,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "replaces_defined_noun");  
+        echo FilteredList($list, "replaces_defined_noun", []);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "pronoun_cs_changed=function() { 
@@ -39,7 +36,7 @@
                 body: `action=pronoun_pattern_cs_item&id=`+id
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK') {
+                if (json.status==='OK') {
                     document.getElementById('pronounId').value=id;
                     document.getElementById('pronounLabel').value=json.label;
                     document.getElementById('pronounBase').value=json.base;
@@ -89,18 +86,21 @@
         flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
         flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
     
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "var flist_pronoun_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_pronoun_pattern_cs; 
         var currentpronounCSSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;
             let category=document.getElementById('pronounCategory').value;
             let pronounId=document.getElementById('pronounId').value;
-            let tags=document.getElementById('pronoun_csdatatags').value;
-            let shapesType=document.getElementById('pronounShapesType').value;
+            let tags=document.getElementById('replaceTags').value;
+            let gender=document.getElementById('replaceGender').value;
+            let pattern=document.getElementById('replacePattern').value;
+            let number=document.getElementById('replaceNumber').value;
+            let fall=document.getElementById('replaceFall').value;
             let shapes=[];
-            if (shapesType==0) shapes=[];
-            else if (shapesType==1) {
+            if (shapesType===0) shapes=[];
+            else if (shapesType===1) {
                 for (let i=0; i<7; i++) {
                     let textbox=document.getElementById('pronoun0'+i);
                     shapes[i]=textbox.value;
@@ -134,7 +134,7 @@
                 body: formData.toString()
             }).then(response => response.json())
             .then(json => {
-                if (json.status=='OK'){
+                if (json.status === 'OK'){
                    flist_pronoun_pattern_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
@@ -176,57 +176,62 @@
     </div>
     <div class="editorView">
         <div id="regionsview">
-            <div class="row section">
-                <label id="name">Popis</label><br> 
-                <input type="text" id="pronounLabel" for="name" value="" placeholder="kami>kama" style="max-width: 9cm;">
-                <a onclick="" class="button">Sestavit</a>
-            </div>
+            <table>
+                <tr>
+                    <td><label for="replaceLabel">Popis</label</td>
+                    <td class="row">
+                        <input type="text" id="replaceLabel" value="" placeholder="kami>kama 7./mn." style="max-width: 9cm;">
+                        <a onclick="" class="button">Sestavit</a>
+                    </td>
+                </tr>
 
-            <div class="row section">
-                <label id="base">Z</label><br>
-                <input type="text" id="pronounBase" for="name" value="" placeholder="kami" style="max-width: 9cm;">
-            </div>
+                <tr>
+                    <td><label for="replaceFrom">Z</label></td>
+                    <td><input type="text" id="replaceFrom" value="" placeholder="kami" style="max-width: 9cm;"></td>
+                </tr>
 
-            <div class="row section">
-                <label id="base">Na</label><br>
-                <input type="text" id="pronounBase" for="name" value="" placeholder="kama" style="max-width: 9cm;">
-            </div>
+                <tr>
+                    <td><label for="replaceTo">Na</label></td>
+                    <td><input type="text" id="replaceTo" value="" placeholder="kama" style="max-width: 9cm;"></td>
+                </tr>
 
-            <div class="row section">
-                <label for="replaceTypeNounGender">Rod</label>
-                <select id="replaceTypeNounGender" name="replaceTypeNounGender">
-                    <option value="0">Jakékoliv</option>
-                    <option value="1">Mužský životný</option>
-                    <option value="2">Mužský neživotný</option>
-                    <option value="3">Ženský</option>
-                    <option value="4">Střední</option>
-                </select>
-                <br>
-            </div>
+                <tr>
+                    <td><label for="replaceGender">Rod</label></td>
+                    <td><select id="replaceGender" name="replaceGender">
+                        <option value="0">Jakékoliv</option>
+                        <option value="1">Mužský životný</option>
+                        <option value="2">Mužský neživotný</option>
+                        <option value="3">Ženský</option>
+                        <option value="4">Střední</option>
+                    </select></td>
+                </tr
 
-            <div class="row section">
-                <label for="replaceTypeNounGender">Číslo</label>
-                <select id="replaceTypeNounGender" name="replaceTypeNounGender">
-                    <option value="0">Jakékoliv</option>
-                    <option value="1">jednotné</option>
-                    <option value="2">množné</option>
-                </select>
-                <br>
-            </div>
+                <tr>
+                    <td><label for="replaceNumber">Číslo</label></td>
+                    <td><select id="replaceNumber" name="replaceNumber">
+                        <option value="0">Jakékoliv</option>
+                        <option value="1">jednotné</option>
+                        <option value="2">množné</option>
+                        </select>
+                    </td>
+                </tr>
 
-            <div class="row section">
-                <label for="replaceTypeNounGender">Pád(y)</label>
-                <input type="text" id="pronounLabel" for="name" value="" placeholder="7" style="max-width: 9cm;">
-                <br>
-            </div>
-              
-            <?php echo tagsEditor("replace_noun_includes", [], "Obsahuje")?>
+                <tr>
+                    <td><label for="replaceFall">Pád</label></td>
+                    <td><input id="replaceFall" type="number" value="" placeholder="7" style="max-width: 9cm;"></td>
+                </tr>
 
-            
-            <?php echo tagsEditor("replace_noun_not_includes", [], "neobsahuje")?>
+                <tr>
+                    <?php echo tagsEditor("replace_noun_includes", [], "Obsahuje")?>
+                </tr>
 
-            <div> 
-                <input type="hidden" id="pronounId" value="-1">
+                <tr>
+                    <?php echo tagsEditor("replace_noun_not_includes", [], "neobsahuje")?>
+                </tr>
+            </table>
+
+            <div class="section">
+                <input type="hidden" id="nounId" value="-1">
                 <a onclick="currentpronounCSSave()" class="button">Uložit</a>
             </div>
         </div>

@@ -7,13 +7,13 @@
 
         // relations list
         include "components/give_relations_pattern.php";
-        $listR=give_relations_pattern($conn,"noun", true);
+        $listR=give_relations_pattern($conn,"pronoun", true);
 
         // side menu
-        echo FilteredList($listR, "noun_relations", []);
+        echo FilteredList($listR, "pronoun_relations", []);
 
         // from list for <select>
-        $sqlFrom="SELECT `id`, `label` FROM `noun_patterns_cs`;";
+        $sqlFrom="SELECT `id`, `label` FROM `pronoun_patterns_cs`;";
 
         $listFrom=[];
         $resultFrom = $conn->query($sqlFrom);
@@ -29,8 +29,8 @@
         $idFrom=0;
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        noun_relations_changed=function() { 
-            let id = flist_noun_relations.getSelectedIdInList();
+        pronoun_relations_changed=function() { 
+            let id = flist_pronoun_relations.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -38,14 +38,14 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=noun_relation_item&id=`+id
+                body: `action=pronoun_relation_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK') {
-                    document.getElementById('nounId').value=id;
+                    document.getElementById('pronounId').value=id;
                     //from
-                    filteredSearchList_noun_from.selectId(json.from);                   
-                    filteredSearchList_noun_from.reload();
+                    filteredSearchList_pronoun_from.selectId(json.from);                   
+                    filteredSearchList_pronoun_from.reload();
                     //to
                     to_load(JSON.parse(json.to));
                 }else console.log('error sql', json);
@@ -54,17 +54,17 @@
 
         refreshFilteredLists();
 
-        flist_noun_relations.EventItemSelectedChanged(noun_relations_changed);
+        flist_pronoun_relations.EventItemSelectedChanged(pronoun_relations_changed);
         ";
 
         $GLOBALS["script"].= /** @lang JavaScript */"
-            var flist_noun_relations; 
-            var currentNounRelationSave = function() {
-                let froms=document.getElementById('listreturnholder_noun_from').value;              
-                let id=document.getElementById('nounId').value;              
+            var flist_pronoun_relations; 
+            var currentpronounRelationSave = function() {
+                let froms=document.getElementById('listreturnholder_pronoun_from').value;              
+                let id=document.getElementById('pronounId').value;              
     
                 let formData = new URLSearchParams();
-                formData.append('action', 'noun_relation_update');
+                formData.append('action', 'pronoun_relation_update');
                 formData.append('id', id);
                 formData.append('from', froms);
                 
@@ -77,28 +77,28 @@
                 }).then(response => response.json())
                 .then(json => {
                     if (json.status==='OK') {                          
-                        flist_noun_relations.getSelectedItemsInList()[0].innerText=document.getElementById('selectedLabel_noun_from').innerText;
-                    }else console.log('error currentNounRelationSave', json);
+                        flist_pronoun_relations.getSelectedItemsInList()[0].innerText=document.getElementById('selectedLabel_pronoun_from').innerText;
+                    }else console.log('error currentpronounRelationSave', json);
                 });
             };";
         ?>
     </div>
     <div class="editorView">
-        <div id="noun">
+        <div id="pronoun">
             <div class="section row">
-                <label for="noun_from" id="name">Z</label>&nbsp;
-                <div id="select_noun_from"></div>
-                <?php createSelectList($listFrom, "noun_from", $idFrom);?>
+                <label for="pronoun_from" id="name">Z</label>&nbsp;
+                <div id="select_pronoun_from"></div>
+                <?php createSelectList($listFrom, "pronoun_from", $idFrom);?>
             </div>
 
             <div class="section">
-                <label for="noun_from" id="name">Na</label>
-                <?php echo multiple_pattern_to([], "noun"); ?>
+                <label for="pronoun_from" id="name">Na</label>
+                <?php echo multiple_pattern_to([], "pronoun"); ?>
             </div>
 
             <div class="section">
-                <input type="hidden" id="nounId" value="-1">
-                <a onclick="currentNounRelationSave()" class="button">Uložit</a>
+                <input type="hidden" id="pronounId" value="-1">
+                <a onclick="currentpronounRelationSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>
@@ -110,33 +110,33 @@ $GLOBALS["script"].= /** @lang JavaScript */"
 // Load pattern
 var showPatternEditor = function(id) { 
     // show popup
-    let popup=document.getElementById('popup_nounPattern');
+    let popup=document.getElementById('popup_pronounPattern');
     popup.style.display='flex';
     
     // show loading message
-    document.getElementById('popup_nounPattern_loading').style.display='flex';
-    document.getElementById('popup_nounPattern_loading').innerText='Načítám...';
+    document.getElementById('popup_pronounPattern_loading').style.display='flex';
+    document.getElementById('popup_pronounPattern_loading').innerText='Načítám...';
     document.getElementById('popupBody').style.display='none';
     
     fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=noun_pattern_to_item&id=`+id
+            body: `action=pronoun_pattern_to_item&id=`+id
     }).then(response => response.json())
     .then(json => {
         if (json.status==='OK') {
             // hide loading message
-            document.getElementById('popup_nounPattern_loading').style.display='none';
+            document.getElementById('popup_pronounPattern_loading').style.display='none';
             document.getElementById('popupBody').style.display='block';
             
             // set values
-            document.getElementById('nounId').value=id;
-            document.getElementById('nounLabel').value=json.label;
-            document.getElementById('nounBase').value=json.base;
-            document.getElementById('nounUppercase').value=json.uppercase;
+            document.getElementById('pronounId').value=id;
+            document.getElementById('pronounLabel').value=json.label;
+            document.getElementById('pronounBase').value=json.base;
+            document.getElementById('pronounUppercase').value=json.uppercase;
             
             if (json.gender==null) json.gender=0;
-            document.getElementById('nounGender').value=json.gender; 
+            document.getElementById('pronounGender').value=json.gender; 
             
             let rawShapes=json.shapes;
             let shapes;
@@ -145,7 +145,7 @@ var showPatternEditor = function(id) {
             } else shapes=[];
             for (let i=0; i<14; i++) {
                 let shape=shapes[i];                            
-                let textbox=document.getElementById('noun'+i);
+                let textbox=document.getElementById('pronoun'+i);
 
                 if (shape===undefined) textbox.value='';
                 else textbox.value=shape;
@@ -160,30 +160,30 @@ var showPatternEditor = function(id) {
                
         }else {
             // error
-            document.getElementById('popup_nounPattern_loading').innerHTML='ID: \"'+id+'\"<br>'+ JSON.stringify(json);     
+            document.getElementById('popup_pronounPattern_loading').innerHTML='ID: \"'+id+'\"<br>'+ JSON.stringify(json);     
             console.log('error sql', json);
         }
     });
 };
 
 // Save pattern
-var currentNounTOSave = function() {
-    let label=document.getElementById('nounLabel').value;
-    let base=document.getElementById('nounBase').value;
-    let gender=document.getElementById('nounGender').value;
-    let uppercase=document.getElementById('nounUppercase').value;
-    let nounId=document.getElementById('nounId').value;
-    let tags=document.getElementById('noun_todatatags').value;
-    let pattern=document.getElementById('nounPattern').value;
+var currentpronounTOSave = function() {
+    let label=document.getElementById('pronounLabel').value;
+    let base=document.getElementById('pronounBase').value;
+    let gender=document.getElementById('pronounGender').value;
+    let uppercase=document.getElementById('pronounUppercase').value;
+    let pronounId=document.getElementById('pronounId').value;
+    let tags=document.getElementById('pronoun_todatatags').value;
+    let pattern=document.getElementById('pronounPattern').value;
     let shapes=[];
     for (let i=0; i<14; i++) {
-        let textbox=document.getElementById('noun'+i);
+        let textbox=document.getElementById('pronoun'+i);
         shapes[i]=textbox.value
     }
 
     let formData = new URLSearchParams();
-    formData.append('action', 'noun_pattern_to_update');
-    formData.append('id', nounId);
+    formData.append('action', 'pronoun_pattern_to_update');
+    formData.append('id', pronounId);
     formData.append('label', label);
     formData.append('base', base);
     formData.append('gender', gender);
@@ -200,7 +200,7 @@ var currentNounTOSave = function() {
     .then(json => {
         if (json.status==='OK') {
             // hide popup
-            let popup=document.getElementById('popup_nounPattern');
+            let popup=document.getElementById('popup_pronounPattern');
             popup.style.display='none';
         }else {
             console.log('error currentRegionSave',json);            
@@ -209,25 +209,25 @@ var currentNounTOSave = function() {
 };";
 ?>
 
-<div id="popup_nounPattern" class="popupBackground" style="display: none; top: 0;">
+<div id="popup_pronounPattern" class="popupBackground" style="display: none; top: 0;">
     <div class="popup">
-        <div class="popupHeader"><span class="pupupTitle">Úprava skloňování</span><span onclick="popupClose('nounPattern')" class="popupClose">×</span></div>
-        <div id="popup_nounPattern_loading" class="loading">Načítání</div>
+        <div class="popupHeader"><span class="pupupTitle">Úprava skloňování</span><span onclick="popupClose('pronounPattern')" class="popupClose">×</span></div>
+        <div id="popup_pronounPattern_loading" class="loading">Načítání</div>
         <div class="popupBody" id="popupBody">
 
             <div class="row section">
-                <label id="name" for="nounLabel">Popis</label><br>
-                <input type="text" id="nounLabel" value="" placeholder="pohádKA">
+                <label id="name" for="pronounLabel">Popis</label><br>
+                <input type="text" id="pronounLabel" value="" placeholder="pohádKA">
                 <a onclick="" class="button">Sestavit</a>
             </div>
 
             <div class="row section">
-                <label id="base" for="nounBase">Základ</label><br>
-                <input type="text" id="nounBase" value="" placeholder="pohád">
+                <label id="base" for="pronounBase">Základ</label><br>
+                <input type="text" id="pronounBase" value="" placeholder="pohád">
             </div>
 
             <div class="section">
-                <label id="name" for="nounShapes">Pád</label>
+                <label id="name" for="pronounShapes">Pád</label>
                 <table>
                     <tr>
                         <td class="tableHeader">Pád</td>
@@ -238,18 +238,18 @@ var currentNounTOSave = function() {
                     $html="";
                     for ($i=0; $i<7; $i++) {
                         $html.="<tr><td>".($i+1).".</td>";
-                        for ($j=0; $j<2; $j++) $html.="<td><input id='noun".($j==0 ? $i : 7+$i)."' type='text'></td>";
+                        for ($j=0; $j<2; $j++) $html.="<td><input id='pronoun".($j==0 ? $i : 7+$i)."' type='text'></td>";
                         $html.="</tr>";
                     }
                     echo $html;
                     ?>
                 </table>
-                <input type="hidden" id="nounShapes" value="-1">
+                <input type="hidden" id="pronounShapes" value="-1">
             </div>
 
             <div class="row section">
-                <label for="nounGender">Rod</label>
-                <select id="nounGender" name="type">
+                <label for="pronounGender">Rod</label>
+                <select id="pronounGender" name="type">
                     <option value="0">Neznámý</option>
                     <option value="4">Střední</option>
                     <option value="3">Ženský</option>
@@ -263,8 +263,8 @@ var currentNounTOSave = function() {
 
 
             <div class="row section">
-                <label for="nounPattern">Vzor</label>
-                <select id="nounPattern" name="type">
+                <label for="pronounPattern">Vzor</label>
+                <select id="pronounPattern" name="type">
                     <option value="0">Neznámý</option>
                     <optgroup label="Střední">
                         <option value="1">Město</option>
@@ -295,8 +295,8 @@ var currentNounTOSave = function() {
             </div>
 
             <div class="row section">
-                <label for="nounUppercase">Velké písmena</label>
-                <select id="nounUppercase" name="uppercase">
+                <label for="pronounUppercase">Velké písmena</label>
+                <select id="pronounUppercase" name="uppercase">
                     <option value="0">Neznámý</option>
                     <option value="1">malé</option>
                     <option value="2">Počáteční Velké</option>
@@ -305,11 +305,11 @@ var currentNounTOSave = function() {
                 <br>
             </div>
 
-            <?php echo tagsEditor("noun_to", [], "Tagy") ?>
+            <?php echo tagsEditor("pronoun_to", [], "Tagy") ?>
             <hr>
             <div style="float: right;">
-                <input type="hidden" id="nounId" value="-1">
-                <a onclick="currentNounTOSave()" class="button">Uložit</a>
+                <input type="hidden" id="pronounId" value="-1">
+                <a onclick="currentpronounTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

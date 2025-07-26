@@ -4,7 +4,7 @@
         
         // site list
         include "components/tags_editor.php";
-
+        $filter=$_SESSION['translate'];
         $sql="SELECT id, label FROM adjective_patterns_to WHERE `translate` = ".$_SESSION['translate'].";";
         $result = $conn->query($sql);
         $list=[];
@@ -16,7 +16,7 @@
         } else {
             // TODO: echo "0 results";
         }
-        echo FilteredList($list, "adjective_patterns_cs");  
+        echo FilteredList($list, "adjective_patterns_cs", []);
 
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
