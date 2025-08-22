@@ -27,6 +27,7 @@ function selectListScripts() :void{
     // init
     $GLOBALS['script'].= /** @lang JavaScript */'
     var createSelectFilter = (id, list, defId) => {
+       // console.log(list);
         let selectFilterParent=document.getElementById("select_"+id);
 
         // Create main div
@@ -37,7 +38,7 @@ function selectListScripts() :void{
      
         // Create span
         const spanL = document.createElement("span");
-        spanL.id = `selectedLabel_${id}`;
+        spanL.id = `selectedLabel_`+id;
         spanL.style.minWidth = "5cm";
         spanL.style.display = "block";
         containerS.appendChild(spanL);
@@ -51,12 +52,12 @@ function selectListScripts() :void{
         // Create hidden input
         const input = document.createElement("input");
         input.type = "hidden";
-        input.id = `listreturnholder_${id}`;
+        input.id = `listreturnholder_`+id;
         containerS.appendChild(input);
         selectFilterParent.appendChild(containerS);
         
         const containerPopup = document.createElement("div");
-        containerPopup.id = `searchList_${id}`;
+        containerPopup.id = `searchList_`+id;
         containerPopup.className = "popupChoose";
         containerPopup.style.display = "none";
     
@@ -66,12 +67,18 @@ function selectListScripts() :void{
         containerPopup.appendChild(inputContainerPopup);
     
         const inputPopup = document.createElement("input");
-        inputPopup.id = `filter_${id}`;
+        inputPopup.id = `filter_`+id;
         inputPopup.type = "text";
         inputContainerPopup.appendChild(inputPopup);
     
+        // back
+        const popupBack = document.createElement("div");
+        popupBack.className = "listSearchBack";
+        popupBack.id = `listBack_`+id;
+        selectFilterParent.appendChild(popupBack);
+        
         const listContainerPopup = document.createElement("div");
-        listContainerPopup.id = `listtoselect_${id}`;
+        listContainerPopup.id = `listtoselect_`+id;
         listContainerPopup.className = "listSearchSelect";
         containerPopup.appendChild(listContainerPopup);
       
@@ -84,10 +91,13 @@ function selectListScripts() :void{
     $GLOBALS['script'].= /** @lang JavaScript */'
     var switchSearch=(id)=>{
         let e=document.getElementById("searchList_"+id);
+        let back=document.getElementById("listBack_"+id);
         if (e.style.display === "block"){
             e.style.display = "none";
+            back.style.display = "none";
         }else{
             e.style.display = "block";
+            back.style.display = "block";
             document.getElementById("filter_" +id).focus();
         }
     }
@@ -98,8 +108,7 @@ function selectListScripts() :void{
    ';
 
     // Filter class
-    $GLOBALS['script'].= /** @lang JavaScript */
-        '
+    $GLOBALS['script'].= /** @lang JavaScript */'
     class filteredSearchList{
         constructor(FilteredListName, list, defId) {
             this.handlerItemSelectedChanged=null;
@@ -109,13 +118,18 @@ function selectListScripts() :void{
             this.SelectedLabel=document.getElementById("selectedLabel_"+FilteredListName);
             this.FilterElement=document.getElementById("filter_"+FilteredListName);
             this.ListContainer=document.getElementById("listtoselect_"+FilteredListName);
+            this.Back=document.getElementById("listBack_"+FilteredListName);
             this.ReturnHolder =document.getElementById("listreturnholder_"+FilteredListName);
             this.Popup        =document.getElementById("searchList_"+FilteredListName);
            
             this.FilterElement.addEventListener("input", () => {
                 this.generateList();
             });
-            
+            this.Back.addEventListener("click", () => {
+                this.Popup.style.display = "none";
+                this.Back.style.display = "none";
+            });
+         //   console.log(list);
             this.list=list;
             this.generateList();
             this.selectId(defId);
@@ -154,6 +168,8 @@ function selectListScripts() :void{
             // get filter text
             let filter = this.filterText();
      
+       //     console.trace();
+         //   console.log(this.list);
             this.list.forEach(item => {
                 let id=item[0];
                 let label=item[1];
@@ -169,6 +185,7 @@ function selectListScripts() :void{
                     div.addEventListener("click", () => {
                         this.filteredListSelect(div);
                         this.Popup.style.display = "none";
+                        this.Back.style.display = "none";
                     });
                 }
             });

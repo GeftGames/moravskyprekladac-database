@@ -15,7 +15,7 @@
             }
         }
 
-        echo FilteredList($list, "adverbs_cs", []);
+        echo FilteredList($list, "adverbs_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         adverbs_cs_changed=function() { 
@@ -37,9 +37,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'adverbs_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'adverbs_cs');
                     }
                    
                 } else console.log('error sql', json);

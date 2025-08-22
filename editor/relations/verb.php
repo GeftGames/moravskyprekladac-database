@@ -10,7 +10,7 @@
         $listR=give_relations_pattern($conn,"verb", true);
 
         // side menu
-        echo FilteredList($listR, "verb_relations", []);
+        echo FilteredList($listR, "verb_relations", [], $_SESSION['translate']);
 
         // from list for <select>
         $sqlFrom="SELECT `id`, `label` FROM `verb_patterns_cs`;";
@@ -47,7 +47,7 @@
                     filteredSearchList_verb_from.selectId(json.from);                   
                     filteredSearchList_verb_from.reload();
                     //to
-                    to_load(JSON.parse(json.to));
+                    to_load(json.to);
                 }else console.log('error sql', json);
             });
         };

@@ -21,7 +21,7 @@
             //echo "0 results";
         }
 
-        echo FilteredList($list, "simpleword", []);
+        echo FilteredList($list, "simplewords", [], $filter);
         
         $GLOBALS["onload"].= /** @lang JavaScript */"
         simpleword_changed=function() { 
@@ -37,7 +37,7 @@
             let id=elementsSelected.dataset.id;
             */
           
-           let id = flist_simpleword.getSelectedIdInList();
+           let id = flist_simplewords.getSelectedIdInList();
         
             // no selected
             if (id==null) return;  
@@ -68,12 +68,12 @@
 
         refreshFilteredLists();
 
-        flist_simpleword.EventItemSelectedChanged(simpleword_changed);
-        flist_simpleword.EventItemAddedChanged(simpleword_added);
+        flist_simplewords.EventItemSelectedChanged(simpleword_changed);
+        flist_simplewords.EventItemAddedChanged(simpleword_added);
         ";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_simpleword; 
+        var flist_simplewords; 
         var currentsimplewordCSSave = function() {
             let label=document.getElementById('simplewordLabel').value;
             let simplewordId=document.getElementById('simplewordId').value;
@@ -92,17 +92,16 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK'){
-                   flist_simpleword.getSelectedItemInList().innerText=label;
+                   flist_simplewords.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };
 
         var simpleword_added = function() {
-            flist_simpleword.lastAddedId;
+            flist_simplewords.lastAddedId;
             simpleword_changed();
         };
         ";
-            
         ?>
     </div>
     <div class="editorView">
@@ -123,10 +122,11 @@
         <table>
             <tr>
                 <td><label for="simplewordTo">Na</label></td>
-            </tr><tr>
+            </tr>
+            <tr>
                 <td><?php echo multiple_to([],"simpleword"); ?></td>
             </tr>
-</table>
+        </table>
         <hr>
         <div>
             <input type="hidden" id="simplewordId" value="-1">

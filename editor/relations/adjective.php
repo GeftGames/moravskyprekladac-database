@@ -10,7 +10,7 @@
         $listR=give_relations_pattern($conn,"adjective", true);
 
         // side menu
-        echo FilteredList($listR, "adjective_relations", []);
+        echo FilteredList($listR, "adjective_relations", [], $_SESSION['translate']);
 
         // from list for <select>
         $sqlFrom="SELECT `id`, `label` FROM `adjective_patterns_cs`;";
@@ -43,11 +43,15 @@
             .then(json => {
                 if (json.status==='OK') {
                     document.getElementById('adjectiveId').value=id;
+                    // set custom base
+                    document.getElementById('usecustombase').checked = (json.custombase != null);
+                    document.getElementById('custombase').value = (json.custombase ?? '');
                     //from
                     filteredSearchList_adjective_from.selectId(json.from);                   
                     filteredSearchList_adjective_from.reload();
                     //to
-                    to_load(JSON.parse(json.to));
+                   // console.log(json.to);
+                    to_load(json.to);
                 }else console.log('error sql', json);
             });
         };
@@ -59,14 +63,18 @@
 
         $GLOBALS["script"].= /** @lang JavaScript */"
             var flist_adjective_relations; 
-            var currentadjectiveRelationSave = function() {
+            var currentAdjectiveRelationSave = function() {
                 let froms=document.getElementById('listreturnholder_adjective_from').value;              
                 let id=document.getElementById('adjectiveId').value;              
-    
+                let usecustombase = document.getElementById('usecustombase').checked ? true : false;
+                let custombase = document.getElementById('custombase').value;
+
                 let formData = new URLSearchParams();
                 formData.append('action', 'adjective_relation_update');
                 formData.append('id', id);
                 formData.append('from', froms);
+                formData.append('usecustombase', usecustombase);
+                formData.append('custombase', custombase);
                 
                 formData.append('to', to_save());
                
@@ -78,13 +86,19 @@
                 .then(json => {
                     if (json.status==='OK') {                          
                         flist_adjective_relations.getSelectedItemsInList()[0].innerText=document.getElementById('selectedLabel_adjective_from').innerText;
-                    }else console.log('error currentadjectiveRelationSave', json);
+                    }else console.log('error currentAdjectiveRelationSave', json);
                 });
             };";
         ?>
     </div>
     <div class="editorView">
         <div id="adjective">
+            <div class="section row">
+                <input type="checkbox" id="usecustombase">
+                <label for="usecustombase" style="user-select: none;inline-size: -webkit-fill-available;">Jiný základ</label>&nbsp;
+                <input type="text" id="custombase" placeholder="zele">
+            </div>
+
             <div class="section row">
                 <label for="adjective_from" id="name">Z</label>&nbsp;
                 <div id="select_adjective_from"></div>
@@ -98,7 +112,7 @@
 
             <div class="section">
                 <input type="hidden" id="adjectiveId" value="-1">
-                <a onclick="currentadjectiveRelationSave()" class="button">Uložit</a>
+                <a onclick="currentAdjectiveRelationSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>
@@ -133,7 +147,6 @@ var showPatternEditor = function(id) {
             document.getElementById('adjectiveId').value=id;
             document.getElementById('adjectiveLabel').value=json.label;
             document.getElementById('adjectiveBase').value=json.base;
-            document.getElementById('adjectiveUppercase').value=json.uppercase;
             
             if (json.gender==null) json.gender=0;
             document.getElementById('adjectiveGender').value=json.gender; 
@@ -167,7 +180,7 @@ var showPatternEditor = function(id) {
 };
 
 // Save pattern
-var currentadjectiveTOSave = function() {
+var currentAdjectiveTOSave = function() {
     let label=document.getElementById('adjectiveLabel').value;
     let base=document.getElementById('adjectiveBase').value;
     let gender=document.getElementById('adjectiveGender').value;
@@ -227,48 +240,90 @@ var currentadjectiveTOSave = function() {
             </div>
 
             <div class="section">
-                <label id="name">Skloňování</label>
-                <div style="display: flex; flex-wrap: wrap;">
+                <label id="name" for="adjectiveShapes">Pád</label>
+                <table>
+                    <tr>
+                        <td class="tableHeader">Pád</td>
+                        <td class="tableHeader">Jednotné</td>
+                        <td class="tableHeader">Množné</td>
+                    </tr>
                     <?php
-                    $arrGenders=["Mužský životný", "Mužský neživotný", "Ženský", "Střední"];
-                    for ($g=0; $g<4; $g++) {
-                        $html='<table>
-                            <caption>'.$arrGenders[$g].'</caption>
-                            <tr>
-                                <td class="tableHeader">Pád</td>
-                                <td class="tableHeader">Jednotné</td>
-                                <td class="tableHeader">Množné</td>
-                            </tr>';
-
-                        for ($i=0; $i<9; $i++) {
-                            // label falls
-                            $html.="<tr><td>".($i<7 ? $i+1 : ( $i==7 ? "n" : "a")).".</td>";
-                            for ($j=0; $j<2; $j++) $html.="<td><input id='adjective".$g.($j==0 ? $i : 9+$i)."' type='text'></td>";
-                            $html.="</tr>";
-                        }
-                        echo $html.'</table>';
+                    $html="";
+                    for ($i=0; $i<7; $i++) {
+                        $html.="<tr><td>".($i+1).".</td>";
+                        for ($j=0; $j<2; $j++) $html.="<td><input id='adjective".($j==0 ? $i : 7+$i)."' type='text'></td>";
+                        $html.="</tr>";
                     }
+                    echo $html;
                     ?>
-                </div>
+                </table>
                 <input type="hidden" id="adjectiveShapes" value="-1">
             </div>
 
-            <div class="row section">
-                <label for="adjectiveCategory">Kategorie</label>
-                <select id="adjectiveCategory" name="type">
-                    <option value="0">Neznámý</option>
-                    <option value="1">Tvrdé</option>
-                    <option value="2">Měkké</option>
-                    <option value="3">Přivlastňovací</option>
-                </select>
-                <br>
-            </div>
+            <table class="formTable">
+                <tr class="row section">
+                    <td><label for="adjectiveGender">Rod</label></td>
+                    <td>
+                        <select id="adjectiveGender" name="type">
+                            <option value="0">Neznámý</option>
+                            <option value="4">Střední</option>
+                            <option value="3">Ženský</option>
+                            <option value="2">Mužský neživotný</option>
+                            <option value="1">Mužský životný</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class="row section">
+                    <td><label for="adjectivePattern">Vzor</label></td>
+                    <td>
+                        <select id="adjectivePattern" name="type">
+                            <option value="0">Neznámý</option>
+                            <optgroup label="Střední">
+                                <option value="1">Město</option>
+                                <option value="2">Moře</option>
+                                <option value="3">Kuře</option>
+                                <option value="4">Stavení</option>
+                            </optgroup>
+                            <optgroup label="Ženský">
+                                <option value="5">Žena</option>
+                                <option value="6">Růže</option>
+                                <option value="7">Píseň</option>
+                                <option value="8">Kost</option>
+                            </optgroup>
+                            <optgroup label="Mužský">
+                                <option value="9">Pán</option>
+                                <option value="10">Hrad</option>
+                                <option value="11">Les</option>
+                                <option value="12">Muž</option>
+                                <option value="13">Stroj</option>
+                                <option value="14">Předseda</option>
+                                <option value="15">Soudce</option>
+                            </optgroup>
+                            <optgroup label="Přídavné">
+                                <option value="16">Mladý</option>
+                                <option value="17">Jarní</option>
+                            </optgroup>
+                        </select>
+                    </td>
+                </tr>
+                <tr class="row section">
+                    <td><label for="adjectiveUppercase">Velké písmena</label></td>
+                    <td>
+                        <select id="adjectiveUppercase" name="uppercase">
+                            <option value="0">Neznámý</option>
+                            <option value="1">malé</option>
+                            <option value="2">Počáteční Velké</option>
+                            <option value="3">VŠECHNY VELKÉ</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
 
             <?php echo tagsEditor("adjective_to", [], "Tagy") ?>
             <hr>
             <div style="float: right;">
                 <input type="hidden" id="adjectiveId" value="-1">
-                <a onclick="currentadjectiveTOSave()" class="button">Uložit</a>
+                <a onclick="currentAdjectiveTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

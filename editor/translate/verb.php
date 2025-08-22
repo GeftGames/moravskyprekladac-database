@@ -16,7 +16,7 @@
         } else {
             // TODO: echo "0 results ";
         }
-        echo FilteredList($list, "verb_pattern_to", []);
+        echo FilteredList($list, "verb_pattern_to", [], $filter);
 
         $arrShapeTables=[
             //[name, show, len, code, display]
@@ -46,20 +46,22 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK') {
+                    let d=json.data;
                     document.getElementById('verbId').value=id;
-                    document.getElementById('verbLabel').value=json.label;
-                    document.getElementById('verbBase').value=json.base;
+                    document.getElementById('verbLabel').value=d.label;
+                    document.getElementById('verbBase').value=d.base;
 
-                    if (json.category===null) json.category=0;
-                    document.getElementById('verbCategory').value=json.category; 
+                    if (d.category===null) d.category=0;
+                    document.getElementById('verbCategory').value=d.category; 
 
                     let shapesTypes=$jsArrShapeTables;
                     
                     // shapes load
                     let shapeTypeIndex=0;
                     for (let s of shapesTypes) {
-                        let code=s[3]; // 'contonous', 'future', ...              
-                        let exists=json[code]!==''; // if this type of table conjunction exists
+                        let code='shapes_'+s[3]; // 'continous', 'future', ...              
+                        let exists=d[code]!==undefined && d[code]!==''; // if this type of table conjunction exists
+                     
                         let checkbox=s[1];// if exists checkbox
                         
                         // checkbox
@@ -69,7 +71,7 @@
                       
                         // textboxs
                         if (exists) {
-                            let shapes=json[code].split('|');
+                            let shapes=d[code].split('|');
                             let shapesLen=s[2];
                             console.log(shapes);
                             for (let i=0; i<shapesLen; i++) { 
@@ -89,9 +91,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet('verb_to',arrTags);
                     } else {
-                        tagSet([]);
+                        tagSet('verb_to',[]);
                     }
                    
                 } else console.log('error sql', json);

@@ -18,11 +18,11 @@
             }
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs", []);
+        echo FilteredList($list, "pronoun_patterns_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         pronoun_cs_changed=function() { 
-            let id = flist_pronoun_pattern_cs.getSelectedIdInList();
+            let id = flist_pronoun_patterns_cs.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -70,9 +70,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'pronoun_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'pronoun_cs');
                     }
                    
                 } else console.log('error sql', json);
@@ -81,11 +81,11 @@
 
         refreshFilteredLists();
 
-        flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
-        flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
+        flist_pronoun_patterns_cs.EventItemSelectedChanged(pronoun_cs_changed);
+        flist_pronoun_patterns_cs.EventItemAddedChanged(pronoun_cs_added);";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_pronoun_pattern_cs;
+        var flist_pronoun_patterns_cs;
         var currentpronounCSSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;
@@ -116,7 +116,7 @@
             }
 
             let formData = new URLSearchParams();
-            formData.append('action', 'pronoun_pattern_cs_update');
+            formData.append('action', 'pronoun_patterns_cs_update');
             formData.append('id', pronounId);
             formData.append('label', label);
             formData.append('base', base);
@@ -132,7 +132,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status === 'OK') {
-                   flist_pronoun_pattern_cs.getSelectedItemInList().innerText=label;
+                   flist_pronoun_patterns_cs.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };
@@ -165,7 +165,7 @@
         };
 
         var pronoun_cs_added = function() {
-            flist_pronoun_pattern_cs.lastAddedId;
+            flist_pronoun_patterns_cs.lastAddedId;
             pronoun_cs_changed();
         }";
             

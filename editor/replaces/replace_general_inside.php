@@ -17,7 +17,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "replaces_inside", []);
+        echo FilteredList($list, "replaces_inside", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 replaces_inside_changed=function() { 

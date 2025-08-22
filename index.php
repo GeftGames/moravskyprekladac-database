@@ -83,13 +83,14 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
     <link rel="stylesheet" href="./data/style.css">
     <script src="./components/editor.js"></script>
     <script>
+        var lastTabEditor='<?php echo $selectPage; ?>';
         <?php echo $GLOBALS["script"]; ?>
         function onload() {
             <?php echo $GLOBALS["onload"]; ?>
 
             // default sort type
-            let sort = localStorage.getItem("sort");
-            document.getElementById("sortTypeFilterList").value = sort;
+           // let sort = localStorage.getItem("sort");
+           // document.getElementById("sortTypeFilterList").value = sort;
         }
         function selectLang(){
             let id=document.getElementById("listreturnholder_translate").value;
@@ -158,7 +159,10 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
     </div>
     <div id="popup_selectLang" class="popupBackground" style="display:none">
         <div class="popup">
-            <div class="popupHeader"><span onclick="popupClose('selectLang')" class="popupClose">×</span></div>
+            <div class="popupHeader">
+                <span>Vybrat překlad</span>
+                <span onclick="popupClose('selectLang')" class="popupClose">×</span>
+            </div>
             <div class="popupBody">
                 <h1>Vybrat překlad</h1>
 
@@ -304,7 +308,9 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         <?php if (isset($_SESSION["error"])) echo $_SESSION["error"]; ?>
     </div>
 
+    <div onmouseleave="selectMainOptionPreview(null)">
     <?php
+
     $tabs=[
         [
             ["source", "Podklad CS"],
@@ -316,8 +322,8 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         ],
         "|",
         [
-            ["tools", "nástroje"],
-            [["extract_sentences", "Z textu věty"], ["extract_words", "Z vět slova"]/*, ["searchdup", "Hledat duplikáty"]*/]
+            ["tools", "Nástroje"],
+            [["extract_sentences", "Z textu věty"], ["extract_words", "Z vět slova"], ["extract_endings_noun", "Zakončení podst."], ["extract_endings_verb", "Zakončení slov."] /*, ["searchdup", "Hledat duplikáty"]*/]
         ],
         [
             ["attributes", "Atributy"],
@@ -348,7 +354,7 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
     ];
 
     // createbuttons
-    $tabsHTML="<div>";
+    $tabsHTML='<div>';
     $headerHTML='<div id="header">';
     $headerEditor="";
     foreach ($tabs as $item) {
@@ -367,7 +373,7 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
         else $headerEditor="<span>".$headerName."<span>";
         $tabsHTML.="<div id='tabsOption_$headerCode'$style>";
 
-        $headerHTML.='<span id="mainOption_'.$headerCode.'" class="choice '.($currentTab ? "selected" :"").'" onclick="selectMainOption('."'$headerCode'".')">'.$headerName.'</span>';
+        $headerHTML.='<span id="mainOption_'.$headerCode.'" class="choice '.($currentTab ? "selected" :"").'" onclick="selectMainOption('."'$headerCode'".')" onmouseover="selectMainOptionPreview('."'$headerCode'".')">'.$headerName.'</span>';
 
         foreach ($tabsBtns as $tabsBtn) {
             if ($tabsBtn=="|") $tabsHTML.="|";
@@ -378,10 +384,10 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
                 $currentPage=$selectedSubTab ? " selected" : "";
 
                 if ($btnName==$selectEditor && $headerCode==$selectPage) $headerEditor.="&gt;<span>".$btnText."</span>";
-                $tabsHTML.="<a class='choice$currentPage' href='./?page=$headerCode&editor=$btnName'>$btnText</a>";
+                $tabsHTML.="<a class=\"choice{$currentPage}\" href=\"./?page=$headerCode&editor=$btnName\">$btnText</a>";
             }
         }
-        $tabsHTML.="</div>";
+        $tabsHTML.="</div>\r\n";
     }
     $headerHTML.="</div>";
     $tabsHTML.="</div>";
@@ -389,7 +395,7 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
     // tabs
     echo $headerHTML;
     echo $tabsHTML;
-
+    echo "</div>";
     // header
     echo "<h1>".$headerEditor."</h1>";
 

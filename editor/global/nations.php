@@ -10,7 +10,7 @@
             }
         }
 
-        echo FilteredList($list, "nations", []);
+        echo FilteredList($list, "nations", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         nation_changed=function() { 

@@ -14,7 +14,7 @@
                 $list[]=[$row["id"], $row["label"]];
             }
         }
-        echo FilteredList($list, "verb_pattern_cs", []);
+        echo FilteredList($list, "verb_pattern_cs", [], null);
 
         $arrShapeTables=[
             //[name, show, len, code, display]
@@ -50,6 +50,8 @@
 
                     if (json.category===null) json.category=0;
                     document.getElementById('verbCategory').value=json.category; 
+                    
+                    document.getElementById('verbClass').value=json.class; 
 
                     let shapesTypes=$jsArrShapeTables;
                     
@@ -87,9 +89,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'verb_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'verb_cs');
                     }
                    
                 } else console.log('error sql', json);
@@ -106,6 +108,7 @@
             let label=document.getElementById('verbLabel').value;
             let base=document.getElementById('verbBase').value;
             let category=document.getElementById('verbCategory').value;
+            let vclass=document.getElementById('verbClass').value;
             let verbId=document.getElementById('verbId').value;
             let tags=document.getElementById('verb_csdatatags').value;
             let shapes=[];
@@ -133,6 +136,7 @@
             formData.append('id', verbId);
             formData.append('label', label);
             formData.append('base', base);
+            formData.append('class', vclass);
             formData.append('shapes', shapes.join('|'));
             formData.append('category', category);
             formData.append('shapes_infinitive', shapetype);
@@ -280,6 +284,19 @@
                     <option value="1">BEZ</option>
                     <option value="2">SI</option>
                     <option value="3">SE</option>
+                </select>
+                <br>
+            </div>
+
+            <div class="row section">
+                <label for="verbClass">Třída</label>
+                <select id="verbClass" name="type">
+                    <option value="0">Neznámý</option>
+                    <option value="1">1. -e</option>
+                    <option value="2">2. -ne</option>
+                    <option value="3">3. -je</option>
+                    <option value="4">4. -í</option>
+                    <option value="5">5. -á</option>
                 </select>
                 <br>
             </div>

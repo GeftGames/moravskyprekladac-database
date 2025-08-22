@@ -16,7 +16,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "cites", ["Sloučit s..."=>"merge()"]);
+        echo FilteredList($list, "cites", ["Sloučit s..."=>"merge()"], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"            
         cites_changed=function() { 

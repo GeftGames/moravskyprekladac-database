@@ -19,7 +19,7 @@
             }
         }
 
-        echo FilteredList($list, "adverb_to");  
+        echo FilteredList($list, "adverb_to", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         adverb_to_changed=function() { 

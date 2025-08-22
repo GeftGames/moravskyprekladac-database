@@ -42,7 +42,7 @@
 
 
         // side menu
-        echo FilteredList($listR, "conjunction_relations", []);
+        echo FilteredList($listR, "conjunction_relations", [], $_SESSION['translate']);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         var conjunction_relation_changed = function() { 

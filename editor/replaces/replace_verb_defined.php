@@ -1,8 +1,7 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
+        include "components/tags_editor.php";
         include "components/tags_editor.php";
 
         $filter=$_SESSION['translate'];
@@ -15,11 +14,11 @@
             }
         }
 
-        echo FilteredList($list, "verb_pattern_cs", []);
+        echo FilteredList($list, "replace_defined_verb", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        verb_cs_changed=function() { 
-            let elementsSelected = flist_verb_replace_def.getSelectedItemInList();
+        replace_defined_verb_changed=function() { 
+            let elementsSelected = flist_replace_defined_verb.getSelectedItemInList();
         
             // no selected
             if (!elementsSelected) {
@@ -84,12 +83,12 @@
 
         refreshFilteredLists();
 
-        flist_verb_replace_def.EventItemSelectedChanged(verb_cs_changed);
-        flist_verb_replace_def.EventItemAddedChanged(verb_cs_added);";
+        flist_replace_defined_verb.EventItemSelectedChanged(replace_defined_verb_changed);
+        flist_replace_defined_verb.EventItemAddedChanged(replace_defined_verb_added);";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
         var flist_verb_replace_def; 
-        var currentverbCSSave = function() {
+        var currentreplace_defined_verbSave = function() {
             let id=document.getElementById('verbId').value;
             let source=document.getElementById('verbReplaceFrom').value;
             let to=document.getElementById('verbReplaceTo').value;
@@ -105,12 +104,11 @@
             let formData = new URLSearchParams();
             formData.append('action', 'replaces_defined_verb_update');
             formData.append('id', id);
-            formData.append('label', label);
             formData.append('source', source);
+            formData.append('to', to);
             formData.append('tags_includes', tags_includeds);
             formData.append('tags_not_includes', tags_not_includeds);
             formData.append('shapes', shapes.join('|'));
-            formData.append('tags', tags);
 
             fetch('index.php', {
                 method: 'POST',
@@ -215,13 +213,13 @@
     <div class="editorView">
         <div id="regionsview">
             <table>
-                <tr>
-                    <td><label id="name" for="verbReplaceLabel">Popis</label></td>
-                    <td class="row">
-                        <input type="text" id="verbReplaceLabel" value="" placeholder="dí>ďijú" style="max-width: 9cm;">
-                      <!--  <a onclick="" class="button">Sestavit</a>-->
+                <!--  <tr>
+                     <td><label id="name" for="verbReplaceLabel">Popis</label></td>
+                     <td class="row">
+                         <input type="text" id="verbReplaceLabel" value="" placeholder="dí>ďijú" style="max-width: 9cm;">
+                        <a onclick="" class="button">Sestavit</a>
                     </td>
-                </tr>
+                </tr>-->
 
                 <tr>
                     <td><label id="base" for="verbReplaceFrom">Z</label</td>
@@ -302,7 +300,7 @@
 
             <div> 
                 <input type="hidden" id="verbId" value="-1">
-                <a onclick="currentverbCSSave()" class="button">Uložit</a>
+                <a onclick="currentreplace_defined_verbSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

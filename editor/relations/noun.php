@@ -10,7 +10,7 @@
         $listR=give_relations_pattern($conn,"noun", true);
 
         // side menu
-        echo FilteredList($listR, "noun_relations", []);
+        echo FilteredList($listR, "noun_relations", [], $_SESSION['translate']);
 
         // from list for <select>
         $sqlFrom="SELECT `id`, `label` FROM `noun_patterns_cs`;";
@@ -43,11 +43,14 @@
             .then(json => {
                 if (json.status==='OK') {
                     document.getElementById('nounId').value=id;
+                    document.getElementById('usecustombase').value=json.custombase!=null;
+                    document.getElementById('custombase').value=json.custombase;
                     //from
                     filteredSearchList_noun_from.selectId(json.from);                   
                     filteredSearchList_noun_from.reload();
                     //to
-                    to_load(JSON.parse(json.to));
+                   // console.log(json.to);
+                    to_load(json.to);
                 }else console.log('error sql', json);
             });
         };
@@ -89,6 +92,12 @@
                 <label for="noun_from" id="name">Z</label>&nbsp;
                 <div id="select_noun_from"></div>
                 <?php createSelectList($listFrom, "noun_from", $idFrom);?>
+            </div>
+
+            <div class="section row">
+                <input type="checkbox" id="usecustombase">
+                <label for="usecustombase" style="user-select: none;inline-size: -webkit-fill-available;">Jiný základ</label>&nbsp;
+                <input type="text" id="custombase" placeholder="pampeliš">
             </div>
 
             <div class="section">

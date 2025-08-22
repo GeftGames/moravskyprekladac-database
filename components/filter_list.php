@@ -1,5 +1,5 @@
 <?php
-function FilteredList($list, $id, $btns) : string {
+function FilteredList(array $list, string $id, array $btns, $filter) : string {
     $type="";
     if (str_contains($id,"relation")) $type="_relation";
 
@@ -7,6 +7,7 @@ function FilteredList($list, $id, $btns) : string {
     $jsonList = json_encode($list);
 
     $html="<div tabindex='0' id='container_$id' class='filterList'>";
+
     // filter
     $html.='<input type="text" id="filter_'.$id.'" onkeyup=\'flist_'.$id.'.generateList('.$jsonList.', "'.$listContaineId.'", this.value)\'>';
     
@@ -38,7 +39,7 @@ function FilteredList($list, $id, $btns) : string {
     </select>";
 
     // build in buttons
-    $html.="<a class='button' onclick=\"getFilteredListById('$id').list_add()\">Přidat</a>";
+    $html.="<a class='button' onclick=\"getFilteredListById('$id').list_add($filter)\">Přidat</a>";
 
     $html.="</div>";
 

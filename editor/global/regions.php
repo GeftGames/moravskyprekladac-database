@@ -8,11 +8,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "regions", []);
+        echo FilteredList($list, "regions", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
             region_changed=function() { 
@@ -35,10 +33,11 @@
             .then(json => {
                 if (json.status === 'OK') {
                     document.getElementById('regionId').value=id;
-                    document.getElementById('regionName').value=json.name;
+                    document.getElementById('regionLabel').value=json.label;
                     document.getElementById('regionParent').value=json.parent;
                     document.getElementById('regionType').value=json.type;
-                    document.getElementById('regionTranslates').value=json.translates;
+                    //document.getElementById('regionTranslates').value=json.translates;
+                    loadTableDataFromJson('regions', json.translates);
                 }else console.log('error sql: ',json);
             });
         };
@@ -55,7 +54,7 @@
             let regionLabel=document.getElementById('regionLabel').value;
             let regionType=document.getElementById('regionType').value;
             let regionParent=document.getElementById('regionParent').value;
-            let translates=document.getElementById('regionTranslates').innerText;
+            let translates=getTableData('regions');//document.getElementById('regionTranslates').innerText;
 
             let formData = new URLSearchParams();
             formData.append('action', 'region_update');
@@ -116,7 +115,12 @@
         </table>
         <div style="display: flex;flex-direction: column;">
             <label for="regionTranslates">Překlady</label>
-            <textarea id="regionTranslates" placeholder='{"cs": "Haná"}' name="translates"></textarea>
+
+            <?php
+                include "components/table_editor.php";
+                echo basicTableEditor("regions", [], ["lang"=>"cs", "text"=>"Haná"]);
+            ?>
+          <!--  <textarea id="regionTranslates" placeholder='{"cs": "Haná"}' name="translates"></textarea>-->
         </div>
         <a onclick="currentRegionSave()" class="button">Save</a>
         <input type="hidden" id="regionId" name="id" value="-1">

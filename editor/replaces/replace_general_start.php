@@ -12,11 +12,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "replaces_start", []);
+        echo FilteredList($list, "replaces_start", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 replaces_start_changed=function() { 

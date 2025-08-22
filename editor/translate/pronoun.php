@@ -19,7 +19,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs", []);
+        echo FilteredList($list, "pronoun_pattern_cs", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         pronoun_cs_changed=function() { 

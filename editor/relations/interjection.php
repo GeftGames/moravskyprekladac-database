@@ -42,7 +42,7 @@
 
 
         // side menu
-        echo FilteredList($listR, "interjection_relations", []);
+        echo FilteredList($listR, "interjection_relations", [], $_SESSION['translate']);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         var interjection_relation_changed = function() { 

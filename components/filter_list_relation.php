@@ -1,5 +1,5 @@
 <?php
-function FilteredListRelation($list, $id) {
+function FilteredListRelation($list, $id, $btns) {
     $listContaineId = "list_".$id; // Unique ID for multiple lists
     $jsonList = json_encode($list);
 
@@ -11,9 +11,22 @@ function FilteredListRelation($list, $id) {
     $html.="<div class='listFilteredContainer' id='".$listContaineId."'>";
     $GLOBALS["onload"].="flist_$id=new filteredList('$id');\nflist_$id.generateList(".json_encode($list).");\n";
     $html.="</div>";
+
     // Mouse context menu
-    $html.="<div id='contextmenu_$id' class='mouseContexMenu'><a onclick=\"getFilteredListById('$id').list_duplicate()\">Duplikovat</a> <a onclick=\"getFilteredListById('$id').list_remove()\">Smazat</a></div>";
-    
+    $html.="<div id='contextmenu_$id' class='mouseContexMenu'>
+        <a onclick=\"getFilteredListById('$id').list_duplicate()\">Duplikovat</a> 
+        <a onclick=\"getFilteredListById('$id').list_remove()\">Smazat</a>";
+
+    // other mouse buttons
+    foreach ($btns as $key => $value) {
+        $name = $key;
+        $link = $value;
+
+        $html.="<a onclick=\"$link\">$name</a>";
+    }
+
+    $html.="</div>";
+
     // Buttons down
     $html.="<a class='button' onclick=\"getFilteredRelationListById('$id').list_relation_add()\">Přidat</a>";
 

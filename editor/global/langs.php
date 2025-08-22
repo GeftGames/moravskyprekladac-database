@@ -10,7 +10,7 @@
             }
         }
 
-        echo FilteredList($list, "langs", []);
+        echo FilteredList($list, "langs", [],null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         lang_changed=function() { 

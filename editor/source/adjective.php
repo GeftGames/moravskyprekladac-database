@@ -1,8 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // site list
         include "components/tags_editor.php";
 
         $sql="SELECT id, label FROM adjective_patterns_cs;";
@@ -13,10 +11,8 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results";
         }
-        echo FilteredList($list, "adjective_patterns_cs", []);
+        echo FilteredList($list, "adjective_patterns_cs", [], null);
 
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
@@ -60,9 +56,9 @@
 
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'adjective_cs');
                     }else{
-                        tagSet([]);
+                        tagSet([], 'adjective_cs');
                     }
                    
                 }else console.log('error sql', json);

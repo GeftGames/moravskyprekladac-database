@@ -46,9 +46,76 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
         const offsetTop = rect.top;
         const maxHeight = window.innerHeight - offsetTop;
         attrpage.style.maxHeight = maxHeight + 'px';
-       // console.log('updated to', maxHeight);
+    }
+    
+    {
+        let variantsRaw='".$nameVariants."'.split(',');
+        let variants={};
+        for (let v of variantsRaw) {
+            let kv=v.split('=');
+            variants[kv[0]]=kv[1];
+        }
+        loadTableDataFromJson('variants', JSON.stringify(variants));
     }
 ";
+// save this attributes page
+$GLOBALS["script"].= /** @lang JavaScript */"
+    var flist_piecesofcite; 
+    var saveAttrs = function() {
+        let formData = new URLSearchParams();
+        formData.append('action', 'attrs');        
+        
+        // id
+        formData.append('id', $filter);
+        
+        // label
+        let name=document.getElementById('name').value;
+        formData.append('name', name);
+        
+        //administrative town
+        let nameAdministrativeTown=document.getElementById('nameAdministrativeTown').value;
+        formData.append('administrativeTown', nameAdministrativeTown);
+              
+        // variants of name
+        let variants=getTableData('variants');
+        let json=JSON.parse(variants);
+        let arr=[];
+        for (let j in json) {
+            arr.push(j,json[j]);
+        }
+        formData.append('variants', arr.join(','));
+        
+        // country
+        let country=document.getElementById('country').value;
+        formData.append('country', country);
+        
+        // Category of this translate
+        let category=document.getElementById('category').value;
+        formData.append('category', category);
+        
+        // GPS
+        let gpsX=document.getElementById('gpsX').value;
+        formData.append('gpsX', gpsX);
+        
+        let gpsY=document.getElementById('gpsY').value;
+        formData.append('gpsY', gpsY);
+        
+        let pieceofciteParent=document.getElementById('pieceofciteParent').value;
+        formData.append('people', paramsPeople);
+  
+        
+
+        fetch('index.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        }).then(response => response.json())
+        .then(json => {
+            if (json.status==='OK'){
+               flist_piecesofcite.getSelectedItemInList().innerText=label;
+            }else console.log('error currentPieceOfCiteSave: ', json);
+        });
+    };";
 ?>
 <div id='attrpage' style="overflow-y: auto;<?php if ($hidden) echo "display: none";?>">
         <table>
@@ -58,16 +125,19 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
                 <td><input type="text" id="name" value='<?php echo $translateName; ?>'></td>
             </tr>
             <tr>
-                <td><label for="name">Spadá pod</label></td>
-                <td><input type="text" id="name" value='<?php echo $administrativeTown; ?>'></td>
+                <td><label for="nameAdministrativeTown">Spadá pod</label></td>
+                <td><input type="text" id="nameAdministrativeTown" value='<?php echo $administrativeTown; ?>'></td>
             </tr>
-            <tr>
+            <tr class="rowsection">
                 <td><label for="namemul">Varianty názvu</label></td>
-                <td><input type="text" id="namemul" value='<?php echo $nameVariants; ?>'></td>
+                <td colspan="2"><?php
+                    include "components/table_editor.php";
+                    echo basicTableEditor("variants", [], ["lang"=>"nář", "text"=>"Holomóc"]);
+                ?></td>
             </tr>
             <tr>
-                <td><label for="region">Typ překladu</label></td>
-                <td><select id="region">
+                <td><label for="category">Typ překladu</label></td>
+                <td><select id="category">
                     <option<?php if ($langtype==0) echo ' selected'; ?>>Neznámé</option>
                     <option<?php if ($langtype==1) echo ' selected'; ?>>Vesnice</option>
                     <option<?php if ($langtype==2) echo ' selected'; ?>>Část města</option>
@@ -120,24 +190,51 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
                 </select></td>
             </tr>
 
-            <tr><td><h3>Dialekt</h3></td><tr>
+            <tr class="rowsection"><td><h3>Dialekt</h3></td><tr>
             <tr>
-                <td><label for="dialect">dialekt dle lingvistiků</label></td>
+                <td><label for="dialect">dialekt dle lingvistiků (Bartoše)</label></td>
                 <td><select id="dialect">
-                    <option>Neznámé</option>
-                    <option>Hanácký</option>
-                    <option>Hanácký horský</option>
-                    <option>Valašský</option>
-                    <option>Slovácký</option>
-                    <option>Kelečský</option>
-                    <option>Kopanický</option>
-                    <option>Po prajsky</option>
-                    <option>Charvátský</option>
-                    <option>Čuhácký</option>
-                    <option>Malohanácký</option>
+                    <option value="0">Neznámý</option>
+
+                    <optgroup label="<slovenský>">
+                        <option value="1.0">Slovenský</option>
+
+                        <option value="1.1.0">Moravskoslovenská</option>
+                        <option value="1.1.1">Slovácký</option>
+                        <option value="1.1.2">Valašský</option>
+                        <option value="1.1.2">Kelečský</option>
+                        <option value="1.1.2">Starojický</option>
+
+                        <option value="1.2">Dolský</option>
+
+                        <option value="1.2">Uherskoslovenská</option>
+                        <option value="1.1">Kopanický</option>
+                    </optgroup>
+
+                    <optgroup label="<hanácké>">
+                        <option value="2.0">Hanácký</option>
+                        <option value="2.1">Čuhácký</option>
+                        <option value="2.1">Hanácký horský</option>
+                        <option value="2.1">kunštátský</option>
+                    </optgroup>
+
+                    <optgroup label="<lašské>">
+                        <option value="3.0">Lašské</option>
+                        <option value="3.1">Hlučínské (po prajzky)</option>
+                    </optgroup>
+
+                    <optgroup label="<české>">
+                        <option value="3.0">Český</option>
+                    </optgroup>
+
+                    <optgroup label="<jiné>">
+                        <option value="4.0">Chorvatský</option>
+                        <option value="5.0">Německý</option>
+                    </optgroup>
                 </select></td>
             </tr>
-            <tr>
+
+            <tr class="rowsection">
                 <td><label for="region">jazyk dle obyvatel</label></td>
                 <td colspan=2>
                     <?php
@@ -154,7 +251,7 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
                     ?>
                 </td>
             </tr>
-            <tr>
+            <tr class="rowsection">
                 <td><label for="region">národnost dle obyvatel</label></td>
                 <td colspan=2>
                     <?php
@@ -172,11 +269,11 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
                 </td>
             </tr>
 
-            <tr>
+            <tr class="rowsection">
                 <td><label for="quality">Kvalita</label></td>
                 <td><input type="number" id="quality"<?php echo $quality;?>></td>
             </tr>
-            <tr>
+            <tr class="rowsection">
                 <td><label for="quality">Zobrazit v mapě</label></td>
                 <td><label class="switch">
                     <input id="quality" type="checkbox"<?php if ($showInMaps) echo '  checked';?>>
@@ -214,6 +311,10 @@ $GLOBALS["onload"].= /** @lang JavaScript */"
                 <div class="section" style="display: grid;width: -webkit-fill-available;">
                     <label for="devinfo">Poznámky bokem</label>
                     <textarea id="devinfo" style="max-width: 15cm;width: -webkit-fill-available;height: 5cm"><?php echo $devinfo; ?></textarea>
+                </div>
+
+                <div class="section" style="display: grid;">
+                    <a class="button" onclick="saveAttrs()">Uložit</a>
                 </div>
             </div>
     </div>

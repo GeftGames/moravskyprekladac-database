@@ -1,9 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-       // include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(label) ASC";
@@ -15,11 +12,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "number_pattern_cs", []);
+        echo FilteredList($list, "number_pattern_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         number_cs_changed=function() { 
@@ -68,9 +63,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'number_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'number_cs');
                     }
                    
                 } else console.log('error sql', json);
@@ -82,7 +77,8 @@
         flist_number_pattern_cs.EventItemSelectedChanged(number_cs_changed);
         flist_number_pattern_cs.EventItemAddedChanged(number_cs_added);";
     
-        $GLOBALS["script"].="var flist_number_pattern_cs; 
+        $GLOBALS["script"].= /** @lang JavaScript */
+            "var flist_number_pattern_cs; 
         var currentnumberCSSave = function() {
             let label=document.getElementById('numberLabel').value;
             let base=document.getElementById('numberBase').value;

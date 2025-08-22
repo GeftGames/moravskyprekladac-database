@@ -18,7 +18,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "preposition_to");  
+        echo FilteredList($list, "preposition_to", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         preposition_to_changed=function() { 

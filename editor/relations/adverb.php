@@ -42,7 +42,7 @@
 
 
         // side menu
-        echo FilteredList($listR, "adverb_relations", []);
+        echo FilteredList($listR, "adverb_relations", [], $_SESSION['translate']);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         var adverb_relation_changed = function() { 
@@ -89,6 +89,9 @@
             
             let tags=document.getElementById('adverb_todatatags').value;
             formData.append('tags', tags);
+            
+            
+            let to=to_save();
 
             fetch('index.php', {
                 method: 'POST',

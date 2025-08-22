@@ -10,7 +10,7 @@
         $listR=give_relations_pattern($conn,"pronoun", true);
 
         // side menu
-        echo FilteredList($listR, "pronoun_relations", []);
+        echo FilteredList($listR, "pronoun_relations", [], $_SESSION['translate']);
 
         // from list for <select>
         $sqlFrom="SELECT `id`, `label` FROM `pronoun_patterns_cs`;";
@@ -47,7 +47,7 @@
                     filteredSearchList_pronoun_from.selectId(json.from);                   
                     filteredSearchList_pronoun_from.reload();
                     //to
-                    to_load(JSON.parse(json.to));
+                    to_load(json.to);
                 }else console.log('error sql', json);
             });
         };

@@ -14,7 +14,7 @@
             }
         }
 
-        echo FilteredList($list, "particles_cs", []);
+        echo FilteredList($list, "particles_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         particle_cs_changed=function() { 
@@ -36,9 +36,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'particle_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'particle_cs');
                     }
                    
                 } else console.log('error sql', json);

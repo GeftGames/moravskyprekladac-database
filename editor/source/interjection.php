@@ -12,11 +12,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["shape"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "interjections_cs", []);
+        echo FilteredList($list, "interjections_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         interjection_cs_changed=function() { 
@@ -38,9 +36,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags,'interjection_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([],'interjection_cs');
                     }
                    
                 } else console.log('error sql', json);
@@ -56,7 +54,6 @@
         var flist_interjections_cs; 
         var currentinterjectionCSSave = function() {
             let shape=document.getElementById('interjectionShape').value;
-            let falls=document.getElementById('interjectionFalls').value;
             let interjectionId=document.getElementById('interjectionId').value;
             let tags=document.getElementById('interjection_csdatatags').value;
            

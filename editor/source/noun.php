@@ -1,9 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-       // include "components/filter_list.php";
         include "components/tags_editor.php";
 
         $sql="SELECT id, label FROM noun_patterns_cs;";
@@ -14,11 +11,9 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_patterns_cs", []);
+        echo FilteredList($list, "noun_patterns_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "
@@ -58,9 +53,9 @@
 
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'noun_cs');
                     }else{
-                        tagSet([]);
+                        tagSet([], 'noun_cs');
                     }
                    
                 } else console.log('error sql', json);
@@ -130,14 +125,14 @@
                 <label for="nounGender">Rod</label>
                 <select id="nounGender" name="type">
                     <option value="0">Neznámý</option>
-                    <option value="4">Střední</option>
-                    <option value="3">Ženský</option>
-                    <option value="2">Mužský neživotný</option>
-                    <option value="1">Mužský životný</option>
+                    <option value="1">Střední</option>
+                    <option value="2">Ženský</option>
+                    <option value="3">Mužský životný</option>
+                    <option value="4">Mužský neživotný</option>
                 </select>
             </div>
 
-            <div class="row section">
+        <!--    <div class="row section">
                 <label for="nounPattern">Vzor</label>
                 <select id="nounPattern" name="type">
                     <option value="0">Neznámý</option>
@@ -166,7 +161,7 @@
                         <option value="16">Mladý</option>
                         <option value="17">Jarní</option>
                     </optgroup>
-                </select>
+                </select>-->
             </div>
 
             <div class="row section">

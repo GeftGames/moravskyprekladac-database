@@ -97,21 +97,23 @@ let idDataTags=id+'datatags';
 
 function tagsEditor($id, $tags, $label) {
     // onload
-    $GLOBALS["script"].= /** @lang JavaScript */"
-    var tagSet=function(list){      
+    $GLOBALS["script"].= /** @lang JavaScript */
+        "
+    var tagSet=function(list, id){   
+        if (id===undefined) console.warn('tagSet([], <missing>)!');
         // crear tags hidden
-        let tags=document.getElementById('".$id. "datatags');
+        let tags=document.getElementById(id+'datatags');
         tags.value='';
     
         // Clear add
-        tagAddNew.valu='';
+        tagAddNew.value='';
     
         // crear tags hidden
-        let area=document.getElementById('tagsArea');
+        let area=document.getElementById(id+'datatags');
         area.innerHTML='';
     
         for (let i of list){  
-            if (i!=='') tagAdd(i, '$id'+'datatags');
+            if (i!=='') tagAdd(i, id+'datatags');
         }
     };
     ";

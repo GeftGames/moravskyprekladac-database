@@ -22,7 +22,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "sentencepart", []);
+        echo FilteredList($list, "sentencepart", [],$filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         sentencepart_changed=function() { 

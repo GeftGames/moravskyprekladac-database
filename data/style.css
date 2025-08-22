@@ -33,7 +33,7 @@
 /*Global*/
 body{
     font-family: var(--f);
-    margin:0px;
+    margin: 0;
     height: 100vh;
     overflow: hidden;
     display: flex;
@@ -102,7 +102,7 @@ a{
     color: var(--ColorText);
     background-color: var(--ConBack);
     transition: box-shadow var(--transitionSlow);
-    border: 0px;
+    border: 0;
     border-radius: 4px;
     text-shadow: var(--tsh);
     margin-top: 5px;
@@ -193,7 +193,6 @@ input[type="number"]{
     width: 48px;
     height: 20px;
     margin-right: 5px;
-    margin-right: 5px;
 }
 
 .switch input {
@@ -224,7 +223,7 @@ input[type="number"]{
     width: 26px;
     left: -3px;
     bottom: -3px;
-    background-color: var(--ConBack);
+    /*background-color: var(--ConBack);*/
     -webkit-transition: .2s;
     transition: .2s;
     background-color: var(--ColorThemeForward);
@@ -330,11 +329,11 @@ input:focus-visible+.slider {
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: #f9f9f9;
     min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
     padding: 4px 4px;
     z-index: 1;
+    /*background-color: #f9f9f9;*/
     background-color: var(--ColorBackground);
 }
 .dropdown:hover .dropdown-content {
@@ -467,7 +466,7 @@ input:focus-visible+.slider {
 }
 .mouseContexMenu{
     background-color: var(--ConBack);  
-    display: flex;
+  /*  display: flex;*/
     flex-direction: column;    
     position: absolute;
     user-select:none;
@@ -542,10 +541,21 @@ h1{
     position: absolute;
     z-index: 100;
     background-color: var(--ConBack);
-    box-shadow: 0px 0px 12px var(--ColorText);
+    box-shadow: 0 0 12px var(--ColorTheme);
+    max-width: 10cm;
+}
+.labelCite{
+     display: flex;
+     width: -webkit-fill-available;
+     margin-left: 5px;
+    overflow-wrap: anywhere;
+ }
+.labelCite:hover{
+    background-color: var(--ColorTheme);
 }
 .listSearchSelect{
-    max-height: 5cm;
+    max-height: 7cm;
+    max-width: 13cm;
     overflow-y: scroll;
 }
 .sideItem.selectedItem{
@@ -554,8 +564,8 @@ h1{
 }
 .trTo{
     flex-wrap: wrap;
-    display: flex;
-    flex-direction: column;
+    /*display: flex;
+    flex-direction: column;*/
     border-left: solid;
     padding-left: 7px;
     align-items: flex-start;
@@ -573,3 +583,28 @@ h1{
 .boxwithitems>span{
     cursor: pointer;
  }
+.listSearchBack{
+    top:0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    opacity: .5;
+    background-color: var(--ColorBackground);
+    position: absolute;
+    z-index: 100;
+    display: none;
+}
+
+.nounEndingsRow:nth-child(2n) {
+    background-color: var(--ConBack);
+}
+#output_noun_endings > td{
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.rowsection td::after{
+    content: "";
+    height: 10px;
+    display: block;
+}

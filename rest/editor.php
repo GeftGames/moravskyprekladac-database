@@ -13,13 +13,40 @@ function list_add() {
     }
     $table=(string)$_POST['table'];
 
-    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $setTranslate=null;
+    if (isset($_POST['translate'])) {
+        $setTranslate=(int)$_POST['translate'];
+    }
 
-    $result=$conn->query("INSERT INTO $table () VALUES ();");
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
+
+    if ($conn->connect_error) {
+        echo json_encode(["status" => "ERROR", "message" => $conn->connect_error]);
+        return;
+    }
+
+    // set default values
+    $sql="INSERT INTO $table () VALUES ();";
+    // set default values, except "translate"
+    if ($setTranslate!=null) $sql="INSERT INTO $table (translate) VALUES ($setTranslate);";
+
+    $result=$conn->query($sql);
     if ($result === TRUE) {
-        list_items();
-        // todo: get id and def
-        // [id =>$conn.lastId, label => $namedef]
+        // return list
+        $sqlList="SELECT id, label FROM $table;";
+        if ($setTranslate!=null)$sqlList="SELECT id, label FROM $table WHERE translate=$setTranslate;";
+        $resultList = $conn->query($sqlList);
+
+        if ($resultList) {
+            $list=[];
+            while($row = $resultList->fetch_assoc()) {
+                $list[]=[$row["id"], $row["label"]];
+            }
+            echo json_encode(["status"=>"OK", "list"=>$list]);
+        } else {
+            echo json_encode(["status" => "ERROR", "function"=>"list_add list", "message" => $conn->error, "sql"=>$sqlList]);
+        }
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_add", "message" => $conn->error]);
     } 
@@ -29,6 +56,7 @@ function list_relation_add() {
     $table=(string)$_POST['table'];
 
     $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
 
     $result=$conn->query("INSERT INTO $table (translate) VALUES (".$_SESSION['translate'].");");
     if ($result === TRUE) {
@@ -91,15 +119,16 @@ function list_items() {
     $table=$_POST['table'];
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
     
-    $order="ORDER BY LOWER(label) ASC";
-    $sql="SELECT id, label FROM $table $order;";
+   // $order="ORDER BY LOWER(label) ASC";
+  //  $filter=$_SESSION["translate"]=$setTranslate;
+    $sql="SELECT id, label FROM $table;";
     $result = $conn->query($sql);
 
     if ($result) {    
         if ($result->num_rows > 0) {    
             $list=[];
             while($row = $result->fetch_assoc()) {
-                $list[]=[$row["id"], $row["label"]];
+                $list[]=[(int)$row["id"], $row["label"]];
             }
             echo json_encode(["status"=>"OK", "list"=>$list]);
         } else {
@@ -534,7 +563,7 @@ function verb_pattern_cs_item() {
 
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, base,
+    $sql="SELECT label, base, class
        shapes_infinitive, 
        shapes_continous, 
        shapes_future, 
@@ -551,7 +580,7 @@ function verb_pattern_cs_item() {
     if ($result) {    
         if ($result->num_rows > 0) {    
             while($row = $result->fetch_assoc()) {
-                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "category"=>$row["category"],
+                echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "category"=>$row["category"], "class"=>$row["class"],
                     "infinitive"        =>$row["shapes_infinitive"],
                     "continous"         =>$row["shapes_continous"],
                     "future"            =>$row["shapes_future"],
@@ -854,7 +883,7 @@ function interjection_cs_update() {
 
 #region relation
 function noun_relation_item() {
-    if (!isset($_POST['id'])){
+    if (!isset($_POST['id'])) {
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
         return;
     }
@@ -864,14 +893,16 @@ function noun_relation_item() {
 
     $relation_id="";
     $from=-1;
+    $custombase=null;
 
-    $sql="SELECT `id`, `from` FROM noun_relations WHERE id = '$id';";
+    $sql="SELECT `id`, `from`, custombase FROM noun_relations WHERE id = '$id';";
     $result = $conn->query($sql);
     if ($result) {
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 $relation_id=$row["id"];
                 $from=$row["from"];
+                $custombase=$row["custombase"];
             }
         } else {
             echo json_encode(["status" => "EMPTY"]);
@@ -883,7 +914,7 @@ function noun_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `certainty`, `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `nouns_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`,  `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `nouns_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -893,7 +924,7 @@ function noun_relation_item() {
         $listTo[]=[
             "id"=>$row["id"],
             "priority"=>$row["priority"],
-            "certainty"=>$row["certainty"],
+          //  "certainty"=>$row["certainty"],
             "shape"=>$row["shape"],
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
@@ -906,8 +937,9 @@ function noun_relation_item() {
 
     echo json_encode([
         "status"=>"OK",
+        "custombase"=>$custombase,
         "from" =>$from,
-        "to"=>json_encode($listTo)
+        "to"=>$listTo
     ]);
     $conn->close();
 }
@@ -969,6 +1001,248 @@ function noun_relation_update() {
     }
 }
 
+function adjective_relation_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $relation_id="";
+    $from=-1;
+    $custombase=null;
+
+    $sql="SELECT `id`, `from`, custombase FROM adjective_relations WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $relation_id=$row["id"];
+                $from=$row["from"];
+                $custombase=$row["custombase"];
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+            return;
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
+    }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`,  `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `adjectives_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "custombase"=>$row["custombase"],
+            "tmp_pattern_from_body"=>$row["tmp_pattern_from_body"],
+            "tmp_imp_from_pattern"=>$row["tmp_imp_from_pattern"],
+            "cite"=>$row["cite"]
+        ];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "custombase"=>$custombase,
+        "from" =>$from,
+        "to"=>$listTo
+    ]);
+    $conn->close();
+}
+
+function pronoun_relation_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $relation_id="";
+    $from=-1;
+    $custombase=null;
+
+    $sql="SELECT `id`, `from`, custombase FROM pronoun_relations WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $relation_id=$row["id"];
+                $from=$row["from"];
+                $custombase=$row["custombase"];
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+            return;
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
+    }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`,  `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `pronouns_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "custombase"=>$row["custombase"],
+            "tmp_pattern_from_body"=>$row["tmp_pattern_from_body"],
+            "tmp_imp_from_pattern"=>$row["tmp_imp_from_pattern"],
+            "cite"=>$row["cite"]
+        ];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "custombase"=>$custombase,
+        "from" =>$from,
+        "to"=>$listTo
+    ]);
+    $conn->close();
+}
+
+function number_relation_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $relation_id="";
+    $from=-1;
+    $custombase=null;
+
+    $sql="SELECT `id`, `from`, custombase FROM number_relations WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $relation_id=$row["id"];
+                $from=$row["from"];
+                $custombase=$row["custombase"];
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+            return;
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"cite_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
+    }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`,  `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `numbers_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "custombase"=>$row["custombase"],
+            "tmp_pattern_from_body"=>$row["tmp_pattern_from_body"],
+            "tmp_imp_from_pattern"=>$row["tmp_imp_from_pattern"],
+            "cite"=>$row["cite"]
+        ];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "custombase"=>$custombase,
+        "from" =>$from,
+        "to"=>$listTo
+    ]);
+    $conn->close();
+}
+
+function verb_relation_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $relation_id="";
+    $from=-1;
+
+    $sql="SELECT `id`, `from` FROM verb_relations WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $relation_id=$row["id"];
+                $from=$row["from"];
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+            return;
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"verb_relation_item", "message" => $conn->error, "sql"=>$sql]);
+        return;
+    }
+
+    $listTo=[];
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`,  `tags`, `tmp_pattern_from_body`, cite, custombase, `tmp_imp_from_pattern` FROM `verbs_to` WHERE `relation` = '$relation_id';";
+    $result = $conn->query($sqlTo);
+    if (!$result) {
+        throwError("SQL error: ".$sqlTo);
+        return;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $listTo[]=[
+            "id"=>$row["id"],
+            "priority"=>$row["priority"],
+            //  "certainty"=>$row["certainty"],
+            "shape"=>$row["shape"],
+            "comment"=>$row["comment"],
+            "tags"=>$row["tags"],
+            "custombase"=>$row["custombase"],
+            "tmp_pattern_from_body"=>$row["tmp_pattern_from_body"],
+            "tmp_imp_from_pattern"=>$row["tmp_imp_from_pattern"],
+            "cite"=>$row["cite"]
+        ];
+    }
+
+    echo json_encode([
+        "status"=>"OK",
+        "from" =>$from,
+        "to"=>json_encode($listTo)
+    ]);
+    $conn->close();
+}
+
 function adverb_relation_item() {
     if (!isset($_POST['id'])){
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
@@ -999,7 +1273,7 @@ function adverb_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `certainty`, `shape`,`comment`, `tags`, `cite` FROM `adverbs_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `cite` FROM `adverbs_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -1013,7 +1287,7 @@ function adverb_relation_item() {
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
             "cite"=>$row["cite"],
-            "certainty"=>$row["certainty"]
+         //   "certainty"=>$row["certainty"]
         ];
     }
 
@@ -1055,14 +1329,13 @@ function adverb_relation_update() {
         $toComment=$to[3];
         $toSource=$to[4];
         $toTags=$to[5];
-        $certainty=$to[6];
+       // $certainty=$to[6];
         $sqlTo= /** @lang SQL */"UPDATE adverbs_to SET 
             `priority` = '$toPriority', 
             `shape` = '$toShape',  
             `tags` = '$toTags',  
             `comment` = '$toComment',  
             `cite` = '$toSource'  
-            `certainty` = '$certainty', 
                 WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
@@ -1114,14 +1387,13 @@ function preposition_relation_update() {
         $toComment=$to[3];
         $toSource=$to[4];
         $toTags=$to[5];
-        $certainty=$to[6];
+       // $certainty=$to[6];
         $sqlTo= /** @lang SQL */"UPDATE adverbs_to SET 
             `priority` = '$toPriority', 
             `shape` = '$toShape',  
             `tags` = '$toTags',  
             `comment` = '$toComment',  
             `cite` = '$toSource'  
-            `certainty` = '$certainty', 
                 WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
@@ -1173,7 +1445,7 @@ function preposition_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `certainty`, `shape`,`comment`, `tags`, `cite` FROM `prepositions_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `cite` FROM `prepositions_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -1187,7 +1459,7 @@ function preposition_relation_item() {
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
             "cite"=>$row["cite"],
-            "certainty"=>$row["certainty"]
+         //  "certainty"=>$row["certainty"]
         ];
     }
 
@@ -1229,7 +1501,7 @@ function conjunction_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `certainty`, `shape`,`comment`, `tags`, `cite` FROM `conjunctions_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `cite` FROM `conjunctions_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -1243,7 +1515,7 @@ function conjunction_relation_item() {
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
             "cite"=>$row["cite"],
-            "certainty"=>$row["certainty"]
+         //   "certainty"=>$row["certainty"]
         ];
     }
 
@@ -1285,14 +1557,14 @@ function conjunction_relation_update() {
         $toComment=$to[3];
         $toSource=$to[4];
         $toTags=$to[5];
-        $certainty=$to[6];
+        //$certainty=$to[6];
         $sqlTo= /** @lang SQL */"UPDATE conjunctions_to SET 
             `priority` = '$toPriority', 
             `shape` = '$toShape',  
             `tags` = '$toTags',  
             `comment` = '$toComment',  
             `cite` = '$toSource'  
-            `certainty` = '$certainty', 
+        
                 WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
@@ -1344,7 +1616,7 @@ function particle_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `certainty`, `shape`,`comment`, `tags`, `cite` FROM `particles_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `cite` FROM `particles_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -1358,7 +1630,7 @@ function particle_relation_item() {
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
             "cite"=>$row["cite"],
-            "certainty"=>$row["certainty"]
+         //   "certainty"=>$row["certainty"]
         ];
     }
 
@@ -1400,14 +1672,13 @@ function particle_relation_update() {
         $toComment=$to[3];
         $toSource=$to[4];
         $toTags=$to[5];
-        $certainty=$to[6];
+       // $certainty=$to[6];
         $sqlTo= /** @lang SQL */"UPDATE adverbs_to SET 
             `priority` = '$toPriority', 
             `shape` = '$toShape',  
             `tags` = '$toTags',  
             `comment` = '$toComment',  
-            `cite` = '$toSource'  
-            `certainty` = '$certainty', 
+            `cite` = '$toSource'
                 WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
@@ -1459,7 +1730,7 @@ function interjection_relation_item() {
     }
 
     $listTo=[];
-    $sqlTo="SELECT `id`, `priority`, `certainty`, `shape`,`comment`, `tags`, `cite` FROM `interjections_to` WHERE `relation` = '$relation_id';";
+    $sqlTo="SELECT `id`, `priority`, `shape`,`comment`, `tags`, `cite` FROM `interjections_to` WHERE `relation` = '$relation_id';";
     $result = $conn->query($sqlTo);
     if (!$result) {
         throwError("SQL error: ".$sqlTo);
@@ -1473,7 +1744,7 @@ function interjection_relation_item() {
             "comment"=>$row["comment"],
             "tags"=>$row["tags"],
             "cite"=>$row["cite"],
-            "certainty"=>$row["certainty"]
+         //   "certainty"=>$row["certainty"]
         ];
     }
 
@@ -1515,14 +1786,13 @@ function interjection_relation_update() {
         $toComment=$to[3];
         $toSource=$to[4];
         $toTags=$to[5];
-        $certainty=$to[6];
+      //  $certainty=$to[6];
         $sqlTo= /** @lang SQL */"UPDATE adverbs_to SET 
             `priority` = '$toPriority', 
             `shape` = '$toShape',  
             `tags` = '$toTags',  
             `comment` = '$toComment',  
             `cite` = '$toSource'  
-            `certainty` = '$certainty', 
                 WHERE id = $toId;";
         $resultTo=$conn->query($sqlTo);
 
@@ -1582,6 +1852,131 @@ function noun_pattern_to_item() {
 }
 
 function noun_pattern_to_update() {
+    // Check if all required parameters are set
+    if (!isset($_POST['id'])
+        || !isset($_POST['label'])
+        || !isset($_POST['base'])
+        || !isset($_POST['shapes'])
+        || !isset($_POST['uppercase'])
+        || !isset($_POST['gender'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['tags'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    // Get the values from the POST request
+    $id = (int)$_POST['id'];
+    $label = $conn->real_escape_string($_POST['label']);
+    $gender = (int)$_POST['gender'];
+    $uppercase = (int)$_POST['uppercase'];
+    $shapes = $_POST['shapes'];
+    $tags = $_POST['tags'];
+    $pattern = $_POST['pattern'];
+    $base = $_POST['base'];
+
+    // Update the noun_pattern_to table
+    /*$sql="UPDATE noun_pattern_to SET".
+        "label = '$label',".
+        "base = '$base',".
+        "gender = $gender,".
+        "uppercase = $uppercase,".
+        "shapes = '$shapes',".
+        "tags = '$tags' WHERE id = $id;";
+
+    $result=$conn->query($sql);*/
+
+    $stmt = $conn->prepare("UPDATE noun_patterns_to SET 
+        label = ?, 
+        base = ?, 
+        gender = ?, 
+        uppercase = ?, 
+        shapes = ?, 
+        tags = ?, 
+        pattern = ?
+            WHERE id = ?");
+
+    if ($stmt === false) {
+        die(json_encode(["status" => "ERROR", "message" => $conn->error]));
+    }
+
+    // Bind parameters: 'ssiiisi' corresponds to the types:
+    // s = string, i = integer
+    $stmt->bind_param("ssiissi", $label, $base, $gender, $uppercase, $shapes, $tags, $pattern, $id);
+
+    $result = $stmt->execute();
+
+    // Display result
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "noun_pattern_to_update", "message" => $conn->error]);
+    }
+}
+
+function verb_pattern_to_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result = sql_get_one(
+        $conn,
+        "verb_patterns_to",
+        [
+            "label", "base", "category", "tags",
+            "shapes_infinitive",
+            "shapes_continous",
+            "shapes_future",
+            "shapes_imperative",
+            "shapes_past_active",
+            "shapes_past_passive",
+            "shapes_transgressive_cont",
+            "shapes_transgressive_past",
+            "shapes_auxiliary"
+        ],
+        "id = '$id'"
+    );
+    echo json_encode($result);
+    /*
+    $sql="SELECT label, base, category, shapes_infinitive, shapes_continous, shapes_future, shapes_imperative, shapes_past_active, shapes_past_passive, shapes_past_passive, shapes_transgressive_cont, shapes_transgressive_past, shapes_auxiliary, tags FROM verb_patterns_to WHERE id = '$id';";
+    $result = $conn->query($sql);
+
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                echo json_encode(["status"=>"OK",
+                    "label"=>$row["label"],
+                    "base"=>$row["base"],
+                    "tags"=>$row["tags"],
+                    "category"=>$row["category"],
+                    "shapes_infinitive"=>$row["shapes_infinitive"],
+                    "shapes_continous"=>$row["shapes_continous"],
+                    "shapes_future"=>$row["shapes_future"],
+                    "shapes_imperative"=>$row["shapes_imperative"],
+                    "shapes_past_active"=>$row["shapes_past_active"],
+                    "shapes_past_passive"=>$row["shapes_past_passive"],
+                    "shapes_transgressive_cont"=>$row["shapes_transgressive_cont"],
+                    "shapes_transgressive_past"=>$row["shapes_transgressive_past"],
+                    "shapes_auxiliary"=>$row["shapes_auxiliary"]
+                ]);
+                return;
+            }
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+        }
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"verb_pattern_to_item", "message" => $conn->error, "sql"=>$sql]);
+    }*/
+    $conn->close();
+}
+
+function verb_pattern_to_update() {
     // Check if all required parameters are set
     if (!isset($_POST['id'])
         || !isset($_POST['label'])
@@ -1779,24 +2174,24 @@ function sentence_item() {
 
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
-    $sql="SELECT `from`, pos, tags FROM sentence_relations WHERE id = '$id';";
+    $sql="SELECT `from`, tags FROM sentence_relations WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 // to translates rows
-                $sqlTo="SELECT `id`, `shape`, `tags`, `comment`, `cite` FROM sentences_to WHERE `relation` = '$id';";
+                $sqlTo="SELECT `id`, `shape`, `tags`, `comment`, pos, `cite` FROM sentences_to WHERE `relation` = '$id';";
                 $resultTo = $conn->query($sqlTo);
                 $to=[];
                 if ($resultTo) {
                     if ($resultTo->num_rows > 0) {
                         while ($rowTo = $resultTo->fetch_assoc()) {
-                            $to[]=["id"=>$rowTo["id"], "shape"=>$rowTo["shape"], "tags"=>$rowTo["tags"], "comment"=>$rowTo["comment"], "cite"=>$rowTo["cite"]];
+                            $to[]=["id"=>$rowTo["id"], "shape"=>$rowTo["shape"], "pos"=>$rowTo["pos"], "tags"=>$rowTo["tags"], "comment"=>$rowTo["comment"], "cite"=>$rowTo["cite"]];
                         }
                     }
 
-                    echo json_encode(["status"=>"OK", "from"=>$row["from"], "pos"=>$row["pos"], "tags"=>$row["tags"], "to"=>$to]);
+                    echo json_encode(["status"=>"OK", "from"=>$row["from"], "tags"=>$row["tags"], "to"=>$to]);
                     return;
                 }
                 echo json_encode(["status" => "ERROR", "message" => $conn->error, "sql"=>$sqlTo]);
@@ -1840,24 +2235,24 @@ function sentencepart_item() {
 
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
-    $sql="SELECT `from`, pos, tags FROM sentencepart_relations WHERE id = '$id';";
+    $sql="SELECT `from`, tags FROM sentencepart_relations WHERE id = '$id';";
     $result = $conn->query($sql);
 
     if ($result) {
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 // to translates rows
-                $sqlTo="SELECT `id`, `shape`, `tags`, `comment`, `cite` FROM sentenceparts_to WHERE `relation` = '$id';";
+                $sqlTo="SELECT `id`, `shape`, `tags`, `comment`, `cite`, pos FROM sentenceparts_to WHERE `relation` = '$id';";
                 $resultTo = $conn->query($sqlTo);
                 $to=[];
                 if ($resultTo) {
                     if ($resultTo->num_rows > 0) {
                         while ($rowTo = $resultTo->fetch_assoc()) {
-                            $to[]=["id"=>$rowTo["id"], "shape"=>$rowTo["shape"], "tags"=>$rowTo["tags"], "comment"=>$rowTo["comment"], "cite"=>$rowTo["cite"]];
+                            $to[]=["id"=>$rowTo["id"], "shape"=>$rowTo["shape"], "pos"=>$rowTo["pos"], "tags"=>$rowTo["tags"], "comment"=>$rowTo["comment"], "cite"=>$rowTo["cite"]];
                         }
                     }
 
-                    echo json_encode(["status"=>"OK", "from"=>$row["from"], "pos"=>$row["pos"], "tags"=>$row["tags"], "to"=>$to]);
+                    echo json_encode(["status"=>"OK", "from"=>$row["from"], "tags"=>$row["tags"], "to"=>$to]);
                     return;
                 }
                 echo json_encode(["status" => "ERROR", "message" => $conn->error, "sql"=>$sqlTo]);
@@ -1893,6 +2288,7 @@ function sentencepart_update() {
 }
 #endregion
 
+#region cites
 function cite_item() {
     if (!isset($_POST['id'])){
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
@@ -2015,7 +2411,9 @@ function pieceofcite_update() {
         echo json_encode(["status" => "ERROR", "function" => "cite_update", "message" => $conn->error, "sql"=>$sql]);
     } 
 }
+#endregion
 
+#region replaces
 function replace_start_item() {
     if (!isset($_POST['id'])) {
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
@@ -2073,6 +2471,250 @@ function replace_start_update() {
     }
 }
 
+function replace_inside_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $sql="SELECT `from`, `to`, `label`  FROM replaces_inside WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        // OK
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $label=$row["label"];
+                $from=$row["from"];
+                $to=$row["to"];
+
+                echo json_encode(["status" => "OK", "from"=>$from, "to"=>$to, "label"=>$label]);
+            }
+            // EMPTY
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+        }
+        // ERROR
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"replace_inside_item", "message" => $conn->error, "sql"=>$sql]);
+    }
+}
+
+function replace_inside_update() {
+    if (!isset($_POST['id']) || !isset($_POST['from']) || !isset($_POST['to'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id    = (int)$_POST['id'];
+    $from  = $conn->real_escape_string($_POST['from']);
+    $to    = $conn->real_escape_string($_POST['to']);
+    $label = $from." > ".$to;
+
+    $sql= /** @lang SQL */"UPDATE replaces_start SET `label` = '$label', `from` = '$from', `to` = '$to' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "replace_inside_update",
+            "sql"=>$sql
+        ]);
+    }
+}
+
+function replace_end_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $sql="SELECT `from`, `to`, `label`  FROM replaces_end WHERE id = '$id';";
+    $result = $conn->query($sql);
+    if ($result) {
+        // OK
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $label=$row["label"];
+                $from=$row["from"];
+                $to=$row["to"];
+
+                echo json_encode(["status" => "OK", "from"=>$from, "to"=>$to, "label"=>$label]);
+            }
+            // EMPTY
+        } else {
+            echo json_encode(["status" => "EMPTY"]);
+        }
+        // ERROR
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"replace_end_item", "message" => $conn->error, "sql"=>$sql]);
+    }
+}
+
+function replace_end_update() {
+    if (!isset($_POST['id']) || !isset($_POST['from']) || !isset($_POST['to'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id    = (int)$_POST['id'];
+    $from  = $conn->real_escape_string($_POST['from']);
+    $to    = $conn->real_escape_string($_POST['to']);
+    $label = $from." > ".$to;
+
+    $sql= /** @lang SQL */"UPDATE replaces_end SET `label` = '$label', `from` = '$from', `to` = '$to' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "replace_end_update",
+            "sql"=>$sql
+        ]);
+    }
+}
+#endregion
+
+function replace_defined_noun_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    echo json_encode(
+        sql_get_one($conn, "replaces_defined_noun", ["source", "to", "label", "fall", "gender", "number"/*, "tags_inc", "tags_not"*/],"`id` = '$id'")
+    );
+}
+
+function replace_defined_noun_update() {
+    if (!isset($_POST['id']) || !isset($_POST['source']) || !isset($_POST['to']) || !isset($_POST['label']) || !isset($_POST['fall']) || !isset($_POST['number']) || !isset($_POST['gender'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id     = (int)$_POST['id'];
+    $source = $conn->real_escape_string($_POST['source']);
+    $to     = $conn->real_escape_string($_POST['to']);
+    $number = $conn->real_escape_string($_POST['number']);
+    $gender = $conn->real_escape_string($_POST['gender']);
+    $fall   = $conn->real_escape_string($_POST['fall']);
+    $label  = $source." > ".$to." ".$fall.".p/č.".$number;
+
+    $sql= /** @lang SQL */"UPDATE replaces_defined_noun SET `label` = '$label', `source` = '$source', `to` = '$to', `label` = '$to' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "replace_defined_noun_update",
+            "sql"=>$sql
+        ]);
+    }
+}
+
+function replace_defined_verb_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    echo json_encode(
+        sql_get($conn, "replaces_defined_verb", ["source", "to", "label", "person", "gender", "number"/*, "tags_inc", "tags_not"*/],"`id` = '$id'")
+    );
+}
+
+function replace_defined_verb_update() {
+    if (!isset($_POST['id']) || !isset($_POST['source']) || !isset($_POST['to']) || !isset($_POST['label']) || !isset($_POST['fall']) || !isset($_POST['number']) || !isset($_POST['gender'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id     = (int)$_POST['id'];
+    $source = $conn->real_escape_string($_POST['source']);
+    $to     = $conn->real_escape_string($_POST['to']);
+    $number = $conn->real_escape_string($_POST['number']);
+    $gender = $conn->real_escape_string($_POST['gender']);
+    $fall   = $conn->real_escape_string($_POST['fall']);
+    $label  = $source." > ".$to." ".$fall.".p/č.".$number;
+
+    $sql= /** @lang SQL */"UPDATE replaces_defined_verb SET `label` = '$label', `source` = '$source', `to` = '$to', `label` = '$to' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "replace_defined_noun_update",
+            "sql"=>$sql
+        ]);
+    }
+}
+
+function replace_defined_item() {
+    if (!isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    echo json_encode(
+        sql_get($conn, "replaces_defined", ["source", "to", "label", "person", "gender", "number"/*, "tags_inc", "tags_not"*/],"`id` = '$id'")
+    );
+}
+
+function replace_defined_update() {
+    if (!isset($_POST['id']) || !isset($_POST['source']) || !isset($_POST['to']) || !isset($_POST['label']) || !isset($_POST['fall']) || !isset($_POST['number']) || !isset($_POST['gender'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+    $conn = new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $id     = (int)$_POST['id'];
+    $source = $conn->real_escape_string($_POST['source']);
+    $to     = $conn->real_escape_string($_POST['to']);
+    $number = $conn->real_escape_string($_POST['number']);
+    $gender = $conn->real_escape_string($_POST['gender']);
+    $fall   = $conn->real_escape_string($_POST['fall']);
+    $label  = $source." > ".$to." ".$fall.".p/č.".$number;
+
+    $sql= /** @lang SQL */"UPDATE replaces_defined SET `label` = '$label', `source` = '$source', `to` = '$to', `label` = '$to' WHERE id = $id;";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo '{ "status": "OK"}';
+    } else {
+        echo json_encode([
+            "status" => "ERROR",
+            "function" => "replace_defined_noun_update",
+            "sql"=>$sql
+        ]);
+    }
+}
+
 function pieceofcite_merge(){
     if (!isset($_POST['current']) || !isset($_POST['with'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
@@ -2114,7 +2756,6 @@ function pieceofcite_merge(){
     }
     echo '{ "status": "OK"}';
 }
-
 
 function place_region_item() {
     if (!isset($_POST['id'])) {
@@ -2259,5 +2900,758 @@ function place_add() {
         echo json_encode(["status" => "OK", "insert_id"=>$conn->insert_id]);
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_add", "message" => $conn->error]);
+    }
+}
+
+function search_endings_noun(){
+    if (
+           !isset($_POST['gender'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['fall'])
+        || !isset($_POST['number'])
+        || !isset($_POST['translate'])
+    ) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Missing values"]);
+        return;
+    }
+
+    // parse input values
+    $gender=(int)$_POST['gender'];
+    $fall=(int)$_POST['fall'];
+    $number=(int)$_POST['number'];
+    $pattern=(int)$_POST['pattern'];
+    $translate=(int)$_POST['translate'];
+
+    // check if all are numbers
+    if (!is_numeric($gender) || !is_numeric($fall) || !is_numeric($number) || !is_numeric($pattern)/**/ || !is_numeric($translate)) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Invalid input types"]);
+        return;
+    }
+
+    // connect
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
+
+    // - load from database - //
+    $arrShapeTranslates=[];
+    {
+        // relations
+        $sql="SELECT `id`, `from` FROM `noun_relations` WHERE `translate`=$translate";
+        $result=$conn->query($sql);
+        $listFromIds=[];
+        $listRelIds=[];
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            if ($row['from']!=null) {// if from is defined (=source of translate is set)
+                $listFromIds[]=$row['from'];
+                $listRelIds[]=$row['id'];
+                $arrShapeTranslates[]=["id"=>$row['id'], "source_id"=>$row['from']];
+            }
+        }
+
+        // cs source
+        // build filte -> for sql IN (that filter)
+        sort($listFromIds); // optional
+        $strListFromIds = implode(',', $listFromIds);
+        if (mb_strlen($strListFromIds)==0) {
+            echo json_encode(["status"=> "ERROR", "message"=>"not found any src", "len"=>count($listFromIds)]);
+            return;
+        }
+
+        $sql="SELECT `id`, `base`, `shapes` FROM `noun_patterns_cs` WHERE `id` IN ($strListFromIds)";
+        if ($gender>0) $sql.="AND `gender`=$gender";
+        if ($pattern>0)$sql.="AND `pattern`=$pattern";
+        $sql.=";";
+
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            // find objects for link
+            $search_id=$row['id'];
+            foreach ($arrShapeTranslates as &$t) {
+                if ($t["source_id"] == $search_id) {
+                    $t["source"]=$row['shapes'];
+                    $t["source_base"]=$row['base'];
+                    break;
+                }
+            }
+            unset($t);
+        }
+
+        // to ids
+        $strListRelIds=implode(',', array_filter($listRelIds, function($v) {
+            return $v !== null && $v !== '';
+        }));
+        $sql="SELECT `relation`, custombase, `shape` FROM `nouns_to` WHERE `relation` IN ($strListRelIds)";
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        $listTo=[];
+        while ($row=$result->fetch_assoc()) {
+           // if ($row['shape']!=null) { // no int id (not defined)
+                $listTo[]=$row['shape'];
+
+                foreach ($arrShapeTranslates as &$t) {
+                    if ($t["id"]==$row['relation']) {
+                        $t["to_id"]=$row['shape'];
+                        $t["to_custombase"]=$row['custombase'];
+                    }
+                }
+                unset($t);
+          //  }
+        }
+
+        // to shapes
+        $strListShapes=join(',', array_unique($listTo));
+        $sql="SELECT `id`, base, `shapes` FROM `noun_patterns_to` WHERE `id` IN ($strListShapes)";
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            foreach ($arrShapeTranslates as &$t) {
+                if (isset($t["to_id"]) && $t["to_id"]==$row['id']) {
+                    $t["to_base"]=$row['base'];
+                    $t["to"]=$row['shapes'];
+                }
+            }
+            unset($t);
+        }
+    }
+
+    // validate data, remove with empty "from" or "to"
+    foreach ($arrShapeTranslates as $k => $t) {
+        if (!isset($t["to"]) || !isset($t["source"])) {
+            unset($arrShapeTranslates[$k]);
+        }
+    }
+
+
+    // - Prepare values - //
+    // split shapes
+    // for example: $translateArr=[["source"=>"pánové", "to"=>"páňi"], ["source"=>"pohádky", "to"=>"pohátkê"]...];
+    $translateArr=[];
+    $index=($fall-1)/*1-7 -> 0-6*/+($number==1 ? 0 : 7); // index pos of pattern (7 falls singular + 7 falls multiple)
+    $minstrlen=100;
+    foreach ($arrShapeTranslates as &$t) {
+        // falls, numbers = 14
+        $splitFrom=explode('|', $t['source']);
+        if (count($splitFrom)!=14){
+            echo json_encode(["status"=>"ERROR", "message"=>"not 14 len src"]);
+            return;
+        }
+
+        // select source variants of fall
+        $splittedFrom=explode(',', $splitFrom[$index]);
+
+        foreach ($splittedFrom as $fromVariant) {// dups by variants
+            // falls, numbers = 14
+            $splitTo=explode('|', $t['to']);
+            if (count($splitTo)!=14) {
+                echo json_encode(["status"=>"ERROR", "message"=>"not 14 len to"]);
+                return;
+            }
+
+            // variants of fall
+            $splittedTo=explode(',', $splitTo[$index]);
+
+            $source=$t['source_base'].$fromVariant;
+
+            if ($source == "") continue; // skip wrong data
+
+            foreach ($splittedTo as $variant) {// dups by variants
+                if ($variant!="-" && !str_contains($variant, "?")) { // not existing shape "-" (for example singular of word kalhoty does not exist, singular is filled with "-"); and not sure "?" (need to be edited) - ignore
+                    // set parsed
+
+                    if ($t['to_custombase']!=null) $to=$t['to_custombase'].$variant; // overwrited value (not use value from pattern)
+                    else $to=$t['to_base'].$variant; // defined in pattern (fall and number)
+
+                    if ($to == "") continue; // skip wrong data
+                    if (mb_strlen($to)==1) continue; // skip wrong data, noun that have only one letter???
+
+                    $translateArr[]=['source'=>$source, 'to'=>$to];
+
+                    // set int min by smallest len by strings to and source
+                    if ($minstrlen>mb_strlen($source)) $minstrlen=mb_strlen($source);
+                    if ($minstrlen>mb_strlen($to)) $minstrlen=mb_strlen($to);
+                }
+            }
+        }
+    }
+    unset($t);
+
+    unset($arrShapeTranslates); // technical stuff not needed anymore
+
+    // - Calculate stats - //
+    // stats
+
+    $stats=[];
+    for ($ending_len=1; $ending_len<5 && $ending_len<$minstrlen; $ending_len++) { // for example: pohádkY-pohátkÊ, pohádKY-pohátKÊ, poháDKY-poháTKÊ, ...
+
+        $statsOfEndings=[]; //for exmaple: $statsOfEndings=[["source"=>"ky", count=>3], ...]
+        $total=0;
+        foreach ($translateArr as $t) {
+            $e=mb_substr($t["source"], mb_strlen($t["source"])-$ending_len); // current ending (for example "ky")
+
+            // add if exists
+            $notfound=true;
+            foreach ($statsOfEndings as &$s) {
+                if ($s["source"]==$e){
+                    $s["count"]++;
+                    $total++;
+                    $notfound=false;
+                    break;
+                }
+                unset($s);
+            }
+            // add new
+            if ($notfound) {
+                $statsOfEndings[]=["source"=>$e, "count"=>1];
+                $total++;
+            }
+        }
+
+        // sort $listFromStatsOfEndings by source_count
+        usort($statsOfEndings, function($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        // if low count of occurences same source ending, then break $ending_len loop
+        // tmp disable limits
+      /*  {
+            $someAboveLimit=false;
+            foreach ($statsOfEndings as $s) {
+                if ($s["count"]>2){
+                    $someAboveLimit=true;
+                    break;
+                }
+            }
+            if (!$someAboveLimit) break;
+        }*/
+
+        // percent of source
+        foreach ($statsOfEndings as &$tStats) {
+            // calculate percents source
+            $tStats["percent"]=$tStats["count"]/$total;
+            unset($tStats["count"]);// not needed in output
+        }
+
+        // compute to
+        foreach ($statsOfEndings as &$tStats) { //for exmaple: $statsOfEndings=[["source"=>"ky", count=>3], ...]
+
+            // get array of to shape
+            $toStatsEndings=[];
+            $totalTo=0;
+            foreach ($translateArr as &$s) { // for example: $translateArr=[["source"=>"pánové", "to"=>"páňi"], ["source"=>"pohádky", "to"=>"pohátkê"]...]; foreach and check if ends with "ky"
+                if (mb_substr($s["source"], mb_strlen($s["source"])-$ending_len) == $tStats["source"]) {
+
+                    $ending=mb_substr($s["to"], mb_strlen($s["to"])-$ending_len);
+
+                    if ($tStats["source"] != $ending) { // only different, it's useless to replace "ky" to "ky"
+                        $notfound=true;
+                        foreach ($toStatsEndings as &$e) {
+                            if ($ending == $e["ending"]) { //find existing ending stats to add
+                                $e["count"]++;
+                                $e["tr"][]=$s;
+                                $notfound=false;
+                                $totalTo++;
+                                break;
+                            }
+                        }
+                        unset($e);
+
+                        if ($notfound) { // add new
+                            $toStatsEndings[]=["ending"=>$ending, "count"=>1, "tr"=>[$s]];
+                            $totalTo++;
+                        }
+                    }
+                }
+            }
+            unset($s);
+
+            // constant of min occurences
+            $minPercent=0.90;
+            $mincount=2;
+
+            foreach ($toStatsEndings as &$tse) {
+                // calculate percent to
+                $tse["percent"]=$tse["count"]/$totalTo;
+
+                // remove low occurences from list
+                 if ($tse["percent"]<$minPercent) unset($tse);
+                 else if ($tse["count"]<$mincount) unset($tse);
+
+                 else unset($tse["count"]);// not needed in output
+            }
+            unset($tse);
+
+            // attach to
+          //  $tStats["to"]=$toStatsEndings;
+
+            // add into array for example [["source"=>"ky", "percent"=>80, to=>[["ending"=>"kê", percent=>95], ...]]
+            $stats[]=[
+                "source_ending" => $tStats["source"],
+                "percent" => round($tStats["percent"], 4),
+                "to" => $toStatsEndings
+            ];
+        }
+        unset($tStats);
+    }
+
+    // todo: check if not already exists
+
+    // json output
+    // for exemple: $data=[[...], [["source"=>"ky", "percent"=>80, to=>[["ending"=>"kê", percent=>95], ...]], ["source"=>"ke", "percent"=>6, to=>[...]], ...], ...]
+    $json=json_encode(["status"=>"OK", "data"=>$stats,/* "_tr"=> $translateArr,"_ar"=>$arrShapeTranslates, "_s"=> $strListFromIds, */"srlen"=>$minstrlen],
+        JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($json === false) {
+        echo json_encode(["status"=>"ERROR", "JSON ERROR"=>json_last_error_msg()]);
+        return;
+    }
+    echo $json;
+}
+
+function add_ending_noun(){
+    if (
+        !isset($_POST['gender'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['fall'])
+        || !isset($_POST['number'])
+        || !isset($_POST['translate'])
+    ) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Missing values"]);
+        return;
+    }
+
+    // parse input values
+    $gender=(int)$_POST['gender'];
+    $fall=(int)$_POST['fall'];
+    $number=(int)$_POST['number'];
+    $pattern=(int)$_POST['pattern'];
+    $translate=(int)$_POST['translate'];
+
+
+    // check if all are numbers
+    if (!is_numeric($gender) || !is_numeric($fall) || !is_numeric($number) || !is_numeric($pattern)/**/ || !is_numeric($translate)) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Invalid input types"]);
+        return;
+    }
+
+    // connect
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
+
+    $source=$conn->real_escape_string($_POST['source']);
+    $to=$conn->real_escape_string($_POST['to']);
+
+    // relations
+    $label=$source.'>'.$to;
+    $sql="INSERT INTO `replaces_defined_noun` (label, `source`, `to`, `translate`, `pattern`, `gender`, `fall`, `number`) VALUES ('$label', '$source', '$to', $translate, $pattern, $gender, $fall, $number)";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo json_encode(["status"=>"OK", "message"=>"added"]);
+    } else {
+        echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+        return;
+    }
+}
+
+function search_endings_verb(){
+    if(!isset($_POST['translate'])
+    || !isset($_POST['class'])
+    || !isset($_POST['type'])
+    || !isset($_POST['gender'])
+    || !isset($_POST['person'])
+    || !isset($_POST['trans'])
+    || !isset($_POST['number'])
+    ) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Missing values"]);
+        return;
+    }
+
+    // parse input values
+    $type=(int)$_POST['type'];
+    $gender=(int)$_POST['gender'];
+    $person=(int)$_POST['person'];
+    $number=(int)$_POST['number'];
+    $trans=(int)$_POST['trans'];
+    $class=(int)$_POST['class'];
+    $translate=(int)$_POST['translate'];
+
+    // check if all are numbers
+    if(!is_numeric($gender)
+    || !is_numeric($person)
+    || !is_numeric($number)
+    || !is_numeric($trans)
+    || !is_numeric($type)
+    || !is_numeric($class)
+    || !is_numeric($translate)) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Invalid input types"]);
+        return;
+    }
+
+    // connect
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
+
+    // - load from database - //
+    $arrShapeTranslates=[];
+    {
+        // relations
+        $sql="SELECT `id`, `from` FROM `verb_relations` WHERE `translate`=$translate";
+        $result=$conn->query($sql);
+        $listFromIds=[];
+        $listRelIds=[];
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            if ($row['from']!=null) {// if from is defined (=source of translate is set)
+                $listFromIds[]=$row['from'];
+                $listRelIds[]=$row['id'];
+                $arrShapeTranslates[]=["id"=>$row['id'], "source_id"=>$row['from']];
+            }
+        }
+
+        // cs source
+        // build filte -> for sql IN (that filter)
+        sort($listFromIds); // optional
+        $strListFromIds = implode(',', $listFromIds);
+        if (mb_strlen($strListFromIds)==0) {
+            echo json_encode(["status"=> "ERROR", "message"=>"not found any src", "len"=>count($listFromIds)]);
+            return;
+        }
+
+        // shype pos (index of array)
+        $sh_type="";
+        $index=null; // index pos of shapes
+        switch ($type){
+            //   case 0: $index=-1; break;
+            case 1: $index=0; $sh_type="infinitive"; break;
+            case 2: $index=$number==1 ? $person : $person+3; $sh_type="continouns"; break;
+            case 3: $index=$number==1 ? $person : $person+3; $sh_type="future"; break;
+            case 4: $index=$number==1 ? $person : $person+3; break;
+            case 5: $index=$number==1 ? $gender : $gender+4; break;
+            case 6: $index=$number==1 ? $gender : $gender+4; break;
+            case 7: $index=$trans; break;
+            case 8: $index=$trans; break;
+            case 9: $index=$number==1 ? $person : $person+3; break;
+            default:
+                echo json_encode(["status"=>"ERROR", "message"=>"not set type"]);
+                return;
+        }
+
+        $sql="SELECT `id`, `base`, `shapes_{$sh_type}` FROM `verb_patterns_cs` WHERE `id` IN ($strListFromIds)";
+      //  if ($gender>0) $sql.="AND `gender`=$gender";
+        if ($class>0) $sql.="AND `class`=$class";
+        $sql.=";";
+
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            // find objects for link
+            $search_id=$row['id'];
+            foreach ($arrShapeTranslates as &$t) {
+                if ($t["source_id"] == $search_id) {
+                    $t["source"]=$row['shapes'];
+                    $t["source_base"]=$row['base'];
+                    break;
+                }
+            }
+            unset($t);
+        }
+
+        // to ids
+        $strListRelIds=implode(',', array_filter($listRelIds, function($v) {
+            return $v !== null && $v !== '';
+        }));
+        $sql="SELECT `relation`, custombase, `shape` FROM `verbs_to` WHERE `relation` IN ($strListRelIds)";
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        $listTo=[];
+        while ($row=$result->fetch_assoc()) {
+            // if ($row['shape']!=null) { // no int id (not defined)
+            $listTo[]=$row['shape'];
+
+            foreach ($arrShapeTranslates as &$t) {
+                if ($t["id"]==$row['relation']) {
+                    $t["to_id"]=$row['shape'];
+                    $t["to_custombase"]=$row['custombase'];
+                }
+            }
+            unset($t);
+            //  }
+        }
+
+        // to shapes
+        $strListShapes=join(',', array_unique($listTo));
+        $sql="SELECT `id`, base, `shapes_{$sh_type}` FROM `verb_patterns_to` WHERE `id` IN ($strListShapes)";
+        $result=$conn->query($sql);
+        if ($result === false) {
+            echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+            return;
+        }
+        while ($row=$result->fetch_assoc()) {
+            foreach ($arrShapeTranslates as &$t) {
+                if (isset($t["to_id"]) && $t["to_id"]==$row['id']) {
+                    $t["to_base"]=$row['base'];
+                    $t["to"]=$row['shapes'];
+                }
+            }
+            unset($t);
+        }
+    }
+
+    // validate data, remove with empty "from" or "to"
+    foreach ($arrShapeTranslates as $k => $t) {
+        if (!isset($t["to"]) || !isset($t["source"])) {
+            unset($arrShapeTranslates[$k]);
+        }
+    }
+
+
+    // - Prepare values - //
+    // split shapes
+    // for example: $translateArr=[["source"=>"pánové", "to"=>"páňi"], ["source"=>"pohádky", "to"=>"pohátkê"]...];
+    $translateArr=[];
+
+
+    $minstrlen=100;
+    foreach ($arrShapeTranslates as &$t) {
+        // falls, numbers = 14
+        $splitFrom=explode('|', $t['source']);
+        if (count($splitFrom)!=14){
+            echo json_encode(["status"=>"ERROR", "message"=>"not 14 len src"]);
+            return;
+        }
+
+        // select source variants of fall
+        $splittedFrom=explode(',', $splitFrom[$index]);
+
+        foreach ($splittedFrom as $fromVariant) {// dups by variants
+            // falls, numbers = 14
+            $splitTo=explode('|', $t['to']);
+            if (count($splitTo)!=14) {
+                echo json_encode(["status"=>"ERROR", "message"=>"not 14 len to"]);
+                return;
+            }
+
+            // variants of fall
+            $splittedTo=explode(',', $splitTo[$index]);
+
+            $source=$t['source_base'].$fromVariant;
+
+            if ($source == "") continue; // skip wrong data
+
+            foreach ($splittedTo as $variant) {// dups by variants
+                if ($variant!="-" && !str_contains($variant, "?")) { // not existing shape "-" (for example singular of word kalhoty does not exist, singular is filled with "-"); and not sure "?" (need to be edited) - ignore
+                    // set parsed
+
+                    if ($t['to_custombase']!=null) $to=$t['to_custombase'].$variant; // overwrited value (not use value from pattern)
+                    else $to=$t['to_base'].$variant; // defined in pattern (fall and number)
+
+                    if ($to == "") continue; // skip wrong data
+                    if (mb_strlen($to)==1) continue; // skip wrong data, noun that have only one letter???
+
+                    $translateArr[]=['source'=>$source, 'to'=>$to];
+
+                    // set int min by smallest len by strings to and source
+                    if ($minstrlen>mb_strlen($source)) $minstrlen=mb_strlen($source);
+                    if ($minstrlen>mb_strlen($to)) $minstrlen=mb_strlen($to);
+                }
+            }
+        }
+    }
+    unset($t);
+
+    unset($arrShapeTranslates); // technical stuff not needed anymore
+
+    // - Calculate stats - //
+    // stats
+
+    $stats=[];
+    for ($ending_len=1; $ending_len<5 && $ending_len<$minstrlen; $ending_len++) { // for example: pohádkY-pohátkÊ, pohádKY-pohátKÊ, poháDKY-poháTKÊ, ...
+
+        $statsOfEndings=[]; //for exmaple: $statsOfEndings=[["source"=>"ky", count=>3], ...]
+        $total=0;
+        foreach ($translateArr as $t) {
+            $e=mb_substr($t["source"], mb_strlen($t["source"])-$ending_len); // current ending (for example "ky")
+
+            // add if exists
+            $notfound=true;
+            foreach ($statsOfEndings as &$s) {
+                if ($s["source"]==$e){
+                    $s["count"]++;
+                    $total++;
+                    $notfound=false;
+                    break;
+                }
+                unset($s);
+            }
+            // add new
+            if ($notfound) {
+                $statsOfEndings[]=["source"=>$e, "count"=>1];
+                $total++;
+            }
+        }
+
+        // sort $listFromStatsOfEndings by source_count
+        usort($statsOfEndings, function($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        // if low count of occurences same source ending, then break $ending_len loop
+        // tmp disable limits
+        /*  {
+              $someAboveLimit=false;
+              foreach ($statsOfEndings as $s) {
+                  if ($s["count"]>2){
+                      $someAboveLimit=true;
+                      break;
+                  }
+              }
+              if (!$someAboveLimit) break;
+          }*/
+
+        // percent of source
+        foreach ($statsOfEndings as &$tStats) {
+            // calculate percents source
+            $tStats["percent"]=$tStats["count"]/$total;
+            unset($tStats["count"]);// not needed in output
+        }
+
+        // compute to
+        foreach ($statsOfEndings as &$tStats) { //for exmaple: $statsOfEndings=[["source"=>"ky", count=>3], ...]
+
+            // get array of to shape
+            $toStatsEndings=[];
+            $totalTo=0;
+            foreach ($translateArr as &$s) { // for example: $translateArr=[["source"=>"pánové", "to"=>"páňi"], ["source"=>"pohádky", "to"=>"pohátkê"]...]; foreach and check if ends with "ky"
+                if (mb_substr($s["source"], mb_strlen($s["source"])-$ending_len) == $tStats["source"]) {
+
+                    $ending=mb_substr($s["to"], mb_strlen($s["to"])-$ending_len);
+
+                    if ($tStats["source"] != $ending) { // only different, it's useless to replace "ky" to "ky"
+                        $notfound=true;
+                        foreach ($toStatsEndings as &$e) {
+                            if ($ending == $e["ending"]) { //find existing ending stats to add
+                                $e["count"]++;
+                                $e["tr"][]=$s;
+                                $notfound=false;
+                                $totalTo++;
+                                break;
+                            }
+                        }
+                        unset($e);
+
+                        if ($notfound) { // add new
+                            $toStatsEndings[]=["ending"=>$ending, "count"=>1, "tr"=>[$s]];
+                            $totalTo++;
+                        }
+                    }
+                }
+            }
+            unset($s);
+
+            // constant of min occurences
+            $minPercent=0.90;
+            $mincount=2;
+
+            foreach ($toStatsEndings as &$tse) {
+                // calculate percent to
+                $tse["percent"]=$tse["count"]/$totalTo;
+
+                // remove low occurences from list
+                if ($tse["percent"]<$minPercent) unset($tse);
+                else if ($tse["count"]<$mincount) unset($tse);
+
+                else unset($tse["count"]);// not needed in output
+            }
+            unset($tse);
+
+            // attach to
+            //  $tStats["to"]=$toStatsEndings;
+
+            // add into array for example [["source"=>"ky", "percent"=>80, to=>[["ending"=>"kê", percent=>95], ...]]
+            $stats[]=[
+                "source_ending" => $tStats["source"],
+                "percent" => round($tStats["percent"], 4),
+                "to" => $toStatsEndings
+            ];
+        }
+        unset($tStats);
+    }
+
+    // todo: check if not already exists
+
+    // json output
+    // for exemple: $data=[[...], [["source"=>"ky", "percent"=>80, to=>[["ending"=>"kê", percent=>95], ...]], ["source"=>"ke", "percent"=>6, to=>[...]], ...], ...]
+    $json=json_encode(["status"=>"OK", "data"=>$stats,/* "_tr"=> $translateArr,"_ar"=>$arrShapeTranslates, "_s"=> $strListFromIds, */"srlen"=>$minstrlen],
+        JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($json === false) {
+        echo json_encode(["status"=>"ERROR", "JSON ERROR"=>json_last_error_msg()]);
+        return;
+    }
+    echo $json;
+}
+
+function add_ending_verb(){
+    if (
+        !isset($_POST['gender'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['fall'])
+        || !isset($_POST['number'])
+        || !isset($_POST['translate'])
+    ) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Missing values"]);
+        return;
+    }
+
+    // parse input values
+    $gender=(int)$_POST['gender'];
+    $fall=(int)$_POST['fall'];
+    $number=(int)$_POST['number'];
+    $pattern=(int)$_POST['pattern'];
+    $translate=(int)$_POST['translate'];
+
+
+    // check if all are numbers
+    if (!is_numeric($gender) || !is_numeric($fall) || !is_numeric($number) || !is_numeric($pattern)/**/ || !is_numeric($translate)) {
+        echo json_encode(["status"=>"ERROR", "message"=>"Invalid input types"]);
+        return;
+    }
+
+    // connect
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+    $conn->set_charset("utf8mb4");
+
+    $source=$conn->real_escape_string($_POST['source']);
+    $to=$conn->real_escape_string($_POST['to']);
+
+    // relations
+    $label=$source.'>'.$to;
+    $sql="INSERT INTO `replaces_defined_noun` (label, `source`, `to`, `translate`, `pattern`, `gender`, `fall`, `number`) VALUES ('$label', '$source', '$to', $translate, $pattern, $gender, $fall, $number)";
+    $result=$conn->query($sql);
+
+    if ($result) {
+        echo json_encode(["status"=>"OK", "message"=>"added"]);
+    } else {
+        echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
+        return;
     }
 }

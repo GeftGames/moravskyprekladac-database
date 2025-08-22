@@ -3,7 +3,8 @@
         <?php
         include "components/tags_editor.php";
 
-        $sql="SELECT id, label, uppercase FROM noun_patterns_to WHERE `translate` = ".$_SESSION['translate'].";";
+        $filter=$_SESSION['translate'];
+        $sql="SELECT id, label, uppercase FROM noun_patterns_to WHERE `translate` = ".$filter.";";
         $result = $conn->query($sql);
         $list=[];
         if (!$result) throwError("SQL error: ".$sql);
@@ -14,11 +15,9 @@
                 if ($uppercase==2) $label=ucfirst($label);
                 $list[]=[$row["id"], $label];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "noun_patterns_to", []);
+        echo FilteredList($list, "noun_patterns_to", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 noun_patterns_to_changed=function() { 
@@ -58,9 +57,9 @@ noun_patterns_to_changed=function() {
 
             if (json.tags!=null) {
                 let arrTags=json.tags.split('|');
-                tagSet(arrTags);
+                tagSet(arrTags, 'noun_to');
             }else{
-                tagSet([]);
+                tagSet([], 'noun_to');
             }
            
         } else console.log('error sql', json);
@@ -150,10 +149,10 @@ var currentNounTOSave = function() {
                 <label for="nounGender">Rod</label>
                 <select id="nounGender" name="type">
                     <option value="0">Neznámý</option>
-                    <option value="4">Střední</option>
-                    <option value="3">Ženský</option>
-                    <option value="2">Mužský neživotný</option>
-                    <option value="1">Mužský životný</option>
+                    <option value="1">Střední</option>
+                    <option value="2">Ženský</option>
+                    <option value="3">Mužský životný</option>
+                    <option value="4">Mužský neživotný</option>
                 </select>
                 <br>
             </div>

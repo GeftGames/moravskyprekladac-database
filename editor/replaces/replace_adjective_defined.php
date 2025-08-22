@@ -13,15 +13,13 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "adjective_pattern_cs", []);
+        echo FilteredList($list, "replaces_defined_adjective", [], $filter);
 
-        $GLOBALS["onload"].= /** @lang JavaScript */
-            "adjective_cs_changed=function() { 
-            let elementsSelected = flist_adjective_pattern_cs.getSelectedItemInList();
+        $GLOBALS["onload"].= /** @lang JavaScript */"
+        replaces_defined_adjective_changed=function() { 
+            let elementsSelected = flist_replaces_defined_adjective.getSelectedItemInList();
         
             // no selected
             if (!elementsSelected) {
@@ -35,7 +33,7 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=adjective_pattern_cs_item&id=`+id
+                body: `action=replaces_defined_adjective_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK') {
@@ -85,13 +83,12 @@
 
         refreshFilteredLists();
 
-        flist_adjective_pattern_cs.EventItemSelectedChanged(adjective_cs_changed);
-        flist_adjective_pattern_cs.EventItemAddedChanged(adjective_cs_added);";
+        flist_replaces_defined_adjective.EventItemSelectedChanged(replaces_defined_adjective_changed);
+        flist_replaces_defined_adjective.EventItemAddedChanged(replaces_defined_adjective_added);";
     
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "var flist_adjective_pattern_cs; 
-        var currentadjectiveCSSave = function() {
-            let label=document.getElementById('adjectiveLabel').value;
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_replaces_defined_adjective; 
+        var current_replaces_defined_adjectiveSave = function() {
             let base=document.getElementById('adjectiveBase').value;
             let category=document.getElementById('adjectiveCategory').value;
             let adjectiveId=document.getElementById('adjectiveId').value;
@@ -134,7 +131,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK'){
-                   flist_adjective_pattern_cs.getSelectedItemInList().innerText=label;
+                   flist_replaces_defined_adjective.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };
@@ -166,9 +163,9 @@
             }
         };
 
-        var adjective_cs_added = function() {
-            flist_adjective_pattern_cs.lastAddedId;
-            adjective_cs_changed();
+        var replaces_defined_adjective_added = function() {
+            flist_replaces_defined_adjectives.lastAddedId;
+            replaces_defined_adjective_changed();
         }";
             
         ?>
@@ -176,13 +173,13 @@
     <div class="editorView">
         <div id="regionsview">
             <table>
-                <tr>
+              <!--  <tr>
                     <td><label id="name" for="adjectiveLabel">Popis</label></td>
                     <td class="row">
                         <input type="text" id="adjectiveLabel" value="" placeholder="ré>réj" style="max-width: 9cm;">
                         <a onclick="" class="button">Sestavit</a>
                     </td>
-                </tr>
+                </tr>-->
 
                 <tr>
                     <td><label id="base" for="adjReplaceFrom">Z</label</td>
@@ -231,7 +228,7 @@
 
             <div> 
                 <input type="hidden" id="adjectiveId" value="-1">
-                <a onclick="currentadjectiveCSSave()" class="button">Uložit</a>
+                <a onclick="current_replaces_defined_adjectiveSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

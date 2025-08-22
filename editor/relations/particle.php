@@ -42,7 +42,7 @@
 
 
         // side menu
-        echo FilteredList($listR, "particle_relations", []);
+        echo FilteredList($listR, "particle_relations", [], $_SESSION['translate']);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         var particle_relation_changed = function() { 

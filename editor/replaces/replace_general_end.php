@@ -5,8 +5,8 @@
         include "components/select_cites.php";
 
         $filter=$_SESSION['translate'];
-        $order="ORDER BY LOWER(label) ASC";
-        $sql="SELECT `id`, `label` FROM `replaces_end` WHERE `translate`=$filter $order;";
+      //  $order="ORDER BY LOWER(label) ASC";
+        $sql="SELECT `id`, `label` FROM `replaces_end` WHERE `translate`=$filter;";
         $result = $conn->query($sql);
         $list=[];
         if ($result->num_rows > 0) {
@@ -15,7 +15,7 @@
             }
         }
 
-        echo FilteredList($list, "replaces_end", ["def noun"=>"sendToDefNoun()", "def adj"=>"sendToDefAdj()", "def verb"=>"sendToDefVerb()"]);
+        echo FilteredList($list, "replaces_end", ["def noun"=>"sendToDefNoun()", "def adj"=>"sendToDefAdj()", "def verb"=>"sendToDefVerb()"], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
 replaces_end_changed=function() { 

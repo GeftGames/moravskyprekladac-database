@@ -14,12 +14,15 @@ class filteredList{
         this.lastAddedId=-1;
         this.type=type;
 
-        document.getElementById('sortTypeFilterList').addEventListener('change', (e) => {
+        let sortTypeFilterList=document.getElementById('sortTypeFilterList');
+        if (sortTypeFilterList!=undefined){
+            sortTypeFilterList.addEventListener('change', (e) => {
 
-            let sort=document.getElementById("sortTypeFilterList").value;
-            localStorage.setItem("sort", sort);
-            this.generateList(this.list);
-        });
+                let sort=document.getElementById("sortTypeFilterList").value;
+                localStorage.setItem("sort", sort);
+                this.generateList(this.list);
+            });
+        }
     }
 
     EventItemSelectedChanged = function(func) {
@@ -62,17 +65,25 @@ class filteredList{
         return document.activeElement === this.FilteredList;
     }
 
-    generateList = (list) => {
+    generateList = (rlist) => {
+        let list=[];
+        rlist.forEach(item => {
+            let id=parseInt(item[0]);
+            let label=item[1];
+            list.push([id, label]);
+        });
         this.ListContainer.innerHTML = "";
         this.filter=this.filterText().toLowerCase();
         if (!Array.isArray(list)) console.warn("list is not array", list);
 
-        let sortType=document.getElementById("sortTypeFilterList").value;
+        let sortType=document.getElementById("sortTypeFilterList")?.value;
         if (sortType==="abc") list.sort((a, b) => a[1].localeCompare(b[1]));
         else if (sortType==="desc") list.sort((a, b) => b[1].localeCompare(a[1]));
-        else if (sortType==="id") list.sort((a, b) => b[0].localeCompare(a[0]));
-        else if (sortType==="none" || sortType==="") {}
+        else if (sortType==="id" || sortType==="none" || sortType==="") list.sort((a, b) => a[0]>b[0] ? a[0]:b[0]);//0=id, 1=name
+       // else if (sortType==="none") {}
 
+       // console.trace()
+       // console.log(list);//test
         this.list=list;
         list.forEach(item => {
             let id=item[0];
@@ -87,12 +98,12 @@ class filteredList{
                 this.ListContainer.appendChild(div);
 
                 div.addEventListener("click", () => {
-                    this.filteredListSelect(div);
+                    this.filteredListSelect(div, true);
                 });
 
                 div.addEventListener("contextmenu", (e) => {
                     e.preventDefault();
-                    this.filteredListSelect(div);
+                    this.filteredListSelect(div, true);
                     HideContexMenu();
                     this.ContextMenu.style.display="flex";
                     this.ContextMenu.style.top=e.clientY+"px";
@@ -104,12 +115,12 @@ class filteredList{
         });
 
         if (list.length>0) {
-            this.filteredListSelect(this.ListContainer.lastChild);
+            this.filteredListSelect(this.ListContainer.lastChild, true);
             this.lastAddedId=list[list.length-1];
         }
     }
 
-    filteredListSelect = (element) => {
+    filteredListSelect = (element, calldispatch) => {
         let classNameSelected="selectedSideItem";
 
         // Deselect
@@ -125,13 +136,9 @@ class filteredList{
 
         // Set current id
         this.ListContainer.setAttribute("data-id", element.getAttribute("data-id"));
-                
-        // call event selection changed
-      /*  document.dispatchEvent(new CustomEvent("selecteditemchanged", {
-            object: this
-        }));
-        */
-        this.SelectedItemChanged_dispatch();
+
+        // Dispatch event, works but too much-heavy load, disabled
+        if (calldispatch) this.SelectedItemChanged_dispatch();
 
         // Focus - ordinary is already focused
         //parentList.focus();
@@ -148,11 +155,18 @@ class filteredList{
         });
     }
 
-    list_add = () =>{
+    list_add = (filterTranslate) =>{
+       /* if (this.handlerItemAddedChanged!=undefined){
+            this.ItemAdded_dispatch();
+            return;
+        }*/
+        let filter="";
+        if (filterTranslate!=null) filter='&translate='+filterTranslate.toString();
+
         fetch('index.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=list'+this.type+'_add&table='+this.TableName
+            body: 'action=list'+this.type+'_add&table='+this.TableName+filter
         }).then(response => response.json())
         .then(json => {
             if (json.status==="ERROR"){
@@ -294,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 if (prev===undefined) return;
                 if (prev.nodeName!=="DIV") continue;
-                selectedContainer.filteredListSelect(prev);
+                selectedContainer.filteredListSelect(prev, false);
             }
         } else if (dir>0) {
             for (let i=0; i>-10; i--) {
@@ -304,8 +318,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 if (next===undefined) return;
                 if (next.nodeName!=="DIV") continue;
-                selectedContainer.filteredListSelect(next);
+                selectedContainer.filteredListSelect(next, false);
             }
+        }
+    });
+
+    document.addEventListener("keyup", (e)=>{
+        if (["ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(e.key)) {
+            let selectedContainer=null;
+            for (let i of filteredLists) {
+                if (i.hasFocus()){
+                    selectedContainer=i;
+                    break;
+                }
+            }
+            if (selectedContainer==null) return;
+            // now run fetch only ONCE for the final selection
+            selectedContainer.SelectedItemChanged_dispatch();
         }
     });
 });
@@ -340,7 +369,22 @@ function selectMainOption(elToSelect) {
         eMainOption.classList.remove("selected");
         document.getElementById("tabsOption_"+tab).style.display="none";
     }
-  
     document.getElementById("mainOption_"+elToSelect).classList.add("selected");
+    document.getElementById("tabsOption_"+elToSelect).style.display="block";
+    lastTabEditor=elToSelect;
+}
+function selectMainOptionPreview(elToSelect) {
+    if (elToSelect==null) {
+        if (lastTabEditor==null) return;
+        elToSelect=lastTabEditor;
+    }
+    let tabs=["source", "global", "attributes", "tools", "patterns", "replaces", "simple", "relations", "translate"];
+    for (let tab of tabs) {
+        let eMainOption = document.getElementById("mainOption_" + tab);
+    //    eMainOption.classList.remove("selected");
+        document.getElementById("tabsOption_"+tab).style.display="none";
+    }
+
+   // document.getElementById("mainOption_"+elToSelect).classList.add("selected");
     document.getElementById("tabsOption_"+elToSelect).style.display="block";
 }

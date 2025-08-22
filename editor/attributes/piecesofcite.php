@@ -17,7 +17,7 @@
             }
         }
       //  echo "Size: ".count($list);
-        echo FilteredList($list, "piecesofcite", []);
+        echo FilteredList($list, "piecesofcite", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */
             "region_changed=function() { 
@@ -55,8 +55,8 @@
 
         flist_piecesofcite.EventItemSelectedChanged(region_changed);";
     
-        $GLOBALS["script"].= /** @lang JavaScript */
-            "var flist_piecesofcite; 
+        $GLOBALS["script"].= /** @lang JavaScript */"
+        var flist_piecesofcite; 
         var currentPieceOfCiteSave = function() {
             let label=document.getElementById('pieceofciteLabel').value;
             let pieceofciteId=document.getElementById('pieceofciteId').value;

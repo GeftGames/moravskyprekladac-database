@@ -22,7 +22,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "phrase", []);
+        echo FilteredList($list, "phrase", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         phrase_changed=function() {

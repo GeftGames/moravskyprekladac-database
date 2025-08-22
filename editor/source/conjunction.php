@@ -14,7 +14,7 @@
             }
         }
 
-        echo FilteredList($list, "conjunctions_cs", []);
+        echo FilteredList($list, "conjunctions_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         conjunction_cs_changed=function() { 
@@ -36,9 +36,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags,'conjunction_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([],'conjunction_cs');
                     }
                    
                 } else console.log('error sql', json);

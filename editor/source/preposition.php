@@ -16,7 +16,7 @@
             // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "prepositions_cs", []);
+        echo FilteredList($list, "prepositions_cs", [], null);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         preposition_cs_changed=function() { 
@@ -39,9 +39,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'preposition_cs');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'preposition_cs');
                     }
                    
                 } else console.log('error sql', json);

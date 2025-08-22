@@ -1,5 +1,5 @@
 <?php
-
+// priority is position
 function multiple_to($list, $DDname) {
     $cites=[];
     // $cites=[[label, id], [label, id], [label, id], ...]
@@ -35,12 +35,9 @@ function multiple_to($list, $DDname) {
 
     // cites
     $GLOBALS["script"].=
-    /** @lang JavaScript */"
-    var cites = $citesJson;";
-
-    // Save
-    $GLOBALS["script"].=
-    /** @lang JavaScript */'        
+    /** @lang JavaScript */'
+    var cites = '.$citesJson.';
+          
     var to_save = function() {
         let data=[]; 
         let wrap=document.getElementById("listTo").childNodes;
@@ -51,7 +48,7 @@ function multiple_to($list, $DDname) {
             for (let e of row) {
                 let typeE=e.getAttribute("seltype");
                 if (typeE!=null) {
-                    if (typeE==="comment" || typeE==="priority") {
+                    if (typeE==="comment") {
                         rowObj[typeE]=e.value;
                     } else if (typeE==="shapeto") {
                         rowObj[typeE]=wrap.querySelector("input[type=hidden]");
@@ -64,7 +61,7 @@ function multiple_to($list, $DDname) {
                                 break;
                             }
                         }
-                        rowObj[typeE]=listCites.join("|");
+                        rowObj[typeE]=listCites.join(",");
                     } else {
                         console.error("unknown typeE", typeE);
                     }
@@ -73,7 +70,7 @@ function multiple_to($list, $DDname) {
             
             //save row in format [id, priority, shapeto, comment, source]
             let item=list[i]; 
-            item.push([i, rowObj["priority"],  rowObj["shapeto"], rowObj["comment"], rowObj["source"]]);
+            item.push([i, i/*position is priority*/,  rowObj["shapeto"], rowObj["comment"], rowObj["source"]]);
             data.push(item);            
             i++;
         }
@@ -87,42 +84,61 @@ function multiple_to($list, $DDname) {
             data.push(item);
         }*/
         return data;// send to fetch, then to server
-    };'; 
+    };
 
-    // Load
-    $GLOBALS["script"].=
-    /** @lang JavaScript */'
     var to_load = function(list) {
-        // clear
+        // clear prev
         document.getElementById("listTo").innerHTML="";
         
+        // sort list by priority (lovest at start), 
+        list.sort(function(a,b){ return a["priority"]-b["priority"]; });
+        
+        // display
         for (let item of list) {
             let itemcites=item["cite"].split(","); // it is not nessesay to convert into numbers            
-            to_add(item["id"], item["priority"], item["shape"], item["comment"], itemcites, item["undetected"]/*, item["certainty"]*/);
+            to_add(item["id"], item["shape"], item["comment"], itemcites, item["undetected"]);
         }
-    };';
+    };
 
-    // Add cite
-    $GLOBALS["script"].=
-    /** @lang JavaScript */'
     var cite_add = function(id) {
         let holder=document.getElementById("citeHolder");
         
        // let tag=document.createElement("div");
         
-    };';
+    };
 
-    // add
-    $GLOBALS["script"].=
-    /** @lang JavaScript */'
     let maxId='.count($list). ';
-    var to_add = function(defId, defPriority, defShapeTo, defComment, defCite, undetected/*, defCertainty*/) {
+    var to_add = function(defId, defShapeTo, defComment, defCite, undetected/*, defCertainty*/) {
         let idAdd = (defId === -1 ? maxId: defId);
         let wrapItem=document.createElement("div");
-        wrapItem.style="";   
+        wrapItem.style="display: flex;flex-direction: row;";   
+        
+        {
+            let dpr=document.createElement("div");  
+            dpr.style="display: flex; flex-direction: column; justify-content:space-evenly;";
+            wrapItem.appendChild(dpr);
+               
+            // up priority
+            let btnPriorityUp=document.createElement("a");
+            btnPriorityUp.className="button";
+            btnPriorityUp.innerText="⯅";
+            btnPriorityUp.addEventListener("click", ()=>{
+                to_PriorityUp(wrap);
+            });
+            dpr.appendChild(btnPriorityUp);           
+                    
+              // down priority
+            let btnPriorityDown=document.createElement("a");
+            btnPriorityDown.className="button";
+            btnPriorityDown.innerText="⯆";
+            btnPriorityDown.addEventListener("click", ()=>{
+                to_PriorityDown(wrap);
+            });
+            dpr.appendChild(btnPriorityDown);   
+        }
         
         // wrap
-        let wrap=document.createElement("div");
+        let wrap=document.createElement("table");
         wrap.className="trTo"; 
         wrapItem.appendChild(wrap);
         
@@ -133,27 +149,56 @@ function multiple_to($list, $DDname) {
         id_holder.setAttribute("seltype","id");
         wrap.appendChild(id_holder);
         
+        let trShape=document.createElement("tr");
+        wrap.appendChild(trShape);
+        
+        let tdShapeLabel=document.createElement("td");
+        trShape.appendChild(tdShapeLabel);
+        
+        // shape label
+        let labelShape=document.createElement("span");
+        labelShape.innerText="Tvar";
+        tdShapeLabel.appendChild(labelShape);
+        
+        let tdShape=document.createElement("td");
+        trShape.appendChild(tdShape);
+        
         // shape
         let idSelectPattern="To"+maxId;
         let text=document.createElement("input");
         text.id="text_"+idSelectPattern;
         text.type="text";
         text.value=defShapeTo;
-        wrap.appendChild(text);
+        tdShape.appendChild(text);
         
-        // priority
+   /*       // priority        
+        let trPriority=document.createElement("tr");
+        wrap.appendChild(trPriority);
+                       
+        // label
+        let tdPriority=document.createElement("td");
+        trPriority.appendChild(tdPriority);
+        
+        let labelPriority=document.createElement("span");
+        labelPriority.innerText="Priorita";
+        tdPriority.appendChild(labelPriority);
+        
+        // priority select
+      let tdPrioritySelect=document.createElement("td");
+        trPriority.appendChild(tdPrioritySelect);
+        
         let priority=document.createElement("select");    
         priority.style="margin-bottom: 3px;";
         priority.setAttribute("seltype","priority");
         if (defPriority!=null) priority.value=defPriority;
-        wrap.appendChild(priority);   
+        tdPrioritySelect.appendChild(priority);   
         
         for (let o of [["primární", 1], ["výchozí", 0], ["vedlejší", -1]]) {
             let option=document.createElement("option");
             option.innerText=o[0];
             option.value=o[1];
             priority.appendChild(option);
-        }   
+        }   */
         
        /* // certainty
         let certainty=document.createElement("select");    
@@ -169,11 +214,39 @@ function multiple_to($list, $DDname) {
             certainty.appendChild(option);
         }*/
         
-        // tags
-        let tags=tagManagerCreate("tagy",maxId);
-        wrap.appendChild(tags);
+                  
+        let trTags=document.createElement("tr");
+        wrap.appendChild(trTags);
         
-        // comment
+        // tag label
+        let tdTagsLabel=document.createElement("td");
+        trTags.appendChild(tdTagsLabel);
+        
+        let taglabel=document.createElement("span");
+        taglabel.innerText="Tagy";
+        tdTagsLabel.appendChild(taglabel);
+        
+        //tags
+        let tdTags=document.createElement("td");
+        trTags.appendChild(tdTags);
+        
+        let tags=tagManagerCreate("tagy", maxId);
+        tdTags.appendChild(tags);
+        
+        // comment        
+        let trComment=document.createElement("tr");
+        wrap.appendChild(trComment);
+        
+        let tdCommentLabel=document.createElement("td");
+        trComment.appendChild(tdCommentLabel);
+        
+        let labelComment=document.createElement("span");
+        labelComment.innerText="Komentář";
+        tdCommentLabel.appendChild(labelComment);
+        
+        let tdComment=document.createElement("td");
+        trComment.appendChild(tdComment);
+        
         let comment=document.createElement("input");
         comment.type="text";
         comment.className="comment";
@@ -181,11 +254,19 @@ function multiple_to($list, $DDname) {
         comment.style="max-width: 9cm;";
         comment.setAttribute("seltype","comment");
         if (defComment!=null) comment.value=defComment;
-        wrap.appendChild(comment);
+        tdComment.appendChild(comment);
 
         // Cite
+        let trCite=document.createElement("tr");
+        wrap.appendChild(trCite);
+        
+        let tdCite=document.createElement("td");
+        tdCite.colSpan=2;
+        trCite.appendChild(tdCite);
+        
         let wrapsource=document.createElement("div");
-        wrap.appendChild(wrapsource); 
+        wrapsource.style.display="flex";
+        tdCite.appendChild(wrapsource); 
           
             let wrapmenu=document.createElement("div");
             wrapmenu.style.display="none";
@@ -196,8 +277,13 @@ function multiple_to($list, $DDname) {
             //source.innerText="zdroj";//todo: set label 
             source.className="filterSelect";
             source.addEventListener("click", function() {
-                if (wrapmenu.style.display==="block") wrapmenu.style.display="none";
-                else wrapmenu.style.display="block";
+                if (wrapmenu.style.display==="block") {
+                    wrapmenu.style.display="none";
+                    citeBack.style.display="none";
+                } else { 
+                    wrapmenu.style.display="block";
+                    citeBack.style.display="block";
+                }
             });
             wrapsource.appendChild(source); 
             wrapsource.appendChild(wrapmenu);  
@@ -206,6 +292,10 @@ function multiple_to($list, $DDname) {
             citeLabel.innerText="zdroj";
             source.appendChild(citeLabel);
             
+            //background full screen
+            let citeBack=document.createElement("div");
+            citeBack.className="listSearchBack";
+            source.appendChild(citeBack);
             
             function SetLabel(){
                 let labels=[];
@@ -213,7 +303,8 @@ function multiple_to($list, $DDname) {
                     let input=r.childNodes[0];
                     if (input.checked) {
                         let label=r.childNodes[1].innerText;
-                        labels.push(label.substring(0,7));
+                        let maxLabelOptionlen=13;
+                        labels.push(label.substring(0,maxLabelOptionlen));
                     }
                 }
                 
@@ -232,7 +323,7 @@ function multiple_to($list, $DDname) {
                 let citeLabel=o[0];
                 // row
                 let row=document.createElement("li");
-                row.style="list-style: none";
+                row.style="list-style: none; display: flex; margin-bottom: 5px;";
                 row.id="row"+citeId
                 wrapmenu.appendChild(row);
                 
@@ -243,7 +334,8 @@ function multiple_to($list, $DDname) {
                 option.className="checkboxCite";
                 option.checked=false;
                 for (let c of defCite) {
-                        console.log(citeId,defCite);
+                    let num=parseInt(c);
+                    console.log(citeId===c);
                     if (citeId===c) {
                         option.checked=true;
                         break;
@@ -263,6 +355,8 @@ function multiple_to($list, $DDname) {
                 let label=document.createElement("label");
                 label.innerText=citeLabel;
                 label.htmlFor=idChecked;
+                label.className="labelCite";
+              //  label.style="display: flex; margin-left: 5px;"
                 row.appendChild(label);
         }
             
@@ -279,32 +373,52 @@ function multiple_to($list, $DDname) {
             span.innerText=undetected;
             wrap.appendChild(span);   
         }
-    
-        
+            
         // remove button
+        let trRemove=document.createElement("tr");
+        wrap.appendChild(trRemove);
+        
         let btnRemove=document.createElement("a");
         btnRemove.className="button";
         btnRemove.innerText="Smazat";
         btnRemove.addEventListener("click", ()=>{
             to_remove(wrap);
         });
-        wrap.appendChild(btnRemove);   
+        trRemove.appendChild(btnRemove);   
         
-        let parent=document.getElementById("listTo");
+        {
+            let trPriority=document.createElement("tr");
+            wrap.appendChild(trPriority);
+            
+    
+        }
+        
+        let parent=document.getElementById("listTo");          
         parent.appendChild(wrapItem);
-                
-                
+       
         maxId++;
-    };';
-
-    // remove
-    $GLOBALS["script"].=
-    /** @lang JavaScript */'
+    };
+    
+    var to_PriorityUp=function(e) {
+        let prevElement=e.previousElementSibling;
+        
+        if (prevElement==undefined) return; //no prev
+        
+        e.parentNode.insertBefore(e, prevElement);
+    };
+    var to_PriorityDown=function (e) {
+        let nextElement=e.nextElementSibling;
+        
+        if (nextElement==undefined) return; //no prev
+        
+        e.parentNode.insertBefore(e, nextElement);
+    };
     var to_remove = function(wrap) {
         if (confirm("Smazat? (nezapomeňte uložit)")){
             wrap.outerHTML="";               
         }
-    };';
+    };
+    ';
 
     $html='<div id="listTo">';
     $i=0;
@@ -318,6 +432,6 @@ function multiple_to($list, $DDname) {
         <a class="button">Smazat</a>
         </div>';
     }*/
-    $html.='</div><a class="button" onclick="to_add(-1, null, null, null, null, null,null)">Přidat</a>';
+    $html.='</div><a class="button" onclick="to_add(-1, /*null,*/ null, null, null, null,null)">Přidat</a>';
     return $html;
 }

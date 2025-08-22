@@ -22,7 +22,7 @@
             //echo "0 results";
         }
 
-        echo FilteredList($list, "sentence", []);
+        echo FilteredList($list, "sentence", [], $filter);
         
         $GLOBALS["onload"].= /** @lang JavaScript */"
         sentences_changed=function() { 
@@ -56,9 +56,9 @@
                     // tags
                     if (json.tags!=null) {
                         let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                        tagSet(arrTags, 'sentence');
                     } else {
-                        tagSet([]);
+                        tagSet([], 'sentence');
                     }
                    
                 } else console.log('error sql', json);
@@ -113,26 +113,24 @@
             <tr>
                 <?php echo tagsEditor("sentence", [], "Tagy");?>
             </tr>
-
-
             <tr>
                 <td><label for="name">Na</label></td>
+            </tr>
         </table>
         <div>
-                <div><?php echo multiple_to([], "sentence"); ?></div>
-            </div>
-<hr>
+            <div><?php echo multiple_to([], "sentence"); ?></div>
+        </div>
+        <hr>
         <div>
             <input type="hidden" id="sentenceId" value="-1">
             <a onclick="currentphraseCSSave()" class="button">Uložit</a>
         </div>
 
-            <div style="color: gray">
-                <label for="name">Info</label>
-                <p>"dny,dny" čárkou bez mezery oddělit více možností, primární je první</p>
-                <p>"?" Neznámý tvar</p>
-                <p>"-" Neexistuje tvar</p>
-            </div>
+        <div style="color: gray">
+            <label for="name">Info</label>
+            <p>"dny,dny" čárkou bez mezery oddělit více možností, primární je první</p>
+            <p>"?" Neznámý tvar</p>
+            <p>"-" Neexistuje tvar</p>
         </div>
     </div>
 </div>

@@ -42,7 +42,7 @@
 
 
         // side menu
-        echo FilteredList($listR, "preposition_relations", []);
+        echo FilteredList($listR, "preposition_relations", [], $_SESSION['translate']);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
         var preposition_relation_changed = function() { 
