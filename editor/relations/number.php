@@ -43,6 +43,9 @@
             .then(json => {
                 if (json.status==='OK') {
                     document.getElementById('numberId').value=id;
+                    // set custom base
+                    document.getElementById('usecustombase').checked = (json.custombase != null);
+                    document.getElementById('custombase').value = (json.custombase ?? '');
                     //from
                     filteredSearchList_number_from.selectId(json.from);                   
                     filteredSearchList_number_from.reload();
@@ -61,12 +64,15 @@
             var flist_number_relations; 
             var currentnumberRelationSave = function() {
                 let froms=document.getElementById('listreturnholder_number_from').value;              
-                let id=document.getElementById('numberId').value;              
+                let id=document.getElementById('numberId').value;                   
+                let usecustombase = document.getElementById('usecustombase').checked;
+                let custombase = document.getElementById('custombase').value;        
     
                 let formData = new URLSearchParams();
                 formData.append('action', 'number_relation_update');
                 formData.append('id', id);
                 formData.append('from', froms);
+                formData.append('custombase', usecustombase ? custombase: null);
                 
                 formData.append('to', to_save());
                
@@ -85,6 +91,12 @@
     </div>
     <div class="editorView">
         <div id="number">
+            <div class="section row">
+                <input type="checkbox" id="usecustombase">
+                <label for="usecustombase" style="user-select: none;inline-size: -webkit-fill-available;">Jiný základ</label>&nbsp;
+                <input type="text" id="custombase" placeholder="zele">
+            </div>
+
             <div class="section row">
                 <label for="number_from" id="name">Z</label>&nbsp;
                 <div id="select_number_from"></div>

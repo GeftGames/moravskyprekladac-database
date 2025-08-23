@@ -2,7 +2,7 @@
 function give_relations_pattern($conn, $tableName) : ?array {
     // relations
     $tableNameRelations=$tableName.'_relations';
-    $sql="SELECT `id`, `from` FROM `$tableNameRelations` WHERE `translate` = ".$_SESSION['translate'].";";
+    $sql="SELECT `id`, `from`, custombase FROM `$tableNameRelations` WHERE `translate` = ".$_SESSION['translate'].";";
     $sqlDone=true;
     $resultR = $conn->query($sql);
     if (!$resultR) {
@@ -19,35 +19,48 @@ function give_relations_pattern($conn, $tableName) : ?array {
         throwError("SQL error: ".$sqlFrom);
     }
 
-    $listFrom=[];
-    $listR=[];
-
     if ($sqlDone) {
+        $listFrom=[];
+        $listR=[];
+
         // list from
         while ($rowFrom = $resultFrom->fetch_assoc()) {
-            $listFrom[]=[$rowFrom["id"], $rowFrom["label"]];
+            $listFrom[$rowFrom["id"]]=$rowFrom["label"];
         }
 
         // list relations
         while ($row = $resultR->fetch_assoc()) {
             $idRelation=$row["id"];
             $idFrom=$row["from"];
+            $custombase=$row["custombase"];
 
             // get from label
-            $from=null;
+            /*$from=null;
             foreach ($listFrom as $item) {
                 if ($item[0]==$idFrom) {
                     $from=$item;
                     break;
                 }
-            }
+            }*/
+            $from = $listFrom[$idFrom] ?? null;
 
             if ($from!=null) {
-                $listR[]=[$idRelation, $from[1]];
+                if ($custombase==null) $listR[]=[$idRelation, $from];
+                else {
+                    $base=extractBase($from);
+                    $ending=substr($from, strlen($base));
+                    $listR[]=[$idRelation, $custombase.$ending];
+                }
             }else{
-                $listR[]=[$idRelation, "<Nepřiřazené>"];
+                if ($custombase==null) $listR[]=[$idRelation, "<Nepřiřazené>"];
+                else $listR[]=[$idRelation, $custombase."<?>"];
             }
         }
     }else return null;
     return $listR;
+}
+
+function extractBase(string $str): string {
+    preg_match('/^\p{Ll}+/u', $str, $matches);
+    return $matches[0] ?? '';
 }

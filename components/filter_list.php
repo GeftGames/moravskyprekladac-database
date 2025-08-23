@@ -1,5 +1,5 @@
 <?php
-function FilteredList(array $list, string $id, array $btns, $filter) : string {
+function FilteredList(array $list, string $id, array $btns, int $filter) : string {
     $type="";
     if (str_contains($id,"relation")) $type="_relation";
 

@@ -7,7 +7,7 @@
 
         // relations list
         include "components/give_relations_pattern.php";
-        $listR=give_relations_pattern($conn,"adjective", true);
+        $listR=give_relations_pattern($conn,"adjective");
 
         // side menu
         echo FilteredList($listR, "adjective_relations", [], $_SESSION['translate']);
@@ -45,7 +45,7 @@
                     document.getElementById('adjectiveId').value=id;
                     // set custom base
                     document.getElementById('usecustombase').checked = (json.custombase != null);
-                    document.getElementById('custombase').value = (json.custombase ?? '');
+                    document.getElementById('custombase').value = json.custombase;
                     //from
                     filteredSearchList_adjective_from.selectId(json.from);                   
                     filteredSearchList_adjective_from.reload();
@@ -66,15 +66,14 @@
             var currentAdjectiveRelationSave = function() {
                 let froms=document.getElementById('listreturnholder_adjective_from').value;              
                 let id=document.getElementById('adjectiveId').value;              
-                let usecustombase = document.getElementById('usecustombase').checked ? true : false;
+                let usecustombase = document.getElementById('usecustombase').checked;
                 let custombase = document.getElementById('custombase').value;
 
                 let formData = new URLSearchParams();
                 formData.append('action', 'adjective_relation_update');
                 formData.append('id', id);
                 formData.append('from', froms);
-                formData.append('usecustombase', usecustombase);
-                formData.append('custombase', custombase);
+                formData.append('custombase', usecustombase ? custombase: null);
                 
                 formData.append('to', to_save());
                
