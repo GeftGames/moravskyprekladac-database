@@ -1,9 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
-       // include "components/filter_list.php";
         include "components/tags_editor.php";
         
         $order="ORDER BY LOWER(label) ASC";
@@ -174,7 +171,7 @@
     <div class="editorView">
         <div id="regionsview">
             <div class="row section">
-                <label id="pronounLabel" for="name">Popis</label><br>
+                <label for="pronounLabel">Popis</label><br>
                 <input type="text" id="pronounLabel" value="" placeholder="niKDO" style="max-width: 9cm;">
                 <a onclick="" class="button">Sestavit</a>
             </div>
@@ -185,7 +182,7 @@
             </div>
 
             <div class="row section">
-                <label>Ohebnost</label>
+                <label for="pronounShapesType">Ohebnost</label>
                 <select id="pronounShapesType" name="type" onchange="changeVisibility()">
                     <option value="0">Nesklonné</option>
                     <option value="1">7 pádů, bez čísla, bez rodu</option>
@@ -222,7 +219,7 @@
             </div>
 
             <div class="row section">
-                <label>Druh</label>
+                <label for="pronounCategory">Druh</label>
                 <select id="pronounCategory" name="type">
                     <option value="0">Neznámý</option>
                     <option value="1">Osobní</option>

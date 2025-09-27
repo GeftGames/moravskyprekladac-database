@@ -1,8 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // site list
         include "components/tags_editor.php";
         $filter=$_SESSION['translate'];
         $sql="SELECT id, label FROM adjective_patterns_to WHERE `translate` = ".$_SESSION['translate'].";";
@@ -13,15 +11,13 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results";
         }
-        echo FilteredList($list, "adjective_patterns_cs", [], $filter);
+        echo FilteredList($list, "adjective_patterns_to", [], $filter);
 
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        adjective_cs_changed=function() { 
-            let id = flist_adjective_patterns_cs.getSelectedIdInList();
+        adjective_to_changed=function() { 
+            let id = flist_adjective_patterns_to.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -30,22 +26,23 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=adjective_pattern_cs_item&id=`+id
+                body: `action=adjective_pattern_to_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 // set data
-                if (json.status==='OK') {
+                if (json.status==='OK') {console.log(json);
+                    let d=json.data;
                     document.getElementById('adjectiveId').value=id;
-                    document.getElementById('adjectiveLabel').value=json.label;
-                    document.getElementById('adjectiveBase').value=json.base;
+                    document.getElementById('adjectiveLabel').value=d.label;
+                    document.getElementById('adjectiveBase').value=d.base;
 
-                    if (json.category==null) json.category=0;
-                    document.getElementById('adjectiveCategory').value=json.category; 
+                    if (d.category==null) d.category=0;
+                    document.getElementById('adjectiveCategory').value=d.category; 
 
-                    let rawShapes=json.shapes;
+                    let rawShapes=d.shapes;
                     let shapes;
                     if (rawShapes!=null) {
-                        shapes=json.shapes.split('|'); 
+                        shapes=d.shapes.split('|'); 
                     } else shapes=[];
                     console.log(shapes.length/4)
                     for (let g=0; g<4; g++) {       // tables
@@ -58,11 +55,11 @@
                         }  
                     }
 
-                    if (json.tags!=null) {
-                        let arrTags=json.tags.split('|');
-                        tagSet(arrTags);
+                    if (d.tags!=null) {
+                        let arrTags=d.tags.split('|');
+                        tagSet(arrTags,  'adjective_to');
                     }else{
-                        tagSet([]);
+                        tagSet([], 'adjective_to');
                     }
                    
                 }else console.log('error sql', json);
@@ -71,16 +68,16 @@
 
         refreshFilteredLists();
 
-        flist_adjective_patterns_cs.EventItemSelectedChanged(adjective_cs_changed);";
+        flist_adjective_patterns_to.EventItemSelectedChanged(adjective_to_changed);";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_adjective_patterns_cs; 
-        var currentadjectiveCSSave = function() {
+        var flist_adjective_patterns_to; 
+        var currentadjectiveTOSave = function() {
             let label=document.getElementById('adjectiveLabel').value;
             let base=document.getElementById('adjectiveBase').value;
             let category=document.getElementById('adjectiveCategory').value;
             let adjectiveId=document.getElementById('adjectiveId').value;
-            let tags=document.getElementById('adjective_csdatatags').value;
+            let tags=document.getElementById('adjective_todatatags').value;
             let shapes=[];
             for (let i=0; i<14; i++) {
                 let textbox=document.getElementById('adjective'+i);
@@ -88,7 +85,7 @@
             }
 
             let formData = new URLSearchParams();
-            formData.append('action', 'adjective_pattern_cs_update');
+            formData.append('action', 'adjective_pattern_to_update');
             formData.append('id', adjectiveId);
             formData.append('label', label);
             formData.append('base', base);
@@ -103,7 +100,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status==='OK'){
-                   flist_adjective_patterns_cs.getSelectedItemInList().innerText=label;
+                   flist_adjective_patterns_to.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };";
@@ -162,10 +159,10 @@
                 <input type="hidden" id="adjectiveShapes" value="-1">
             </div>
 
-            <?php echo tagsEditor("adjective_cs", [], "Tagy")?>
+            <?php echo tagsEditor("adjective_to", [], "Tagy")?>
             <div> 
                 <input type="hidden" id="adjectiveId" value="-1">
-                <a onclick="currentadjectiveCSSave()" class="button">Uložit</a>
+                <a onclick="currentadjectiveTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

@@ -95,7 +95,7 @@ function multiple_pattern_to($list, $DDname) {
         for (let item of list) {
             let cites=item['cite'].split(',');
             let undetected='';
-            if (item['tmp_pattern_from_body']!=null || item['tmp_imp_from_pattern']!=null) undetected='from: '+item['tmp_pattern_from_body']+'; to: '+item['tmp_imp_from_pattern']
+            if (item['tmp_pattern_from_body']!=null || item['tmp_imp_from_pattern']!=null) undetected='body: '+item['tmp_pattern_from_body']+'; pat: '+item['tmp_imp_from_pattern']
             to_add(item['id'], item['shape'], item['comment'], cites, undetected, item['custombase']);
         }
     };

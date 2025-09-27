@@ -6,7 +6,7 @@
  * @param $otherParams: custom options for placement, format: ", `str`, `str`, `str`, ..."
  * @return string
  */
-function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
+function generateSelectMultipleWithSort(\mysqli $conn, string $name, $filter, $otherParams) {
     // get all types
     $listAllTypes=[];
     {
@@ -69,6 +69,7 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
                 }).then(response => response.json())
                 .then(json => {
                     if (json.status==='OK') {
+                        console.log(json);
                         let newSelectedItem=document.createElement('span');
                         newSelectedItem.setAttribute('data-id', value);// id of placed
                         newSelectedItem.setAttribute('data-parent', json.insert_id);// belongs to parent (placed region of region)
@@ -81,9 +82,14 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
                 });
             }            
         }
-        function SelectInSelected(e, name) {
+        
+        /*
+        * @param name: name of this component
+        * */
+         var SelectInSelected=(e)=>{
             // deselect
-            let selectedItems=document.getElementById(name+'_selectedItems');
+            
+            let selectedItems=e.parentNode;// document.getElementById(name+'_selectedItems');
             for (let child of selectedItems.childNodes) {
                 if (child.classList.contains('selected')) {
                     child.classList.remove('selected');
@@ -111,12 +117,29 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
         }
                 
         function Remove(name) {
-            let selectedItems = document.getElementById(name+'_selectedItems');
-            let selected = selectedItems.querySelector('.selected');
+            let selectedItem = document.getElementById(name+'_selectedItems');
+            let selected = selectedItem.querySelector('.selected');
             if (selected) {
-                selectedItems.removeChild(selected);
+                let id=selected.getAttribute('data-id');
+                
+                if (isNaN(parseInt((id)))) {//test
+                    console.error('id is not number: '+id+'');
+                    return;// very likely not ever possible to happen
+                } 
+                
+                fetch('index.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=place_remove&table='+name+'&translate={$filter}&id='+id
+                }).then(response => response.json())
+                .then(json => {
+                    if (json.status==='OK') {
+                        selectedItem.removeChild(selected);                        
+                    } else console.log('error sql', json);
+                });
             }
         }
+        
         var selectedId;
         function showOptions(name) {
             popupShow(name);
@@ -207,7 +230,8 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
     ";
 
     // -- Elements -- //
-    $html="<div style='display:flex'>";
+    $html="<!-- component of 'selectmultipleandsort.php' -->";
+    $html.="<div style='display:flex'>";
 
     // Left box
     $html.="<div style='width: 50%;'>";
@@ -216,7 +240,7 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
     // all items, by click move to selected box
     foreach ($listAllTypes as $item) {
         // by click move to selected if not already exists there
-        $html.='<a data-value="'.$item[0]/*id*/.'" data-label="'.$item[1].'" onclick="Select(this, `'.$name.'`)">'.$item[1]/*label*/.' →</a>';
+        $html.='<a data-value="'.$item[0]/*id*/.'" data-label="'.$item[1].'" onclick="Select(this, \''.$name.'\')">'.$item[1]/*label*/.' →</a>';
     }
     $html.="</div>";
 
@@ -230,7 +254,7 @@ function generateSelectMultipleWithSort($conn, $name, $filter, $otherParams) {
     // list of selected items
     $html.="<div id='{$name}_selectedItems' class='boxwithitems' style='min-height: 50px; border: solid 1px gray;display: grid;overflow-y: scroll;'>";
     foreach ($listSelected as $item) {
-        $html.='<a data-id="'.$item["id"].'"  data-parent="'.$item["parent"].'"onclick="SelectInSelected(this, '.$item["label"].');">'.$item["label"].'</a>';
+        $html.='<span data-id="'.$item["id"].'" data-parent="'.$item["parent"].'" onclick="SelectInSelected(this);">'.$item["label"].'</span>';
     }
     $html.="</div>";
 

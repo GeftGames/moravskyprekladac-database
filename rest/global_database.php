@@ -2,7 +2,6 @@
 // Rest api - database global tools 
 namespace REST;
 require_once "help.php";
-use function Safe\mysql_real_escape_string;
 
 function database_init(): void{
     $dev=$GLOBALS["dev"];
@@ -10,7 +9,7 @@ function database_init(): void{
         throwError("Přihlašovací údaje jsou nekorektní!");
         return;
     }
-    $hashPassword=md5($_POST["password"]);
+    $hashPassword=$_POST["password"];
     
     // Create connection
     $conn_newDB = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"]);
@@ -21,6 +20,9 @@ function database_init(): void{
         throwError("Connection failed: " . $conn_newDB->connect_error);
         exit();
     }
+
+
+    header("location: index.php");
 
     // Check database
     $result = $conn_newDB->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '".$GLOBALS["databaseName"]."'");
@@ -101,7 +103,7 @@ function database_init(): void{
             label VARCHAR(255) DEFAULT '$namedef',
             base VARCHAR(255),
             shapes_infinitive TEXT,
-            shapes_continous TEXT,
+            shapes_continuous TEXT,
             shapes_future TEXT,
             shapes_imperative TEXT,
             shapes_past_active TEXT,
@@ -152,7 +154,7 @@ function database_init(): void{
             id_production INT NOT NULL,
             label varchar(255) DEFAULT '$namedef',
             translate INT,
-            base VARCHAR(255),
+            base VARCHAR(255) NOT NULL DEFAULT '',
             tags VARCHAR(255),
             uppercase TINYINT,
             pattern TINYINT DEFAULT 0 NOT NULL,
@@ -162,6 +164,7 @@ function database_init(): void{
         "CREATE TABLE adjective_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             id_production INT NOT NULL,
+            base VARCHAR(255) NOT NULL DEFAULT '',
             label VARCHAR(255) DEFAULT '$namedef',
             translate INT,
             category TINYINT,
@@ -173,8 +176,9 @@ function database_init(): void{
             label VARCHAR(255) DEFAULT '$namedef',
             translate INT,
             pattern_type TINYINT,
-            base VARCHAR(255),
-            shapes TEXT
+            base VARCHAR(255) NOT NULL DEFAULT '',
+            shapes TEXT,
+            tags VARCHAR(255)
         );",
         "CREATE TABLE number_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -182,8 +186,9 @@ function database_init(): void{
             label varchar(255) DEFAULT '$namedef',
             translate INT,
             pattern_type TINYINT,
-            base VARCHAR(255),
-            shapes TEXT
+            base VARCHAR(255) NOT NULL DEFAULT '',         
+            shapes TEXT,
+            tags VARCHAR(255)
         );",
         "CREATE TABLE verb_patterns_to (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -193,9 +198,9 @@ function database_init(): void{
             category TINYINT,
             label varchar(255) DEFAULT '$namedef',
             tags TEXT,
-            base VARCHAR(255),
+            base VARCHAR(255) NOT NULL DEFAULT '',
             shapes_infinitive TEXT, 
-            shapes_continous TEXT, 
+            shapes_continuous TEXT, 
             shapes_future TEXT, 
             shapes_imperative TEXT, 
             shapes_past_active TEXT, 
@@ -431,7 +436,6 @@ function database_init(): void{
         // translate
         "CREATE TABLE translate (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            id_production INT NOT NULL,
             name VARCHAR(255),
             nameVariants VARCHAR(255),
             administrativeTown VARCHAR(255),
@@ -518,6 +522,7 @@ function database_init(): void{
         // regions ploace
         "CREATE TABLE place_regions (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
             region_id INT ,
             region_id_production INT, /*for export*/
             translate INT, /*translate parent*/
@@ -528,6 +533,7 @@ function database_init(): void{
 
         "CREATE TABLE place_nations (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
             nation_id INT,
             nation_id_production INT, /*for export*/
             translate INT, /*translate parent*/
@@ -537,6 +543,7 @@ function database_init(): void{
 
         "CREATE TABLE place_langs (
             id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            id_production INT,
             lang_id INT,
             lang_id_production INT, /*for export*/
             translate INT, /*translate parent*/
@@ -668,26 +675,33 @@ function database_init(): void{
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `relation` INT,
             `pos` tinyint NOT NULL ,
-            `tags` VARCHAR(255) NOT NULL ,
-            `shape` VARCHAR(255) NOT NULL ,
-            `cite` VARCHAR(255) NOT NULL ,
+            `tags` VARCHAR(255) NOT NULL,
+            `shape` VARCHAR(255) NOT NULL,
+            `cite` VARCHAR(255) NOT NULL,
             `comment` VARCHAR(255) NOT NULL         
         );",
         "CREATE TABLE sentence_relations (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `from` VARCHAR(255) DEFAULT '$namedef',
             `translate` INT,
-            `display` tinyint NOT NULL ,
+            `display` tinyint NOT NULL,
             `tags` varchar(255) NOT NULL 
         );",
         "CREATE TABLE sentences_to (
             `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `relation` INT,
-            `pos` tinyint NOT NULL ,
+            `pos` tinyint NOT NULL,
             `shape` VARCHAR(255),
-            `tags` VARCHAR(255) NOT NULL ,
+            `tags` VARCHAR(255) NOT NULL,
             `cite` VARCHAR(255) NOT NULL,
             `comment` VARCHAR(255) NOT NULL    
+        );",
+        "CREATE TABLE sentencepapattern_relations (
+            `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `from` INT,
+            `translate` INT NOT NULL,
+            `display` VARCHAR(255),
+            `tags` VARCHAR(255) NOT NULL
         );",
     ];
 
@@ -728,11 +742,14 @@ function database_load() :void {
 
 function database_importold(): void {
     $dev=$GLOBALS["dev"];
+
+    // check is log in
     if (!isset($_SESSION["username"])) {
         throwError("Nejste přihlášený!");
         return;
     }
 
+    // check is there is files
     if (empty($_FILES["database_files"]["name"][0])) {
         throwError("Chybí soubor databáze!");
         return;
@@ -742,15 +759,15 @@ function database_importold(): void {
     $conn = new \mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
     $conn->set_charset("utf8mb4");
 
-    // File settings
+    // get files
     $files=$_FILES["database_files"];
 
-    // Files (multiple translate files)
+    // foreach files (multiple translate files)
     foreach ($files["tmp_name"] as $key => $tmpName) {
 
-        echo "file: ".htmlspecialchars($files["name"][$key])."<br>";
+        echo "<b>file: ".$files["name"][$key]."</b><br>";
 
-        // Check before upload
+        // Check before upload if is translate file
         if (pathinfo($files["name"][$key], PATHINFO_EXTENSION) !== "trw") {
             throwError("Neplatný typ souboru!");
             continue;
@@ -764,6 +781,7 @@ function database_importold(): void {
             continue;
         }
 
+        // support only newest version of translate file
         if ($lines[0]!="TW v4") {
             throwError("Databáze není typu 'TW v4': '".$lines[0]."'");
             continue;
@@ -988,6 +1006,7 @@ function database_importold(): void {
                 if (isset($citeVars["shortcut"]))$shortcut=$citeVars["shortcut"];
                 else if ($citetypeRaw=="sncj") $shortcut="sncj";
                 else if ($citetypeRaw=="cja") $shortcut="cja";
+                else if ($citetypeRaw=="inf") $shortcut="inf"; // informátor
                 else {
                     throwError("Missing shortcut: ".$citetypeRaw);
                 }
@@ -1735,7 +1754,7 @@ function database_importold(): void {
                     "tmp_imp_from_pattern"=>$tmp_imp_from_pattern
                 ]);
                 if ($result["status"]=="ERROR") {
-                    // todo: $conn->uncommit
+                    $conn->rollback();
                 }
             }
         }
@@ -2074,7 +2093,7 @@ function database_importold(): void {
             $shapetype=$parts[1];
 
             // convert shapetype from
-            $SContinous          = ($shapetype &   1) ==  1;
+            $SContinuous          = ($shapetype &   1) ==  1;
             $SImperative         = ($shapetype &   2) ==  2;
             $SPastActive         = ($shapetype &   4) ==  4;
             $SPastPassive        = ($shapetype &   8) ==  8;
@@ -2083,7 +2102,7 @@ function database_importold(): void {
             $STransgressivePast  = ($shapetype &  64) == 64;
             $SAuxiliary          = ($shapetype & 128) ==128;
 
-            $Continous          = "";
+            $Continuous          = "";
             $Imperative         = "";
             $PastActive         = "";
             $PastPassive        = "";
@@ -2098,9 +2117,9 @@ function database_importold(): void {
             $GLOBALS["index"]=1;
 
             $class=0;
-            if ($SContinous) {
+            if ($SContinuous) {
                 $arr=GetArray($conn, $shapes, $GLOBALS["index"], 6);
-                $Continous         = implode("|",$arr);
+                $Continuous         = implode("|",$arr);
 
                 // 1 -e, 2 -ne, 3 -je , 4 -í, 5-á
                 if (str_ends_with("á", $arr[2])) $class=5;
@@ -2121,7 +2140,7 @@ function database_importold(): void {
 
             $sql="INSERT INTO verb_patterns_cs (label, base, category, class, 
                     shapes_infinitive, 
-                    shapes_continous, 
+                    shapes_continuous, 
                     shapes_future, 
                     shapes_imperative, 
                     shapes_past_active, 
@@ -2132,7 +2151,7 @@ function database_importold(): void {
                 ) 
                 SELECT '$label', '$base', '$category', $class, 
                     '$Infinitive', 
-                    '$Continous', 
+                    '$Continuous', 
                     '$Future', 
                     '$Imperative', 
                     '$PastActive', 
@@ -2163,7 +2182,7 @@ function database_importold(): void {
             $shapetype=$parts[1];
 
             // convert shapetype from
-            $SContinous          = ($shapetype &   1) ==  1;
+            $SContinuous          = ($shapetype &   1) ==  1;
             $SImperative         = ($shapetype &   2) ==  2;
             $SPastActive         = ($shapetype &   4) ==  4;
             $SPastPassive        = ($shapetype &   8) ==  8;
@@ -2172,7 +2191,7 @@ function database_importold(): void {
             $STransgressivePast  = ($shapetype &  64) == 64;
             $SAuxiliary          = ($shapetype & 128) ==128;
 
-            $Continous          = "";
+            $Continuous          = "";
             $Imperative         = "";
             $PastActive         = "";
             $PastPassive        = "";
@@ -2186,7 +2205,7 @@ function database_importold(): void {
 
             $GLOBALS["index"]=1;
 
-            if ($SContinous)        $Continous         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
+            if ($SContinuous)        $Continuous         = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
             if ($SFuture)           $Future            = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 6));
             if ($SImperative)       $Imperative        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 3));
             if ($SPastActive)       $PastActive        = implode("|", GetArray($conn, $shapes, $GLOBALS["index"], 8));
@@ -2199,7 +2218,7 @@ function database_importold(): void {
 
             /*$sql="INSERT INTO verb_patterns_to (translate, label, base, category,
                     shapes_infinitive, 
-                    shapes_continous, 
+                    shapes_continuous,
                     shapes_future, 
                     shapes_imperative, 
                     shapes_past_active, 
@@ -2209,7 +2228,7 @@ function database_importold(): void {
                     shapes_auxiliary) ".
                 "SELECT $langId, '$label', '$base', $category, 
                     '$Infinitive', 
-                    '$Continous', 
+                    '$Continuous',
                     '$Future', 
                     '$Imperative', 
                     '$PastActive', 
@@ -2221,7 +2240,7 @@ function database_importold(): void {
             // only defined cite types
            $sql="INSERT INTO verb_patterns_to (translate, label, base, category,
                 shapes_infinitive,
-                shapes_continous,
+                shapes_continuous,
                 shapes_future,
                 shapes_imperative,
                 shapes_past_active,
@@ -2242,7 +2261,7 @@ function database_importold(): void {
 
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ississsssssss", $langId, $label, $base, $category, $Infinitive,
-                $Continous,
+                $Continuous,
                 $Future,
                 $Imperative,
                 $PastActive,
@@ -2270,13 +2289,13 @@ function database_importold(): void {
         // get list of all pattern from and to before looping
         $verbsFrom=[];
         {
-            $sqlFromP="SELECT `id`, `label` FROM verb_patterns_cs;";
+            $sqlFromP="SELECT `id`, `label`, `base` FROM `verb_patterns_cs`;";
             $resultFromP = $conn->query($sqlFromP);
             if ($resultFromP) {
-                while($row = $resultFromP->fetch_assoc()) {
-                    $verbsFrom[$row["label"]]=$row["id"];
+                while ($row = $resultFromP->fetch_assoc()) {
+                    $verbsFrom[$row["label"]]=["id"=>$row["id"], "base"=>$row["base"]];
                 }
-            }else{
+            } else {
                 throwError("SQL error: ".$sqlFromP);
                 $conn->rollback();
             }
@@ -2288,10 +2307,10 @@ function database_importold(): void {
             $sqlToP="SELECT `id`, `label` FROM `verb_patterns_to` WHERE `translate`=$langId;";
             $resultToP = $conn->query($sqlToP);
             if ($resultToP) {
-                while($row = $resultToP->fetch_assoc()) {
+                while ($row = $resultToP->fetch_assoc()) {
                     $verbsTo[$row["label"]]=$row["id"];
                 }
-            }else{
+            } else {
                 throwError("SQL error: ".$resultToP);
                 $conn->rollback();
             }
@@ -2305,20 +2324,22 @@ function database_importold(): void {
 
             $parts = explode('|', $line);
             $fromBase=$parts[0];
-            $fromPattern=$parts[1];;
+            $fromPattern=$parts[1];
+            $patternBase= $verbsFrom[$fromPattern]["id"] ?? "NULL";
             $shapes=LoadListTranslatingToDataWithPattern($parts, 2);
+            $custombase = ($fromBase==$patternBase) ? null : $fromBase;
 
             // add current relation to database
             {
                 // get id from text of pattern (label)
-                $from = $verbsFrom[$fromPattern] ?? "NULL";
-
-                $sql_rel="INSERT INTO verb_relations (`translate`, `from`) VALUES ($langId, $from);";
-                $result=$conn->query($sql_rel);
-                if (!$result) {
+                $from = $verbsFrom[$fromPattern]["id"] ?? "NULL";
+                $result=sql_insert($conn, "verb_relations", ["translate"=>$langId, "from"=>$from, "custombase"=>$custombase]);
+                //$sql_rel="INSERT INTO verb_relations (`translate`, `from`, `custombase`) VALUES ($langId, $from, $custombase);";
+               // $result=$conn->query($sql_rel);
+                if ($result["status"]=="ERROR") {
                     sqlError($sql_rel, $conn);
-                    // todo: $conn->cancel commit
-                    return;
+                    $conn->rollback();
+                    exit;
                 }
             }
             $idRelation=$conn->insert_id;
@@ -2916,7 +2937,7 @@ function database_importold(): void {
         $conn->commit();
     }
 
-    header("location: index.php");
+    //header("location: index.php");
 }
 
 function select_lang() : void {
@@ -2946,8 +2967,8 @@ function extractBase(string $str): string {
     return $matches[0] ?? '';
 }
 
-function getUpperCaseType($str) : int {
-    // return: 0 = unknown?, 1=lower, 2=first uppercase, 3=all uppercase
+// return: 0 = unknown?, 1=lower, 2=first uppercase, 3=all uppercase
+function getUpperCaseType(string $str): int {
     if ($str === '') {
         return 0; // Unknown or empty string
     }
@@ -2988,7 +3009,7 @@ function loadListTranslatingToData(array $rawData, int $start) : array {
           
     return $list; //[["Text"=>..., "Source"=>..., "Comment"=>...], [...], ...]
 }*/
-function loadListTranslatingToData(array $rawData, int $start) : array {
+function loadListTranslatingToData(array $rawData, int $start): array {
     $list = [];
     $len = count($rawData);
 
@@ -3015,7 +3036,7 @@ function loadListTranslatingToDataWithPattern($rawData, $start) : array{
     return $list;
 }*/
 
-function loadListTranslatingToDataWithPattern(array $rawData, int $start) : array{
+function loadListTranslatingToDataWithPattern(array $rawData, int $start): array{
     $list = [];
     $len = count($rawData);
 
@@ -3030,7 +3051,7 @@ function loadListTranslatingToDataWithPattern(array $rawData, int $start) : arra
     return $list;
 }
 
-function tryToGetTags($comment) : array{
+function tryToGetTags(string $comment): array{
     $list=[];
          
     if (str_contains($comment, "expr.")) $list[]="expr.";
@@ -3042,14 +3063,14 @@ function tryToGetTags($comment) : array{
     return $list;
 }
 
-function GetArray($conn, $source, $pos, $len) : array {
+function GetArray(\mysqli $conn, $source, $pos, $len) : array {
     $arr = [];
     for ($i=0; $i<$len; $i++) $arr[$i]=mysqli_escape_string($conn, $source[$pos+$i]);
     $GLOBALS["index"]+=$len;
     return $arr;
 }
 
-function getCategoryAdjective($shapeA1) {
+function getCategoryAdjective(string $shapeA1) {
     // tvrdé
     if (str_ends_with($shapeA1,"é"))    return 1;
     if (str_ends_with($shapeA1,"ej"))   return 1;

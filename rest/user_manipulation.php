@@ -12,7 +12,7 @@ function register() {
         return;
     }
     
-    $hashPassword=md5($_POST["password"]);
+    $hashPassword=$_POST["password"];
 
     // register
     $sql = "INSERT INTO users (username, userPassword, email, usertype, activated)
@@ -30,7 +30,7 @@ function register() {
 
 function login() {
     $username=$_POST['username'];
-    $hashPassword=md5($_POST["password"]);
+    $hashPassword=$_POST["password"];
  
     // root
     if (isset($_POST['root'])) {

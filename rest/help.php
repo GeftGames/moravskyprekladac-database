@@ -21,47 +21,86 @@ function throwError($string) :void{
     die();
 }
 
-function sql_get($conn, $tablename, $columns, $where) {
+/**
+ * Selects records in a database table with given data and conditions.
+ *
+ * @param mysqli $conn       The MySQLi database connection object.
+ * @param string $tablename  The name of the table to update.
+ * @param array  $data       Associative array of column => value pairs to update. [param => value, ...]
+ * @param array  $where      SQL WHERE clause as a string, e.g. [id => 5].
+ *
+ * @return array Returns an associative array with keys:
+ *               - status: "OK" or "ERROR"
+ *               - data (if OK and rows found)
+ *               - message, function, sql (if ERROR)
+ */
+function sql_get(\mysqli $conn, string $tablename, array $columns, array $where) {
     // columns
-    $cols = implode(", ", array_map(function($col) {
-        return "`" . addslashes($col) . "`";
-    }, $columns));
+    $cols = implode(", ", array_map(function($col) { return "`".$col."`"; }, $columns));
 
     // where
     $conditions = [];
-    foreach ($where as $col => $val) {
-        $conditions[] = "`" . $conn->real_escape_string($col) . "` = ?";
-    }
-    $whereClause = implode(" AND ", $conditions);
-/*
-    $bWhere="";
-    if ($where!="") {
-        $bWhere=" WHERE $where";
-    }*/
+    $values = [];
+    $types = "";
 
-    $sql="SELECT {$cols} FROM `{$tablename}`$whereClause;";
-    $result = $conn->query($sql);
-    if ($result) {
-        if ($result->num_rows > 0) {
-            // return data
-            $data =[
-              //  "status"=>"OK",
-            ];
-            while ($row = $result->fetch_assoc()) {
-                $data[] = $row;
-            }
-            return $data;
+    foreach ($where as $col => $val) {
+        $conditions[] = "`".$col."` = ?";
+        $values[] = $val;
+        // determine bind type
+        if (is_int($val)) {
+            $types .= "i";
+        } elseif (is_float($val)) {
+            $types .= "d";
+        } elseif (is_null($val)) {
+            $types .= "s"; // treat NULL as string, handle separately below
         } else {
-            // empty
-            return [];//["status" => "EMPTY"];
+            $types .= "s";
         }
-    } else {
-        // error connect
-        return ["status" => "ERROR", "function"=>"sql_get", "message" => $conn->error, "sql"=>$sql];
+    }
+
+    $whereClause = count($conditions) > 0 ? " WHERE " . implode(" AND ", $conditions) : "";
+
+    $sql = "SELECT {$cols} FROM `{$tablename}`{$whereClause};";
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return ["status" => "ERROR", "function" => "sql_get", "message" => $conn->error, "sql" => $sql];
+    }
+
+    // bind params if needed
+    $stmt->bind_param($types, ...$values);
+
+    if (!$stmt->execute()) {
+        return ["status" => "ERROR", "function" => "sql_get", "message" => $stmt->error, "sql" => $sql];
+    }
+
+    $result = $stmt->get_result();
+    $data = [];
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+    }
+
+    $stmt->close();
+    return ["status" => "OK", "data" => $data];
+}
+
+function sql_get_one(\mysqli $conn, string $tablename, array $columns, array $where): array{
+    $result=sql_get($conn, $tablename, $columns, $where);
+    if ($result["status"]=="OK"){
+        if (count($result["data"])==1){
+            return ["status"=>"OK", "data"=>$result["data"][0]];
+        }else{
+            return ["status"=>"ERROR", "message"=>"More than one row found!"];
+        }
+    }else{
+        return $result;
     }
 }
 
-function sql_get_one($conn, $tablename, $columns, $where) {
+/*
+function sql_get_one(\mysqli $conn, string $tablename, array $columns, array $where): array{
     $cols = implode(", ", array_map(function($col) {
         return "`" . addslashes($col) . "`";
     }, $columns));
@@ -69,14 +108,11 @@ function sql_get_one($conn, $tablename, $columns, $where) {
     // where
     $conditions = [];
     foreach ($where as $col => $val) {
-        $conditions[] = "`" . $conn->real_escape_string($col) . "` = ?";
+        $conditions[] = "`" . $col . "` = ".$val." ";
     }
     $whereClause = implode(" AND ", $conditions);
 
-   /* $bWhere="";
-    if ($where!="") {
-        $bWhere=" WHERE $where";
-    }*/
+
 
     $sql="SELECT {$cols} FROM `{$tablename}` $whereClause;";
     $result = $conn->query($sql);
@@ -94,6 +130,7 @@ function sql_get_one($conn, $tablename, $columns, $where) {
         return ["status" => "ERROR", "function"=>"sql_get", "message" => $conn->error, "sql"=>$sql];
     }
 }
+*/
 
 /**
  * Updates records in a database table with given data and conditions.

@@ -164,7 +164,7 @@ a{
     color: var(--ColorOrig);
 }
 
-textarea, input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
+textarea, input[type="text"], input[type="number"], input[type="url"], input[type="boolean"], input[type="email"], input[type="password"] {
     color: var(--ColorText);
     background-color: var(--ConBack);
     border: 1px solid #88888863;
@@ -177,6 +177,9 @@ textarea, input[type="text"], input[type="number"], input[type="email"], input[t
     font-family: var(--f);
     font-size: var(--fontSizeMedium);
     width: -webkit-fill-available;
+}
+input[type="url"]{
+    width: unset;
 }
 input[type="number"]{
     max-width: 100px;
@@ -460,7 +463,15 @@ input:focus-visible+.slider {
     user-select: none;
     cursor:pointer;
     min-height: 4mm;
+    overflow-wrap: break-word;
+    display: list-item;
+    border-bottom: solid 2px var(--ConBack);
+    margin-bottom: 1px;
+    margin-top: 1px;
 }
+/*.sideItem:nth-child(odd){
+    background-color: var(--ConBack);
+}*/
 .sideItem:hover{
     color: var(--ColorOrig)
 }

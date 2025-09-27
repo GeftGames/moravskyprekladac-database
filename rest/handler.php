@@ -4,7 +4,7 @@ function rest(){
     require_once "global_database.php";
     require_once "user_manipulation.php";
     require_once "editor.php";
-    require_once "database_export.php";
+   // require_once "database_export.php";
 
     $action=$_POST['action'];
     $_SESSION["error"]="";

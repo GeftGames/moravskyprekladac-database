@@ -13,15 +13,13 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
         echo FilteredList($list, "verb_pattern_to", [], $filter);
 
         $arrShapeTables=[
             //[name, show, len, code, display]
             ["Infinitiv", false, 1, "infinitive"],
-            ["Přítomný", true, 6, "continous"],
+            ["Přítomný", true, 6, "continuous"],
             ["Budoucí", true, 6, "future"],
             ["Rozkazovací", true, 3, "imperative"],
             ["Minulý činný", true, 8, "past_active"],
@@ -73,7 +71,7 @@
                         if (exists) {
                             let shapes=d[code].split('|');
                             let shapesLen=s[2];
-                            console.log(shapes);
+                         //   console.log(shapes);
                             for (let i=0; i<shapesLen; i++) { 
                                 let shape1=shapes[i];                            
                              //   console.log(shape1,shapeTypeIndex,i);
@@ -89,11 +87,11 @@
                     changeVisibility();
 
                     // tags
-                    if (json.tags!=null) {
-                        let arrTags=json.tags.split('|');
-                        tagSet('verb_to',arrTags);
+                    if (d.tags!=null) {
+                        let arrTags=d.tags.split('|');
+                        tagSet(arrTags, 'verb_to');
                     } else {
-                        tagSet('verb_to',[]);
+                        tagSet([], 'verb_to');
                     }
                    
                 } else console.log('error sql', json);
@@ -206,8 +204,8 @@
                         if ($typeTable=="infinitive") {
                             $html.= '<input id="verbShape'.$g.'0" type="text">';
 
-                        // Continous, Future, Podmiňovací
-                        } else if ($typeTable=="continous" || $typeTable=="future" || $typeTable=="auxiliary") {
+                        // Continuous, Future, Podmiňovací
+                        } else if ($typeTable=="continuous" || $typeTable=="future" || $typeTable=="auxiliary") {
                             // table header
                             $html.='<tr>
                                     <td class="tableHeader">Osoba</td>
@@ -269,7 +267,7 @@
                             $html.="<tr><td>j. m</td><td><input id='verbShape".$g."0' type='text'></td></tr>";
                             $html.="<tr><td>j. f+n</td><td><input id='verbShape".$g."1' type='text'></td></tr>";
                             $html.="<tr><td>Množný</td><td><input id='verbShape".$g."2' type='text'></td></tr>";
-                        }else echo "<p>ERROR: Table does not exists: $typeTable</p>";
+                        }else echo "<p>ERROR: Table does not exist: $typeTable</p>";
                         echo $html.'</table></div>';
                     }                 
                     ?>

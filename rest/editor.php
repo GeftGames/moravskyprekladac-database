@@ -563,9 +563,9 @@ function verb_pattern_cs_item() {
 
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
   
-    $sql="SELECT label, base, class
+    $sql="SELECT label, base, class,
        shapes_infinitive, 
-       shapes_continous, 
+       shapes_continuous, 
        shapes_future, 
        shapes_imperative, 
        shapes_past_active, 
@@ -582,7 +582,7 @@ function verb_pattern_cs_item() {
             while($row = $result->fetch_assoc()) {
                 echo json_encode(["status"=>"OK", "label"=>$row["label"], "base"=>$row["base"], "tags"=>$row["tags"], "category"=>$row["category"], "class"=>$row["class"],
                     "infinitive"        =>$row["shapes_infinitive"],
-                    "continous"         =>$row["shapes_continous"],
+                    "continuous"         =>$row["shapes_continuous"],
                     "future"            =>$row["shapes_future"],
                     "imperative"        =>$row["shapes_imperative"],
                     "past_active"       =>$row["shapes_past_active"],
@@ -615,7 +615,7 @@ function verb_pattern_cs_update() {
     $tags = $_POST['tags'];
     $category = $_POST['category'];
     $shapes_infinitive      = $_POST['shapes_infinitive'];
-    $shapes_continous       = $_POST['shapes_continous'];
+    $shapes_continuous       = $_POST['shapes_continuous'];
     $shapes_future          = $_POST['shapes_future'];
     $shapes_imperative      = $_POST['shapes_imperative'];
     $shapes_past_active     = $_POST['shapes_past_active'];
@@ -626,7 +626,7 @@ function verb_pattern_cs_update() {
 
     $sql="UPDATE verb_pattern_cs SET label = '$label', base = '$base', 
         shapes_infinitive = '$shapes_infinitive', 
-        shapes_continous        = '$shapes_continous',
+        shapes_continuous        = '$shapes_continuous',
         shapes_future           = '$shapes_future',
         shapes_imperative       = '$shapes_imperative', 
         shapes_past_active      = '$shapes_past_active',
@@ -1195,14 +1195,16 @@ function verb_relation_item() {
 
     $relation_id="";
     $from=-1;
+    $custombase=null;
 
-    $sql="SELECT `id`, `from` FROM verb_relations WHERE id = '$id';";
+    $sql="SELECT `id`, `from`, `custombase` FROM verb_relations WHERE id = '$id';";
     $result = $conn->query($sql);
     if ($result) {
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 $relation_id=$row["id"];
                 $from=$row["from"];
+                $custombase=$row["custombase"];
             }
         } else {
             echo json_encode(["status" => "EMPTY"]);
@@ -1237,8 +1239,11 @@ function verb_relation_item() {
 
     echo json_encode([
         "status"=>"OK",
-        "from" =>$from,
-        "to"=>json_encode($listTo)
+        "data"=>[
+            "from" =>$from,
+            "custombase"=>$custombase,
+            "to"=>$listTo
+        ]
     ]);
     $conn->close();
 }
@@ -1916,6 +1921,177 @@ function noun_pattern_to_update() {
     }
 }
 
+function adjective_pattern_to_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result=sql_get_one($conn, "adjective_patterns_to", ["label", "base", "category", "shapes"], ["id"=>$id]);
+
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"adjective_pattern_to_item"]);
+    }
+    $conn->close();
+}
+
+function adjective_pattern_to_update() {
+    // Check if all required parameters are set
+    if (!isset($_POST['id'])
+        || !isset($_POST['label'])
+        || !isset($_POST['base'])
+        || !isset($_POST['shapes'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['tags'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    // Get the values from the POST request
+    $id = (int)$_POST['id'];
+    $label = $conn->real_escape_string($_POST['label']);
+    $shapes = $_POST['shapes'];
+    $tags = $_POST['tags'];
+    $pattern = $_POST['pattern'];
+    $base = $_POST['base'];
+
+    $result=sql_update($conn, "adjective_patterns_to",[
+        "label" => $label,
+        "base" => $base,
+        "shapes" => $shapes,
+        "tags" => $tags,
+        "pattern" => $pattern
+    ], ["id"=>$id]);
+
+    // Display result
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "adjective_pattern_to_update", "message" => $result]);
+    }
+}
+
+function pronoun_pattern_to_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result=sql_get_one($conn, "pronoun_patterns_to", ["label", "base", "pattern_type", "shapes", "tags"], ["id"=>$id]);
+
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"pronoun_pattern_to_item"]);
+    }
+    $conn->close();
+}
+
+function pronoun_pattern_to_update() {
+    // Check if all required parameters are set
+    if (!isset($_POST['id'])
+        || !isset($_POST['label'])
+        || !isset($_POST['base'])
+        || !isset($_POST['shapes'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['tags'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    // Get the values from the POST request
+    $id = (int)$_POST['id'];
+    $label = $conn->real_escape_string($_POST['label']);
+    $shapes = $_POST['shapes'];
+    $tags = $_POST['tags'];
+    $pattern = $_POST['pattern'];
+    $base = $_POST['base'];
+
+    $result=sql_update($conn, "adjective_patterns_to",[
+        "label" => $label,
+        "base" => $base,
+        "shapes" => $shapes,
+        "tags" => $tags,
+        "pattern" => $pattern
+    ], ["id"=>$id]);
+
+    // Display result
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "adjective_pattern_to_update", "message" => $result]);
+    }
+}
+
+function number_pattern_to_item() {
+    if (!isset($_POST['id'])){
+        echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
+        return;
+    }
+    $id = $_POST['id'];
+
+    $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result=sql_get($conn, "number_patterns_to", ["label", "base", "shapes", "tags"], ["id"=>$id]);
+
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"number_pattern_to_item", "detail" => $result]);
+    }
+    $conn->close();
+}
+
+function number_pattern_to_update() {
+    // Check if all required parameters are set
+    if (!isset($_POST['id'])
+        || !isset($_POST['label'])
+        || !isset($_POST['base'])
+        || !isset($_POST['shapes'])
+        || !isset($_POST['pattern'])
+        || !isset($_POST['tags'])) {
+        echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
+        return;
+    }
+
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    // Get the values from the POST request
+    $id = (int)$_POST['id'];
+    $label = $conn->real_escape_string($_POST['label']);
+    $shapes = $_POST['shapes'];
+    $tags = $_POST['tags'];
+    $pattern = $_POST['pattern'];
+    $base = $_POST['base'];
+
+    $result=sql_update($conn, "number_patterns_to",[
+        "label" => $label,
+        "base" => $base,
+        "shapes" => $shapes,
+        "tags" => $tags,
+        "pattern" => $pattern
+    ], ["id"=>$id]);
+
+    // Display result
+    if ($result["status"]=="OK") {
+        echo json_encode($result);
+    } else {
+        echo json_encode(["status" => "ERROR", "function" => "number_pattern_to_update", "message" => $result]);
+    }
+}
+
 function verb_pattern_to_item() {
     if (!isset($_POST['id'])){
         echo json_encode(["status" => "ERROR", "message" => "ID is missing"]);
@@ -1931,7 +2107,7 @@ function verb_pattern_to_item() {
         [
             "label", "base", "category", "tags",
             "shapes_infinitive",
-            "shapes_continous",
+            "shapes_continuous",
             "shapes_future",
             "shapes_imperative",
             "shapes_past_active",
@@ -1940,7 +2116,7 @@ function verb_pattern_to_item() {
             "shapes_transgressive_past",
             "shapes_auxiliary"
         ],
-        "id = '$id'"
+        ["id"=>$id]
     );
     echo json_encode($result);
     /*
@@ -2596,7 +2772,7 @@ function replace_defined_noun_item() {
     $conn=new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
     echo json_encode(
-        sql_get_one($conn, "replaces_defined_noun", ["source", "to", "label", "fall", "gender", "number"/*, "tags_inc", "tags_not"*/],"`id` = '$id'")
+        sql_get($conn, "replaces_defined_noun", ["source", "to", "label", "fall", "gender", "number"/*, "tags_inc", "tags_not"*/],"`id` = '$id'")
     );
 }
 
@@ -2715,7 +2891,7 @@ function replace_defined_update() {
     }
 }
 
-function pieceofcite_merge(){
+function pieceofcite_merge(): void{
     if (!isset($_POST['current']) || !isset($_POST['with'])) {
         echo '{ "status": "ERROR", "message": "Nelze aktualizovat '.$_POST['id'].', chybí parametry."}';
         return;
@@ -2886,18 +3062,38 @@ function place_nation_update() {
 }
 
 function place_add() {
-    if (!isset($_POST['table']) || !isset($_POST['translate'])) {
-        throwError("Chybí list");
+    if (!isset($_POST['table']) || !isset($_POST['translate']) || !isset($_POST['parent'])) {
+        echo json_encode(["status" => "ERROR", "messgae"=>"chybí parametry"]);
         return;
     }
     $table=(string)$_POST['table']; // table name
-    $translate=(string)$_POST['translate']; // column asociated translate
+    $parent=(int)$_POST['parent']; // belongs to
+    $translate=(int)$_POST['translate']; // column asociated translate
 
     $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
 
-    $result=$conn->query("INSERT INTO place_{$table}s SET translate=$translate;");
+    $result=$conn->query("INSERT INTO place_{$table}s SET translate={$translate}, {$table}_id={$parent};");
     if ($result === TRUE) {
         echo json_encode(["status" => "OK", "insert_id"=>$conn->insert_id]);
+    } else {
+        echo json_encode(["status" => "ERROR", "function"=>"list_add", "message" => $conn->error]);
+    }
+}
+
+function place_remove() {
+    if (!isset($_POST['table']) || !isset($_POST['translate']) || !isset($_POST['id'])) {
+        echo json_encode(["status" => "ERROR", "messgae"=>"chybí parametry"]);
+        return;
+    }
+    $table=(string)$_POST['table']; // table name
+    $id=(int)$_POST['id']; // id of row
+    $translate=(int)$_POST['translate']; // not necessary, asociated translate (if something happened then removed only for this translation)
+
+    $conn= new mysqli($GLOBALS["serverNameDB"], $GLOBALS["usernameDB"], $GLOBALS["passwordDB"], $GLOBALS["databaseName"]);
+
+    $result=$conn->query("DELETE FROM place_{$table}s WHERE translate={$translate} AND id={$id};");
+    if ($result === TRUE) {
+        echo json_encode(["status" => "OK"]);
     } else {
         echo json_encode(["status" => "ERROR", "function"=>"list_add", "message" => $conn->error]);
     }
@@ -3352,7 +3548,6 @@ function search_endings_verb(){
         }
 
         $sql="SELECT `id`, `base`, `shapes_{$sh_type}` FROM `verb_patterns_cs` WHERE `id` IN ($strListFromIds)";
-      //  if ($gender>0) $sql.="AND `gender`=$gender";
         if ($class>0) $sql.="AND `class`=$class";
         $sql.=";";
 
@@ -3366,7 +3561,7 @@ function search_endings_verb(){
             $search_id=$row['id'];
             foreach ($arrShapeTranslates as &$t) {
                 if ($t["source_id"] == $search_id) {
-                    $t["source"]=$row['shapes'];
+                    $t["source"]=$row['shapes_'.$sh_type];
                     $t["source_base"]=$row['base'];
                     break;
                 }
@@ -3386,8 +3581,8 @@ function search_endings_verb(){
         }
         $listTo=[];
         while ($row=$result->fetch_assoc()) {
-            // if ($row['shape']!=null) { // no int id (not defined)
-            $listTo[]=$row['shape'];
+            if ($row['shape']!=null)  // no int id (not defined)
+                $listTo[]=$row['shape'];
 
             foreach ($arrShapeTranslates as &$t) {
                 if ($t["id"]==$row['relation']) {
@@ -3401,7 +3596,9 @@ function search_endings_verb(){
 
         // to shapes
         $strListShapes=join(',', array_unique($listTo));
-        $sql="SELECT `id`, base, `shapes_{$sh_type}` FROM `verb_patterns_to` WHERE `id` IN ($strListShapes)";
+        $sql="SELECT `id`, `base`, `shapes_{$sh_type}` FROM `verb_patterns_to` WHERE `id` IN ($strListShapes)";
+     //   print_r($sql);
+       // exit();
         $result=$conn->query($sql);
         if ($result === false) {
             echo json_encode(["status"=>"ERROR", "message"=>"SQL failed: ".$conn->error]);
@@ -3411,7 +3608,7 @@ function search_endings_verb(){
             foreach ($arrShapeTranslates as &$t) {
                 if (isset($t["to_id"]) && $t["to_id"]==$row['id']) {
                     $t["to_base"]=$row['base'];
-                    $t["to"]=$row['shapes'];
+                    $t["to"]=$row['shapes_'.$sh_type];
                 }
             }
             unset($t);

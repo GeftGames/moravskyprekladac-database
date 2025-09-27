@@ -2,7 +2,6 @@
     <div>
         <?php
         include "components/tags_editor.php";
-        include "components/tags_editor.php";
 
         $filter=$_SESSION['translate'];
         $sql="SELECT id, label FROM replaces_defined_verb WHERE translate=$filter;";
@@ -213,14 +212,6 @@
     <div class="editorView">
         <div id="regionsview">
             <table>
-                <!--  <tr>
-                     <td><label id="name" for="verbReplaceLabel">Popis</label></td>
-                     <td class="row">
-                         <input type="text" id="verbReplaceLabel" value="" placeholder="dí>ďijú" style="max-width: 9cm;">
-                        <a onclick="" class="button">Sestavit</a>
-                    </td>
-                </tr>-->
-
                 <tr>
                     <td><label id="base" for="verbReplaceFrom">Z</label</td>
                     <td><input type="text" id="verbReplaceFrom" value="" placeholder="dí" style="max-width: 9cm;"></td>

@@ -1,8 +1,6 @@
 <div class="splitView">
     <div>
         <?php
-        
-        // Do dashboard stuff
         include "components/tags_editor.php";
 
         $filter=$_SESSION['translate'];
@@ -15,15 +13,13 @@
             while($row = $result->fetch_assoc()) {
                 $list[]=[$row["id"], $row["label"]];
             }
-        } else {
-            // TODO: echo "0 results ";
         }
 
-        echo FilteredList($list, "pronoun_pattern_cs", [], $filter);
+        echo FilteredList($list, "pronoun_pattern_to", [], $filter);
 
         $GLOBALS["onload"].= /** @lang JavaScript */"
-        pronoun_cs_changed=function() { 
-            let id = flist_pronoun_pattern_cs.getSelectedIdInList();
+        pronoun_to_changed=function() { 
+            let id = flist_pronoun_pattern_to.getSelectedIdInList();
         
             // no selected
             if (id==null) return;
@@ -31,7 +27,7 @@
             fetch('index.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=pronoun_pattern_cs_item&id=`+id
+                body: `action=pronoun_pattern_to_item&id=`+id
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK') {
@@ -81,17 +77,17 @@
 
         refreshFilteredLists();
 
-        flist_pronoun_pattern_cs.EventItemSelectedChanged(pronoun_cs_changed);
-        flist_pronoun_pattern_cs.EventItemAddedChanged(pronoun_cs_added);";
+        flist_pronoun_pattern_to.EventItemSelectedChanged(pronoun_to_changed);
+        flist_pronoun_pattern_to.EventItemAddedChanged(pronoun_to_added);";
     
         $GLOBALS["script"].= /** @lang JavaScript */"
-        var flist_pronoun_pattern_cs; 
-        var currentpronounCSSave = function() {
+        var flist_pronoun_pattern_to; 
+        var currentpronounTOSave = function() {
             let label=document.getElementById('pronounLabel').value;
             let base=document.getElementById('pronounBase').value;
             let category=document.getElementById('pronounCategory').value;
             let pronounId=document.getElementById('pronounId').value;
-            let tags=document.getElementById('pronoun_csdatatags').value;
+            let tags=document.getElementById('pronoun_todatatags').value;
             let shapesType=document.getElementById('pronounShapesType').value;
             let shapes=[];
             if (shapesType==0) shapes=[];
@@ -115,7 +111,7 @@
             }
 
             let formData = new URLSearchParams();
-            formData.append('action', 'pronoun_pattern_cs_update');
+            formData.append('action', 'pronoun_pattern_to_update');
             formData.append('id', pronounId);
             formData.append('label', label);
             formData.append('base', base);
@@ -130,7 +126,7 @@
             }).then(response => response.json())
             .then(json => {
                 if (json.status=='OK'){
-                   flist_pronoun_pattern_cs.getSelectedItemInList().innerText=label;
+                   flist_pronoun_pattern_to.getSelectedItemInList().innerText=label;
                 }else console.log('error currentRegionSave',json);
             });
         };
@@ -162,9 +158,9 @@
             }
         };
 
-        var pronoun_cs_added = function() {
-            flist_pronoun_pattern_cs.lastAddedId;
-            pronoun_cs_changed();
+        var pronoun_to_added = function() {
+            flist_pronoun_pattern_to.lastAddedId;
+            pronoun_to_changed();
         }";
             
         ?>
@@ -235,8 +231,8 @@
             </div>
 
             <div class="row section">
-                <label for="pronounCategorySyntaktics">Syntaktická funkce</label>
-                <select id="pronounCategorySyntaktics" name="type">
+                <label for="pronounCategorySyntaktito">Syntaktická funkce</label>
+                <select id="pronounCategorySyntaktito" name="type">
                     <option value="0">Neznámý</option>
                     <option value="1">Nepřívlastková</option>
                     <option value="2">Přívlastková</option>
@@ -244,10 +240,10 @@
                 <br>
             </div>
 
-            <?php echo tagsEditor("pronoun_cs", [], "Tagy")?>
+            <?php echo tagsEditor("pronoun_to", [], "Tagy")?>
             <div> 
                 <input type="hidden" id="pronounId" value="-1">
-                <a onclick="currentpronounCSSave()" class="button">Uložit</a>
+                <a onclick="currentpronounTOSave()" class="button">Uložit</a>
             </div>
         </div>
     </div>

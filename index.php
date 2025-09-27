@@ -108,20 +108,34 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
             popupClose('selectLang');
         }
         function export_database(){
-            fetch('index.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=database_export'
-            }).then(response => response.json())
-                .then(json => {
-                    if (json.status==="ERROR") console.error(json.error);
+            popupShow('export');
 
-                    //download?
-                    let filename=json.file;
+            document.getElementById("progressbarexport_process").style.accentColor="unset";
+            document.getElementById("progressbarexport_process").value=0;
+            const evtSource = new EventSource("/rest/database_export.php");//"index.php?action=database_export"
 
+            evtSource.onmessage = function(e) {
+                console.log(e);
+                const data = JSON.parse(e.data);
+                if (data.progress !== undefined) {
+                    console.log((new Date()).toISOString(), data.progress);
+                    document.getElementById("progressbarexport_process").value = Math.round(data.progress * 100);
+                }
+                if (data.status==="OK") {
+                    evtSource.close();
+                    document.getElementById("progressbarexport_process").value = 100;
+                    console.log("Export finished");
+                    document.getElementById("progressbarexport_process").style.accentColor="green";
+                }
+            };
+            evtSource.addEventListener("error", function(e) {
+                console.error("Error with export!");
+                document.getElementById("progressbarexport_process").style.accentColor="red";
+                evtSource.close();
             });
-
         }
+
+
     </script>
 </head>
 <body onload="onload()">
@@ -179,6 +193,19 @@ createSelectList($listTranslates, "translate", $_SESSION["translate"]);
                 <form>
                     <input type="text" name="new-translate">
                     <a class="button">Vytvořit</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="popup_export" class="popupBackground" style="display:none">
+        <div class="popup">
+            <div class="popupHeader"><span onclick="popupClose('export')" class="popupClose">×</span></div>
+            <div class="popupBody">
+                <h1>Zpracovávání</h1>
+                <form>
+                   <!-- <div id="progressbarexport_wrap" style="width:200px; height: 20px; background-color: var(--ColorBackground2)">-->
+                    <!--</div>-->
+                    <progress style="width:200px; height: 20px;" max="100" id="progressbarexport_process"></progress>
                 </form>
             </div>
         </div>
